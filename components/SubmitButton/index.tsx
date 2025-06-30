@@ -1,13 +1,17 @@
 type Props = {
+    className?: string;
     active?: boolean;
     disabled?: boolean;
+    isMedium?: boolean;
 };
 
-const SubmitButton = ({ active, disabled }: Props) => (
+const SubmitButton = ({ className, active, disabled, isMedium }: Props) => (
     <button
-        className={`group relative flex justify-center items-center size-10 rounded-xl cursor-pointer before:absolute before:inset-0 before:rounded-xl before:bg-gradient-to-b before:from-[#E5E5E5] before:to-[#E2E2E2] before:shadow-[0px_3px_4px_-1px_rgba(0,0,0,0.15),0px_1px_0px_0px_rgba(255,255,255,0.33)_inset,0px_0px_0px_1px_#D4D4D4] before:transition-all after:absolute after:inset-0 after:rounded-xl after:bg-gradient-to-b after:from-[#323232] after:to-[#222222] after:shadow-[0px_0.5px_1px_0px_rgba(255,255,255,0.15)_inset,0px_2px_4px_-1px_rgba(13,13,13,0.50),0px_-1px_1.2px_0.35px_#121212_inset,0px_0px_0px_1px_#333] after:opacity-0 after:transition-all hover:after:opacity-100 ${
+        className={`group relative flex justify-center items-center cursor-pointer before:absolute before:inset-0 before:rounded-xl before:bg-gradient-to-b before:from-[#E5E5E5] before:to-[#E2E2E2] before:shadow-[0px_3px_4px_-1px_rgba(0,0,0,0.15),0px_1px_0px_0px_rgba(255,255,255,0.33)_inset,0px_0px_0px_1px_#D4D4D4] before:transition-all after:absolute after:inset-0 after:rounded-xl after:bg-gradient-to-b after:from-[#323232] after:to-[#222222] after:shadow-[0px_0.5px_1px_0px_rgba(255,255,255,0.15)_inset,0px_2px_4px_-1px_rgba(13,13,13,0.50),0px_-1px_1.2px_0.35px_#121212_inset,0px_0px_0px_1px_#333] after:opacity-0 after:transition-all hover:after:opacity-100 ${
             active ? "after:opacity-100 hover:after:!opacity-90" : ""
-        } ${disabled ? "opacity-40 pointer-events-none" : ""}`}
+        } ${isMedium ? "size-8 rounded-[0.625rem]" : "size-10 rounded-xl"} ${
+            disabled ? "opacity-40 pointer-events-none" : ""
+        } ${className || ""}`}
     >
         <svg
             className={`relative z-2 size-4 transition-colors ${

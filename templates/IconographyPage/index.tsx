@@ -257,7 +257,7 @@ const IconographyPage = () => {
                         center
                     >
                         <svg
-                            className="size-4"
+                            className="size-5"
                             width={16}
                             height={16}
                             viewBox="0 0 16 16"
