@@ -3,17 +3,16 @@
 import Layout from "@/components/Layout";
 import Group from "@/components/Group";
 import RowCards from "@/components/RowCards";
-// import Card from "@/components/Card";
-// import Notification from "@/components/Notification";
-// import Notifications from "@/components/Notifications";
+import Card from "@/components/Card";
+import Notification from "@/components/Notification";
+import Notifications from "@/components/Notifications";
 
 const MenuPage = () => {
     return (
         <Layout title="Notifications">
             <Group title="Variations">
                 <RowCards>
-                    sds
-                    {/* <Card className="h-63" title="Comment" span={2} center>
+                    <Card className="h-63" title="Comment" span={2} center>
                         <div className="w-96.5">
                             <Notification
                                 item={{
@@ -103,10 +102,10 @@ const MenuPage = () => {
                                 }}
                             />
                         </div>
-                    </Card> */}
+                    </Card>
                 </RowCards>
             </Group>
-            {/* <Group title="Notification Dropdown">
+            <Group title="Notification Dropdown">
                 <RowCards>
                     <Card
                         className="py-38 bg-[#F8F7F7]"
@@ -116,7 +115,7 @@ const MenuPage = () => {
                         <Notifications />
                     </Card>
                 </RowCards>
-            </Group> */}
+            </Group>
         </Layout>
     );
 };
