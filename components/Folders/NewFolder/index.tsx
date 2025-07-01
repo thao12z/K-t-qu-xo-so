@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from "react";
-import Icon from "@/components/Icon";
 
 const NewFolder = () => {
     const [isOpen, setIsOpen] = useState(false);
