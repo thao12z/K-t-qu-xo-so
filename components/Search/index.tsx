@@ -1,5 +1,3 @@
-import Icon from "@/components/Icon";
-
 type Props = {
     className?: string;
     search: string;
