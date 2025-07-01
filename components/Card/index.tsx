@@ -3,10 +3,18 @@ type Props = {
     title?: string;
     span?: 1 | 2 | 3 | 4 | 5 | 6;
     center?: boolean;
+    centerHorizontal?: boolean;
     children: React.ReactNode;
 };
 
-const Card = ({ className, title, span = 1, center, children }: Props) => (
+const Card = ({
+    className,
+    title,
+    span = 1,
+    center,
+    centerHorizontal,
+    children,
+}: Props) => (
     <div
         className={`relative mt-2 mx-1 border border-[#ECECEC] ${
             span > 3 ? "rounded-[1.375rem]" : "rounded-2xl"
@@ -23,8 +31,8 @@ const Card = ({ className, title, span = 1, center, children }: Props) => (
                 ? "w-[calc(16.666%-0.5rem)]"
                 : "w-[calc(100%-0.5rem)]"
         } ${center ? "flex justify-center items-center" : ""} ${
-            className || ""
-        }`}
+            centerHorizontal ? "flex justify-center items-start" : ""
+        } ${className || ""}`}
     >
         {title && (
             <div className="absolute top-2 left-2 px-3 py-1 rounded-xl bg-[#F1F1F1] text-[0.6875rem] leading-[1rem] font-medium">

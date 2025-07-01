@@ -48,7 +48,7 @@ const Field = ({
             )}
             <div className={`relative ${textarea ? "text-[0]" : ""}`}>
                 {icon && (
-                    <div className="absolute top-0 left-0 bottom-0 flex items-center justify-center w-10">
+                    <div className="absolute top-0 left-0 bottom-0 flex items-center justify-center w-10 pointer-events-none">
                         {icon}
                     </div>
                 )}

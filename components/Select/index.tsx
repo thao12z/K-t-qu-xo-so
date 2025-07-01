@@ -13,6 +13,8 @@ export type SelectOption = {
 type SelectProps = {
     className?: string;
     classButton?: string;
+    classOptions?: string;
+    classOption?: string;
     label?: string;
     indicator?: string;
     value: SelectOption | null;
@@ -28,6 +30,8 @@ type SelectProps = {
 const Select = ({
     className,
     classButton,
+    classOptions,
+    classOption,
     label,
     indicator,
     value = null,
@@ -83,7 +87,9 @@ const Select = ({
                 </svg>
             </ListboxButton>
             <ListboxOptions
-                className={`z-100 [--anchor-gap:2px] w-[var(--button-width)] p-1 bg-[#fcfcfc] border border-[#E2E2E2] shadow-[0px_1px_4px_-4px_rgba(0,0,0,0.075),0px_8px_16px_-12px_rgba(0,0,0,0.125)] rounded-[0.625rem] origin-top transition duration-200 ease-out outline-none data-[closed]:scale-95 data-[closed]:opacity-0 `}
+                className={`z-100 [--anchor-gap:2px] w-[var(--button-width)] p-1 bg-[#fcfcfc] border border-[#E2E2E2] shadow-[0px_1px_4px_-4px_rgba(0,0,0,0.075),0px_8px_16px_-12px_rgba(0,0,0,0.125)] rounded-[0.625rem] origin-top transition duration-200 ease-out outline-none data-[closed]:scale-95 data-[closed]:opacity-0 ${
+                    classOptions || ""
+                }`}
                 anchor="bottom"
                 transition
                 modal={false}
@@ -92,7 +98,7 @@ const Select = ({
                     <ListboxOption
                         className={`relative p-2 rounded-lg font-medium leading-[1rem] text-[#7B7B7B] cursor-pointer transition-colors data-[focus]:text-[#000] data-[selected]:bg-[#f1f1f1] data-[selected]:text-[#000] ${
                             isSmall ? "text-[0.75rem]" : "text-[0.8125rem]"
-                        }`}
+                        } ${classOption || ""}`}
                         key={option.id}
                         value={option}
                     >

@@ -8,10 +8,19 @@ import Card from "@/components/Card";
 import Field from "@/components/Field";
 import NewField from "@/components/NewField";
 import UploadAvatar from "@/components/UploadAvatar";
+import Invite from "@/components/Invite";
+import ColorPicker from "@/components/ColorPicker";
+import Search from "@/components/Search";
 
 const InputsPage = () => {
     const [value, setValue] = useState("");
     const [username, setUsername] = useState("sophie");
+    const [search, setSearch] = useState("");
+
+    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        console.log(search);
+    };
 
     return (
         <Layout title="Inputs">
@@ -139,6 +148,36 @@ const InputsPage = () => {
                     </Card>
                     <Card className="h-50" title="No avatar" span={2} center>
                         <UploadAvatar />
+                    </Card>
+                </RowCards>
+            </Group>
+            <Group title="Invite">
+                <RowCards>
+                    <Card
+                        className="h-50"
+                        title="Default, Hover, Focus, Dropdown"
+                        center
+                    >
+                        <Invite />
+                    </Card>
+                </RowCards>
+            </Group>
+            <Group title="Color picker">
+                <RowCards>
+                    <Card className="h-50" title="Default, Hover, Focus" center>
+                        <ColorPicker className="w-54.5" />
+                    </Card>
+                </RowCards>
+            </Group>
+            <Group title="Search">
+                <RowCards>
+                    <Card className="h-50" title="Default, Hover, Focus" center>
+                        <Search
+                            className="w-54"
+                            search={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            handleSubmit={handleSubmit}
+                        />
                     </Card>
                 </RowCards>
             </Group>
