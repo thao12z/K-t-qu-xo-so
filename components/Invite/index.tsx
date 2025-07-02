@@ -7,12 +7,16 @@ const viewOptions = [
     { id: 1, name: "can edit" },
 ];
 
-const Invite = () => {
+type Props = {
+    className?: string;
+};
+
+const Invite = ({ className }: Props) => {
     const [value, setValue] = useState("");
     const [view, setView] = useState(viewOptions[0]);
 
     return (
-        <div className="relative w-76.5">
+        <div className={`relative ${className || ""}`}>
             <Field
                 className=""
                 classInput="!h-10 !pl-4 !pr-28 !bg-[#F8F7F7] shadow-[0_1px_3px_0_rgba(18,18,18,0.10)_inset] placeholder:opacity-50"

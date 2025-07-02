@@ -51,8 +51,10 @@ const Select = ({
             as="div"
         >
             <ListboxButton
-                className={`group flex items-center gap-1.5 w-full pl-3 pr-2 border border-[#ececec] rounded-[0.625rem] font-medium leading-[1rem] transition-all cursor-pointer [&_svg]:fill-[#7B7B7B]/70 data-[hover]:border-[#E2E2E2] data-[open]:border-[#e2e2e2] data-[open]:bg-transparent focus:bg-[#FCFCFC] ${
-                    isSmall ? "h-8 text-[0.75rem]" : "h-9 text-[0.8125rem]"
+                className={`group flex items-center gap-1.5 w-full pl-3 pr-2 border border-[#ececec] rounded-[0.625rem] font-medium leading-[1rem] transition-all cursor-pointer [&_svg]:fill-[#7B7B7B]/70 [&_svg]:size-4 data-[hover]:border-[#E2E2E2] data-[open]:border-[#e2e2e2] data-[open]:bg-transparent focus:bg-[#FCFCFC] ${
+                    isSmall
+                        ? "h-8 text-[0.75rem] [&_svg]"
+                        : "h-9 text-[0.8125rem]"
                 } ${
                     isWhite
                         ? "bg-transparent !border-s-02"
@@ -68,9 +70,9 @@ const Select = ({
                     <div className="shrink-0 pr-2 text-[#000]">{label}</div>
                 )}
                 {value?.name ? (
-                    <div className="pr-2 truncate">{value.name}</div>
+                    <div className="truncate">{value.name}</div>
                 ) : (
-                    <div className="pr-2 truncate text-[#7B7B7B]/80">
+                    <div className="truncate text-[#7B7B7B]/80">
                         {placeholder}
                     </div>
                 )}

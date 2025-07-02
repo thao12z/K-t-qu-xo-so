@@ -158,7 +158,7 @@ const InputsPage = () => {
                         title="Default, Hover, Focus, Dropdown"
                         center
                     >
-                        <Invite />
+                        <Invite className="w-76.5" />
                     </Card>
                 </RowCards>
             </Group>
