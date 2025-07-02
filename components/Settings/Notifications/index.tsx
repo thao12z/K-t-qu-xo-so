@@ -34,7 +34,6 @@ const Notifications = () => {
                     value={display}
                     onChange={setDisplay}
                     options={displays}
-                    isMedium
                 />
             </Option>
             <Option title="Video generated">
