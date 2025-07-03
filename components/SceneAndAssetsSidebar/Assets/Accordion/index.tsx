@@ -1,13 +1,10 @@
 import { useState } from "react";
 import Image from "next/image";
 import AnimateHeight from "react-animate-height";
-import { Popover, PopoverButton, PopoverPanel } from "@headlessui/react";
-import Button from "@/components/Button";
 
 type Props = {
     className?: string;
     title: string;
-    titleButton?: string;
     items: {
         id: number;
         title: string;
@@ -17,13 +14,7 @@ type Props = {
     largeImage?: boolean;
 };
 
-const Accordion = ({
-    className,
-    title,
-    titleButton,
-    items,
-    largeImage,
-}: Props) => {
+const Accordion = ({ className, title, items, largeImage }: Props) => {
     const [active, setActive] = useState(true);
 
     return (

@@ -1,6 +1,5 @@
 import { useState } from "react";
 import Select from "@/components/Select";
-import Icon from "@/components/Icon";
 import Group from "../../Group";
 
 import { lensFormats, zoomLevels, rotates } from "./content";
@@ -9,6 +8,7 @@ const Lens = () => {
     const [lensFormat, setLensFormat] = useState(lensFormats[0]);
     const [zoomLevel, setZoomLevel] = useState(zoomLevels[0]);
     const [rotate, setRotate] = useState(rotates[0]);
+
     return (
         <Group title="Lens">
             <div className="flex flex-col gap-1.5">
