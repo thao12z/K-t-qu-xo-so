@@ -1,7 +1,7 @@
 import { useState } from "react";
+import NewFolder from "@/components/NewFolder";
+import Folder from "@/components/Folder";
 import Search from "./Search";
-import NewFolder from "./NewFolder";
-import Folder from "./Folder";
 
 import { folders } from "./folders";
 

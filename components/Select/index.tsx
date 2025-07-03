@@ -66,9 +66,7 @@ const Select = ({
                 } ${label ? "text-[#7B7B7B]/50" : ""} ${classButton || ""}`}
             >
                 {icon && icon}
-                {label && (
-                    <div className="shrink-0 pr-2 text-[#000]">{label}</div>
-                )}
+                {label && <div className="shrink-0 text-[#000]">{label}</div>}
                 {value?.name ? (
                     <div className="truncate">{value.name}</div>
                 ) : (
