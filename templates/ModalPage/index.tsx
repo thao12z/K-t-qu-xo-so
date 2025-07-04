@@ -81,7 +81,7 @@ const ModalPage = () => {
                         title="Export images, Export video, Export 3D"
                         center
                     >
-                        <Export />
+                        <Export className="bg-[#FCFCFC] border border-[#ECECEC] rounded-[1.25rem] shadow-[0px_239px_67px_0px_rgba(0,0,0,0.00),0px_153px_61px_0px_rgba(0,0,0,0.01),0px_86px_52px_0px_rgba(0,0,0,0.04),0px_38px_38px_0px_rgba(0,0,0,0.06),0px_10px_21px_0px_rgba(0,0,0,0.07)]" />
                     </Card>
                 </RowCards>
             </Group>

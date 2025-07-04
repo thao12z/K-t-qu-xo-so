@@ -35,7 +35,7 @@ const Card = ({
         } ${className || ""}`}
     >
         {title && (
-            <div className="absolute top-2 left-2 px-3 py-1 rounded-xl bg-[#F1F1F1] text-[0.6875rem] leading-[1rem] font-medium">
+            <div className="absolute top-2 left-2 z-2 px-3 py-1 rounded-xl bg-[#F1F1F1] text-[0.6875rem] leading-[1rem] font-medium">
                 {title}
             </div>
         )}

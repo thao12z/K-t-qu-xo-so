@@ -23,7 +23,7 @@ const MenuPage = () => {
                         span={3}
                         centerHorizontal
                     >
-                        <Zoom />
+                        <Zoom className="w-51 rounded-2xl bg-[#FCFCFC] border border-[#ECECEC] shadow-[0px_239px_67px_0px_rgba(0,0,0,0.00),0px_153px_61px_0px_rgba(0,0,0,0.01),0px_86px_52px_0px_rgba(0,0,0,0.04),0px_38px_38px_0px_rgba(0,0,0,0.06),0px_10px_21px_0px_rgba(0,0,0,0.07)]" />
                     </Card>
                     <Card
                         className="min-h-121.5 pt-20 pb-16"

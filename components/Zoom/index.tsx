@@ -2,12 +2,12 @@ import { useState } from "react";
 import { zoomOptions } from "./items";
 import Field from "@/components/Field";
 
-interface PropsLine {
+type PropsLine = {
     title: string;
     keyName: string;
     onClick: () => void;
     active?: boolean;
-}
+};
 
 const Line = ({ title, keyName, onClick, active }: PropsLine) => {
     return (
@@ -39,18 +39,22 @@ const Line = ({ title, keyName, onClick, active }: PropsLine) => {
     );
 };
 
-const Zoom = () => {
+type Props = {
+    className?: string;
+};
+
+const Zoom = ({ className }: Props) => {
     const [percentage, setPercentage] = useState("100%");
     const [activeId, setActiveId] = useState(2);
     const [comments, setComments] = useState(true);
     const [view, setView] = useState(true);
 
     return (
-        <div className="w-51 rounded-2xl bg-[#FCFCFC] border border-[#ECECEC] shadow-[0px_239px_67px_0px_rgba(0,0,0,0.00),0px_153px_61px_0px_rgba(0,0,0,0.01),0px_86px_52px_0px_rgba(0,0,0,0.04),0px_38px_38px_0px_rgba(0,0,0,0.06),0px_10px_21px_0px_rgba(0,0,0,0.07)]">
+        <div className={`${className || ""}`}>
             <div className="p-2 border-b border-[#ECECEC]">
                 <div className="relative">
                     <Field
-                        classInput="!h-9 !pl-9"
+                        classInput="!h-9 !pl-9 !bg-[#F8F7F7]"
                         value={percentage}
                         onChange={(e) => setPercentage(e.target.value)}
                         icon={

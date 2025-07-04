@@ -7,6 +7,7 @@ import RowCards from "@/components/RowCards";
 import Card from "@/components/Card";
 import Button from "@/components/Button";
 import SubmitButton from "@/components/SubmitButton";
+import Tooltip from "@/components/Tooltip";
 
 const ButtonsPage = () => {
     return (
@@ -401,9 +402,7 @@ const ButtonsPage = () => {
             <Group title="Tooltip">
                 <RowCards>
                     <Card className="h-50" title="Text" center>
-                        <div className="px-1.5 py-1 rounded-md bg-[#121212] shadow-[0px_4px_4px_-2px_rgba(0,0,0,0.40)] text-[0.6875rem] leading-[1rem] font-medium text-[#E2E2E2]">
-                            Copy prompt
-                        </div>
+                        <Tooltip>Copy prompt</Tooltip>
                     </Card>
                 </RowCards>
             </Group>
