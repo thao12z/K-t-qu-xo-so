@@ -1,5 +1,4 @@
 import { useState } from "react";
-import Tooltip from "@/components/Tooltip";
 import Action from "./Action";
 import ZoomControl from "./ZoomControl";
 import ExportFiles from "./ExportFiles";
