@@ -2,7 +2,7 @@ import Image from "next/image";
 import Button from "@/components/Button";
 
 const DeleteFile = () => (
-    <div className="relative w-89 bg-[#FCFCFC] rounded-[2rem] border border-[#ECECEC] shadow-[0px_239px_67px_0px_rgba(0,0,0,0.00),_0px_153px_61px_0px_rgba(0,0,0,0.01),_0px_86px_52px_0px_rgba(0,0,0,0.04),_0px_38px_38px_0px_rgba(0,0,0,0.06),_0px_10px_21px_0px_rgba(0,0,0,0.07)]">
+    <div className="relative w-89 bg-[#FCFCFC] rounded-[2rem] border border-[#ECECEC] shadow-2xl">
         <div className="absolute bottom-[calc(100%-11.25rem)] left-0 right-0 pointer-events-none">
             <Image
                 className="w-full opacity-100"

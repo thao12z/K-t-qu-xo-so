@@ -5,6 +5,7 @@ type Props = {
     center?: boolean;
     centerHorizontal?: boolean;
     children: React.ReactNode;
+    isGray?: boolean;
 };
 
 const Card = ({
@@ -14,6 +15,7 @@ const Card = ({
     center,
     centerHorizontal,
     children,
+    isGray,
 }: Props) => (
     <div
         className={`relative mt-2 mx-1 border border-[#ECECEC] ${
@@ -32,10 +34,16 @@ const Card = ({
                 : "w-[calc(100%-0.5rem)]"
         } ${center ? "flex justify-center items-center" : ""} ${
             centerHorizontal ? "flex justify-center items-start" : ""
-        } ${className || ""}`}
+        } ${isGray ? "bg-[#F8F7F7]" : ""} ${className || ""}`}
     >
         {title && (
-            <div className="absolute top-2 left-2 z-2 px-3 py-1 rounded-xl bg-[#F1F1F1] text-[0.6875rem] leading-[1rem] font-medium">
+            <div
+                className={`absolute top-2 left-2 z-2 px-3 py-1 border rounded-xl text-[0.6875rem] leading-[1rem] font-medium ${
+                    isGray
+                        ? "bg-[#FCFCFC] border-[#ECECEC]"
+                        : "bg-[#F1F1F1] border-transparent"
+                }`}
+            >
                 {title}
             </div>
         )}

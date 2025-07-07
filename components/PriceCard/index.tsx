@@ -18,9 +18,7 @@ const PriceCard = ({ item }: Props) => {
     return (
         <div
             className={`relative flex flex-col w-80 rounded-[1.25rem] bg-[#F1F1F1] ${
-                planCreator
-                    ? "shadow-[0px_239px_67px_0px_rgba(0,0,0,0.00),0px_153px_61px_0px_rgba(0,0,0,0.01),0px_86px_52px_0px_rgba(0,0,0,0.04),0px_38px_38px_0px_rgba(0,0,0,0.06),0px_10px_21px_0px_rgba(0,0,0,0.07)]"
-                    : ""
+                planCreator ? "shadow-2xl" : ""
             }`}
         >
             {planCreator && (

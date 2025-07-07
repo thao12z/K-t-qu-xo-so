@@ -30,7 +30,7 @@ const FileMenu = () => {
     ];
 
     return (
-        <div className="w-51 p-2 rounded-[1.25rem] bg-[#FCFCFC] border border-[#ECECEC] shadow-[0px_239px_67px_0px_rgba(0,0,0,0.00),0px_153px_61px_0px_rgba(0,0,0,0.01),0px_86px_52px_0px_rgba(0,0,0,0.04),0px_38px_38px_0px_rgba(0,0,0,0.06),0px_10px_21px_0px_rgba(0,0,0,0.07)]">
+        <div className="w-51 p-2 rounded-[1.25rem] bg-[#FCFCFC] border border-[#ECECEC] shadow-2xl">
             {items.map((item, index) => (
                 <button
                     className="flex justify-between items-center gap-2.5 h-9 w-full px-2 rounded-xl text-[0.75rem] leading-[1rem] font-medium cursor-pointer transition-colors hover:bg-[#F1F1F1] nth-3:relative nth-3:mb-4 nth-3:after:absolute nth-3:after:top-[calc(100%+0.5rem)] nth-3:after:-left-2 nth-3:after:-right-2 nth-3:after:h-0.25 nth-3:after:bg-[#ECECEC] nth-3:after:pointer-events-none"

@@ -8,7 +8,7 @@ import { people } from "./people";
 
 const ShareFile = () => {
     return (
-        <div className="w-105 rounded-[2rem] border border-[#ECECEC] bg-[#FCFCFC] shadow-[0px_239px_67px_0px_rgba(0,0,0,0.00),_0px_153px_61px_0px_rgba(0,0,0,0.01),_0px_86px_52px_0px_rgba(0,0,0,0.04),_0px_38px_38px_0px_rgba(0,0,0,0.06),_0px_10px_21px_0px_rgba(0,0,0,0.07)]">
+        <div className="w-105 rounded-[2rem] border border-[#ECECEC] bg-[#FCFCFC] shadow-2xl">
             <div className="flex gap-1.5 p-4">
                 <Invite className="grow" />
                 <Button isSecondary>Invite</Button>

@@ -11,7 +11,7 @@ const Settings = () => {
     const [activeId, setActiveId] = useState(0);
 
     return (
-        <div className="flex w-148.5 min-h-112 rounded-3xl bg-[#FCFCFC] shadow-[0px_239px_67px_0px_rgba(0,0,0,0.00),0px_153px_61px_0px_rgba(0,0,0,0.01),0px_86px_52px_0px_rgba(0,0,0,0.04),0px_38px_38px_0px_rgba(0,0,0,0.06),0px_10px_21px_0px_rgba(0,0,0,0.07)]">
+        <div className="flex w-148.5 min-h-112 rounded-3xl bg-[#FCFCFC] shadow-2xl">
             <div className="flex flex-col gap-0.5 shrink-0 w-45 p-3 border-r border-[#ECECEC]">
                 {menu.map((item) => (
                     <button

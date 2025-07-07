@@ -16,7 +16,7 @@ const ZoomControl = () => {
                 </svg>
             </PopoverButton>
             <PopoverPanel
-                className="z-20 [--anchor-gap:0.75rem] [--anchor-offset:0.5rem] w-51 rounded-2xl bg-[#FCFCFC] border border-[#ECECEC] shadow-[0px_239px_67px_0px_rgba(0,0,0,0.00),0px_153px_61px_0px_rgba(0,0,0,0.01),0px_86px_52px_0px_rgba(0,0,0,0.04),0px_38px_38px_0px_rgba(0,0,0,0.06),0px_10px_21px_0px_rgba(0,0,0,0.07)] transition duration-200 data-closed:opacity-0"
+                className="z-20 [--anchor-gap:0.75rem] [--anchor-offset:0.5rem] w-51 rounded-2xl bg-[#FCFCFC] border border-[#ECECEC] shadow-2xl transition duration-200 data-closed:opacity-0"
                 anchor={{ to: "bottom end" }}
                 transition
             >

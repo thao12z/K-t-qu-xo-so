@@ -18,7 +18,7 @@ const socials = [
 
 const ShareProfile = () => {
     return (
-        <div className="w-105 p-2 rounded-[2rem] bg-[#FCFCFC] shadow-[0px_239px_67px_0px_rgba(0,0,0,0.00),_0px_153px_61px_0px_rgba(0,0,0,0.01),_0px_86px_52px_0px_rgba(0,0,0,0.04),_0px_38px_38px_0px_rgba(0,0,0,0.06),_0px_10px_21px_0px_rgba(0,0,0,0.07)]">
+        <div className="w-105 p-2 rounded-[2rem] bg-[#FCFCFC] shadow-2xl">
             <div className="flex gap-1">
                 {[
                     "/images/gallery/10.jpg",

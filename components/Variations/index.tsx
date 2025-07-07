@@ -7,7 +7,7 @@ const Variations = () => {
     const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
     return (
-        <div className="w-52 p-4 pt-3 bg-[#FCFCFC]/95 rounded-[1.25rem] shadow-[0px_239px_67px_0px_rgba(0,0,0,0.00),_0px_153px_61px_0px_rgba(0,0,0,0.01),_0px_86px_52px_0px_rgba(0,0,0,0.04),_0px_38px_38px_0px_rgba(0,0,0,0.06),_0px_10px_21px_0px_rgba(0,0,0,0.07)]">
+        <div className="w-52 p-4 pt-3 bg-[#FCFCFC]/95 rounded-[1.25rem] shadow-2xl">
             <div className="flex items-center mb-3">
                 <div className="mr-auto text-[0.75rem] leading-[1rem] font-semibold">
                     Variations

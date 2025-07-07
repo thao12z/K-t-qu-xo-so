@@ -17,18 +17,20 @@ const SidebarPage = () => {
             <Group title="Canvas Sidebar">
                 <RowCards>
                     <Card
-                        className="py-16 bg-[#F8F7F7]"
+                        className="py-16"
                         title="Scene, Assets"
                         span={2}
                         centerHorizontal
+                        isGray
                     >
                         <SceneAndAssetsSidebar />
                     </Card>
                     <Card
-                        className="py-16 bg-[#F8F7F7]"
+                        className="py-16"
                         title="Design, Animation"
                         span={2}
                         centerHorizontal
+                        isGray
                     >
                         <DesignAndAnimationSidebar />
                     </Card>
@@ -37,18 +39,20 @@ const SidebarPage = () => {
             <Group title="Home Sidebar">
                 <RowCards>
                     <Card
-                        className="py-16 bg-[#F8F7F7]"
+                        className="py-16"
                         title="Home"
                         span={2}
                         centerHorizontal
+                        isGray
                     >
                         <HomeSidebar />
                     </Card>
                     <Card
-                        className="py-16 bg-[#F8F7F7]"
+                        className="py-16"
                         title="Guideline"
                         span={2}
                         centerHorizontal
+                        isGray
                     >
                         <GuidelineSidebar content={content} />
                     </Card>
