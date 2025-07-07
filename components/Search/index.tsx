@@ -1,14 +1,21 @@
 type Props = {
     className?: string;
+    classInput?: string;
     search: string;
     onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
     handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
 };
 
-const Search = ({ className, search, onChange, handleSubmit }: Props) => {
+const Search = ({
+    className,
+    classInput,
+    search,
+    onChange,
+    handleSubmit,
+}: Props) => {
     return (
         <form
-            className={`group relative ml-4 ${className || ""}`}
+            className={`group relative ${className || ""}`}
             onSubmit={handleSubmit}
         >
             <button className="absolute top-1 left-1 bottom-1 z-2 flex items-center justify-center cursor-pointer w-8 fill-[#7B7B7B] transition-colors group-hover:fill-[#000]">
@@ -22,7 +29,9 @@ const Search = ({ className, search, onChange, handleSubmit }: Props) => {
                 </svg>
             </button>
             <input
-                className="w-full h-10 px-12 border border-transparent bg-[#FCFCFC] rounded-xl text-[0.75rem] leading-[1rem] font-medium text-[#000] transition-all placeholder:text-[#7B7B7B] hover:border-[#ECECEC] focus:border-[#F1F1F1] focus:bg-[#F1F1F1] focus:shadow-[0px_1px_3px_0px_rgba(18,18,18,0.10)_inset]"
+                className={`w-full h-10 px-12 border border-transparent bg-[#FCFCFC] rounded-xl text-[0.75rem] leading-[1rem] font-medium text-[#000] transition-all placeholder:text-[#7B7B7B] hover:border-[#ECECEC] focus:border-[#F1F1F1] focus:bg-[#F1F1F1] focus:shadow-[0px_1px_3px_0px_rgba(18,18,18,0.10)_inset] ${
+                    classInput || ""
+                }`}
                 type="text"
                 placeholder="Search..."
                 value={search}

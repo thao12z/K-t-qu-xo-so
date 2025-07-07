@@ -2,12 +2,16 @@ import Link from "next/link";
 import Image from "next/image";
 
 type Props = {
+    className?: string;
     onlyIcon?: boolean;
     onlyText?: boolean;
 };
 
-const Logo = ({ onlyIcon, onlyText }: Props) => (
-    <Link className="inline-flex items-center gap-3 p-1" href="/">
+const Logo = ({ className, onlyIcon, onlyText }: Props) => (
+    <Link
+        className={`inline-flex items-center gap-3 p-1 ${className || ""}`}
+        href="/"
+    >
         {!onlyText && (
             <Image
                 className="size-8"
