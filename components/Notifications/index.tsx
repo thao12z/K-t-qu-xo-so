@@ -3,7 +3,11 @@ import Notification from "@/components/Notification";
 
 import { content } from "./content";
 
-const Notifications = () => {
+type Props = {
+    className?: string;
+};
+
+const Notifications = ({ className }: Props) => {
     const [tab, setTab] = useState("all");
 
     const tabs = [
@@ -18,7 +22,7 @@ const Notifications = () => {
     ];
 
     return (
-        <div className="w-96 h-200 flex flex-col bg-[#FCFCFC] border border-[#ECECEC] rounded-[1.25rem] shadow-2xl">
+        <div className={`${className || ""}`}>
             <div className="flex justify-between items-center px-5 py-4 border-b border-[#ECECEC]">
                 <div className="text-[0.875rem] leading-[1.25rem] font-semibold">
                     Notifications

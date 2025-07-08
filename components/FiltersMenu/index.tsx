@@ -35,7 +35,7 @@ const FiltersMenu = () => {
     const [sort, setSort] = useState(0);
 
     return (
-        <div className="z-20 w-45 p-2 bg-[#FCFCFC] border border-[#ECECEC] rounded-2xl shadow-2xl">
+        <div className="w-45 p-2 bg-[#FCFCFC] border border-[#ECECEC] rounded-2xl shadow-2xl">
             {itemsType.map((item) => (
                 <Item
                     key={item.id}

@@ -14,7 +14,7 @@ const HeaderAsset = () => {
                     <path d="M3.275 3.275a.94.94 0 0 1 1.33 0L10 8.671l5.395-5.395a.94.94 0 0 1 1.224-.091l.105.091a.94.94 0 0 1 0 1.33L11.329 10l5.396 5.395a.94.94 0 0 1 .091 1.224l-.091.105a.94.94 0 0 1-1.33 0L10 11.329l-5.394 5.396a.94.94 0 0 1-1.224.091l-.105-.091a.94.94 0 0 1 0-1.33L8.671 10 3.275 4.605a.94.94 0 0 1-.091-1.224l.091-.105z" />
                 </svg>
             </button>
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-3 before:absolute before:top-0 before:left-0 before:bottom-0 before:z-2 before:w-15 before:bg-gradient-to-r before:from-[#FCFCFC] before:to-transparent after:absolute after:top-0 after:right-0 after:bottom-0 after:z-2 after:w-15 after:bg-gradient-to-l after:from-[#FCFCFC] after:to-transparent before:pointer-events-none after:pointer-events-none before:transition-opacity after:transition-opacity hover:before:opacity-0 hover:after:opacity-0">
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-3 before:absolute before:top-0 before:left-0 before:bottom-0 before:z-2 before:w-15 before:bg-gradient-to-r before:from-[#FCFCFC] before:to-transparent after:absolute after:top-0 after:right-0 after:bottom-0 after:z-2 after:w-15 after:bg-gradient-to-l after:from-[#FCFCFC] after:to-transparent before:pointer-events-none after:pointer-events-none before:transition-opacity after:transition-opacity hover:before:opacity-0 hover:after:opacity-0 max-[1259px]:left-30 max-[1259px]:translate-x-0 max-[1023px]:hidden">
                 {[
                     "/images/3d-objects/5.png",
                     "/images/3d-objects/6.png",

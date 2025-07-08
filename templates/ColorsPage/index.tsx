@@ -13,7 +13,7 @@ const ColorsPage = () => {
                     <div className="flex flex-wrap -mt-4 -mx-2">
                         {group.items.map((item, index) => (
                             <div
-                                className="w-[calc(20%-1rem)] mt-4 mx-2 p-1.5 rounded-xl border border-[#ECECEC]"
+                                className="w-[calc(20%-1rem)] mt-4 mx-2 p-1.5 rounded-xl border border-[#ECECEC] max-[1259px]:w-[calc(25%-1rem)]"
                                 key={index}
                             >
                                 <div

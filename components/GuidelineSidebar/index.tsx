@@ -14,9 +14,10 @@ type Props = {
             href: string;
         }[];
     }[];
+    onClose?: () => void;
 };
 
-const Sidebar = ({ className, content }: Props) => {
+const Sidebar = ({ className, content, onClose }: Props) => {
     const pathname = usePathname();
     const isActive = (href: string) => pathname === href;
 
@@ -26,7 +27,7 @@ const Sidebar = ({ className, content }: Props) => {
                 className || ""
             }`}
         >
-            <div className="p-6">
+            <div className="flex items-center p-6 max-[1023px]:pr-4">
                 <Link href="/">
                     <Image
                         className="opacity-100"
@@ -36,6 +37,21 @@ const Sidebar = ({ className, content }: Props) => {
                         alt="Logo"
                     />
                 </Link>
+                {onClose && (
+                    <button
+                        className="hidden size-8 ml-auto cursor-pointer max-[1023px]:inline-block"
+                        onClick={onClose}
+                    >
+                        <svg
+                            className="size-5 fill-[#7b7b7b]"
+                            width={20}
+                            height={20}
+                            viewBox="0 0 20 20"
+                        >
+                            <path d="M3.275 3.275a.94.94 0 0 1 1.33 0L10 8.671l5.395-5.395a.94.94 0 0 1 1.224-.091l.105.091a.94.94 0 0 1 0 1.33L11.329 10l5.396 5.395a.94.94 0 0 1 .091 1.224l-.091.105a.94.94 0 0 1-1.33 0L10 11.329l-5.394 5.396a.94.94 0 0 1-1.224.091l-.105-.091a.94.94 0 0 1 0-1.33L8.671 10 3.275 4.605a.94.94 0 0 1-.091-1.224l.091-.105z" />
+                        </svg>
+                    </button>
+                )}
             </div>
             <div className="grow px-5 pb-5 overflow-y-auto scrollbar-none">
                 {content.map((group) => (

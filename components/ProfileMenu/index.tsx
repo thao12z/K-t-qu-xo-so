@@ -27,7 +27,7 @@ const ProfileMenu = ({}) => {
     ];
 
     return (
-        <div className="z-30 w-55 p-2 rounded-[1.25rem] border border-[#E5E5E5] bg-[#FCFCFC] shadow-2xl">
+        <div className="w-55 p-2 rounded-[1.25rem] border border-[#E5E5E5] bg-[#FCFCFC] shadow-2xl">
             {navigation.map((item, index) => (
                 <button
                     className="flex items-center w-full gap-3.5 h-10 px-2.5 rounded-xl text-[0.75rem] font-semibold fill-[#7B7B7B] cursor-pointer transition-colors hover:bg-[#F1F1F1] hover:fill-[#000] nth-4:relative nth-4:mb-4 nth-4:after:absolute nth-4:after:top-[calc(100%+0.5rem)] nth-4:after:-left-2 nth-4:after:-right-2 nth-4:after:h-0.25 nth-4:after:bg-[#F4F4F4] nth-4:after:pointer-events-none"

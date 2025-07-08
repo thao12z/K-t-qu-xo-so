@@ -112,7 +112,7 @@ const MenuPage = () => {
                         title="Notifications"
                         centerHorizontal
                     >
-                        <Notifications />
+                        <Notifications className="w-96 h-200 flex flex-col bg-[#FCFCFC] border border-[#ECECEC] rounded-[1.25rem] shadow-2xl" />
                     </Card>
                 </RowCards>
             </Group>

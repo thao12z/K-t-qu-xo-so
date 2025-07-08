@@ -157,7 +157,7 @@ const CardsPage = () => {
             <Group title="Asset">
                 <RowCards>
                     <Card
-                        className="aspect-square"
+                        className="aspect-square max-[1023px]:aspect-[1.8]"
                         title="Ratio"
                         span={3}
                         center
@@ -167,7 +167,7 @@ const CardsPage = () => {
                         </div>
                     </Card>
                     <Card
-                        className="aspect-square"
+                        className="aspect-square max-[1023px]:aspect-[1.8]"
                         title="Material, Add"
                         span={3}
                         center
@@ -180,7 +180,7 @@ const CardsPage = () => {
                         />
                     </Card>
                     <Card
-                        className="aspect-square"
+                        className="aspect-square max-[1023px]:aspect-[1.8]"
                         title="Style, Add"
                         span={3}
                         center

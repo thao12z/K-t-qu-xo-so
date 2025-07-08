@@ -65,7 +65,7 @@ const ModalPage = () => {
                         <QuickComment />
                     </Card>
                     <Card
-                        className="py-18 bg-[#F8F7F7]"
+                        className="py-18 bg-[#F8F7F7] max-[1023px]:pt-40"
                         title="Confirm"
                         span={2}
                         center

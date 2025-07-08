@@ -11,13 +11,28 @@ const HomePage = () => {
         <Layout title="Branding">
             <Group>
                 <RowCards>
-                    <Card className="h-154.5" title="Symbol" span={3} center>
+                    <Card
+                        className="h-154.5 max-[1419px]:h-80 max-[1023px]:h-60"
+                        title="Symbol"
+                        span={3}
+                        center
+                    >
                         <Logo onlyIcon />
                     </Card>
-                    <Card className="h-154.5" title="Wordmark" span={3} center>
+                    <Card
+                        className="h-154.5 max-[1419px]:h-80 max-[1023px]:h-60"
+                        title="Wordmark"
+                        span={3}
+                        center
+                    >
                         <Logo onlyText />
                     </Card>
-                    <Card className="h-154.5" title="Full" span={3} center>
+                    <Card
+                        className="h-154.5 max-[1419px]:h-80 max-[1023px]:h-60"
+                        title="Full"
+                        span={3}
+                        center
+                    >
                         <Logo />
                     </Card>
                 </RowCards>
