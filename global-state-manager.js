@@ -1,63 +1,61 @@
-// 🌐 USER GLOBAL STATE MANAGER - EXTENSION OF ADMIN SYSTEM  
-// Version: 3.0.0 | Created: 2024 | Follows USER SYSTEM DEVELOPMENT GUIDELINES
+// 🌐 GLOBAL STATE MANAGER - FOUNDATION MODULE
+// Version: 1.0.0 | Created: 2024 | Follows ADMIN SYSTEM DEVELOPMENT GUIDELINES
 (function() {
     'use strict';
     
-    // ===== USER GLOBAL STATE MANAGER EXTENSION =====
-    const UserGlobalStateManager = {
-        // ✅ REQUIRED - Extend admin state with user-specific data
-        _userState: {
-            userSessions: [],      // Đại lý login sessions
-            userProfiles: [],      // Đại lý profile data
-            lotteryResults: [],    // Cached lottery data
-            userCalculations: [],  // Đại lý bet history
-            betSettlements: [],    // Settlement results
-            agentSettings: [],     // Agent-specific settings
-            userNotifications: []  // User-specific notifications
+    // ===== GLOBAL STATE MANAGER IMPLEMENTATION =====
+    const GlobalStateManager = {
+        // ✅ REQUIRED - Internal state storage
+        _state: {
+            users: [],
+            payments: [],
+            packages: [],
+            notifications: [],
+            paymentConfig: []
         },
         
-        // ✅ REQUIRED - User-specific subscribers
-        _userSubscribers: {},
+        // ✅ REQUIRED - Subscriber management
+        _subscribers: {},
         
         // Debug flag
         _debug: true,
         
-        // ===== USER-SPECIFIC METHODS =====
+        // ===== CORE METHODS =====
         
-        getUserData: function(key) {
-            if (!this._userState.hasOwnProperty(key)) {
-                console.warn(`⚠️ [UserGlobalState] Invalid key: ${key}`);
+        getData: function(key) {
+            if (!this._state.hasOwnProperty(key)) {
+                console.warn(`⚠️ [GlobalState] Invalid key: ${key}`);
                 return [];
             }
-            return [...this._userState[key]];
+            return [...this._state[key]];
         },
         
-        updateUserData: function(key, newData, source = 'Unknown') {
-            if (!this._userState.hasOwnProperty(key)) {
-                console.error(`❌ [UserGlobalState] Invalid key: ${key}`);
+        updateData: function(key, newData, source = 'Unknown') {
+            if (!this._state.hasOwnProperty(key)) {
+                console.error(`❌ [GlobalState] Invalid key: ${key}`);
                 return false;
             }
             
-            const oldCount = this._userState[key].length;
-            this._userState[key] = Array.isArray(newData) ? [...newData] : newData;
+            const oldCount = this._state[key].length;
+            this._state[key] = Array.isArray(newData) ? [...newData] : newData;
             
             if (this._debug) {
-                console.log(`🔄 [UserGlobalState] UPDATE ${key}`, { 
+                console.log(`🔄 [GlobalState] UPDATE ${key}`, { 
                     source, 
                     oldCount, 
-                    newCount: this._userState[key].length,
+                    newCount: this._state[key].length,
                     timestamp: new Date().toISOString()
                 });
             }
             
-            this._notifyUserSubscribers(key, this._userState[key]);
-            this._saveUserToStorage(key, this._userState[key]);
+            this._notifySubscribers(key, this._state[key]);
+            this._saveToStorage(key, this._state[key]);
             return true;
         },
         
-        subscribeToUserData: function(key, callback, componentName = 'Unknown') {
-            if (!this._userSubscribers[key]) {
-                this._userSubscribers[key] = [];
+        subscribe: function(key, callback, componentName = 'Unknown') {
+            if (!this._subscribers[key]) {
+                this._subscribers[key] = [];
             }
             
             const subscription = { 
@@ -66,339 +64,425 @@
                 id: Date.now() + Math.random() 
             };
             
-            this._userSubscribers[key].push(subscription);
+            this._subscribers[key].push(subscription);
             
             if (this._debug) {
-                console.log(`🔔 [UserGlobalState] SUBSCRIBE ${key}`, { 
+                console.log(`🔔 [GlobalState] SUBSCRIBE ${key}`, { 
                     componentName,
-                    totalSubscribers: this._userSubscribers[key].length
+                    totalSubscribers: this._subscribers[key].length
                 });
             }
             
             // Return unsubscribe function
-            return () => this._unsubscribeUser(key, subscription.id);
+            return () => this._unsubscribe(key, subscription.id);
         },
         
-        // ===== CURRENT USER MANAGEMENT =====
+        // ===== BUSINESS LOGIC HELPERS =====
         
-        getCurrentUser: function() {
-            // Get current user from userSessions (most recent active session)
-            const activeSessions = this._userState.userSessions.filter(s => s.status === 'active');
-            if (activeSessions.length > 0) {
-                // Return the most recent session
-                return activeSessions.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
-            }
-            return null;
+        findUser: function(userId) {
+            return this._state.users.find(u => u.id == userId);
         },
         
-        setCurrentUser: function(user, source = 'Unknown') {
-            if (!user) {
-                // Clear current user by deactivating all sessions
-                this._userState.userSessions = this._userState.userSessions.map(s => ({
-                    ...s,
-                    status: 'inactive'
-                }));
-            } else {
-                // Add or update user session
-                const existingSession = this._userState.userSessions.find(s => s.userId === user.id);
-                
-                if (existingSession) {
-                    // Update existing session
-                    existingSession.status = 'active';
-                    existingSession.lastActive = new Date().toISOString();
-                } else {
-                    // Create new session
-                    const newSession = {
-                        id: Date.now(),
-                        userId: user.id,
-                        user: user,
-                        status: 'active',
-                        createdAt: new Date().toISOString(),
-                        lastActive: new Date().toISOString()
+        findPayment: function(paymentId) {
+            return this._state.payments.find(p => p.id == paymentId);
+        },
+        
+        findPackage: function(packageId) {
+            return this._state.packages.find(p => p.id === packageId);
+        },
+        
+        getNextUserId: function() {
+            const users = this._state.users;
+            if (users.length === 0) return 1;
+            
+            // Filter out any non-numeric IDs and get the maximum
+            const numericIds = users
+                .map(u => u.id)
+                .filter(id => typeof id === 'number' && Number.isInteger(id) && id > 0);
+            
+            if (numericIds.length === 0) return 1;
+            
+            return Math.max(...numericIds) + 1;
+        },
+        
+        getNextPaymentId: function() {
+            const payments = this._state.payments;
+            if (payments.length === 0) return 1;
+            
+            // Filter out any non-numeric IDs and get the maximum
+            const numericIds = payments
+                .map(p => p.id)
+                .filter(id => typeof id === 'number' && Number.isInteger(id) && id > 0);
+            
+            if (numericIds.length === 0) return 1;
+            
+            return Math.max(...numericIds) + 1;
+        },
+        
+        // Fix user IDs that are not numbers
+        fixUserIds: function() {
+            const users = this._state.users;
+            let hasChanges = false;
+            
+            const fixedUsers = users.map((user, index) => {
+                // Check if ID is not a valid number
+                if (typeof user.id !== 'number' || !Number.isInteger(user.id) || user.id <= 0) {
+                    console.warn(`⚠️ [GlobalState] Fixing invalid user ID: ${user.id} for user: ${user.username}`);
+                    hasChanges = true;
+                    return {
+                        ...user,
+                        id: index + 1 // Assign sequential ID
                     };
-                    this._userState.userSessions.push(newSession);
                 }
+                return user;
+            });
+            
+            if (hasChanges) {
+                this.updateData('users', fixedUsers, 'FixUserIds');
+                console.log('✅ [GlobalState] Fixed user IDs');
             }
             
-            if (this._debug) {
-                console.log(`👤 [UserGlobalState] SET_CURRENT_USER`, { 
-                    source, 
-                    userId: user?.id,
-                    totalSessions: this._userState.userSessions.length
-                });
-            }
-            
-            this._saveUserToStorage('userSessions', this._userState.userSessions);
-            return true;
+            return hasChanges;
         },
         
-        // ===== USER BUSINESS LOGIC HELPERS =====
-        
-        findUserSession: function(sessionId) {
-            return this._userState.userSessions.find(s => s.id === sessionId);
-        },
-        
-        findUserProfile: function(userId) {
-            return this._userState.userProfiles.find(p => p.userId === userId);
-        },
-        
-        findLotteryResult: function(date, region = 'bac') {
-            return this._userState.lotteryResults.find(r => 
-                r.date === date && r.region === region
-            );
-        },
-        
-        findUserCalculation: function(calculationId) {
-            return this._userState.userCalculations.find(c => c.id === calculationId);
-        },
-        
-        // ===== USER NOTIFICATION HELPERS =====
-        
-        addUserNotification: function(message, type = 'info', source = 'UserSystem') {
+        addNotification: function(message, type = 'info', source = 'System') {
             const notification = {
                 id: Date.now() + Math.random(),
                 message,
-                type,
+                type, // success, error, warning, info
                 timestamp: new Date().toISOString(),
                 read: false,
                 source
             };
             
-            const currentNotifications = this._userState.userNotifications || [];
+            const currentNotifications = this._state.notifications;
             const newNotifications = [notification, ...currentNotifications.slice(0, 49)];
             
-            this.updateUserData('userNotifications', newNotifications, source);
+            this.updateData('notifications', newNotifications, source);
             return notification.id;
         },
         
-        saveBetSettlement: function(settlementData, source = 'BetSettlement') {
-            const settlement = {
-                id: Date.now() + Math.random(),
-                ...settlementData,
-                timestamp: new Date().toISOString(),
-                source
-            };
-            
-            const currentSettlements = this._userState.betSettlements;
-            const newSettlements = [settlement, ...currentSettlements];
-            
-            this.updateUserData('betSettlements', newSettlements, source);
-            return settlement.id;
-        },
+        // ===== ATOMIC OPERATIONS =====
         
-        cacheLotteryResult: function(resultData, source = 'LotteryAPI') {
-            const result = {
-                id: Date.now() + Math.random(),
-                ...resultData,
-                cachedAt: new Date().toISOString(),
-                source
-            };
+        updatePaymentAndUser: function(paymentId, userId, activationData, source = 'PaymentApproval') {
+            if (this._debug) {
+                console.log(`🔄 [GlobalState] ATOMIC_UPDATE_START`, { paymentId, userId, source });
+            }
             
-            const currentResults = this._userState.lotteryResults;
-            const newResults = [result, ...currentResults.slice(0, 99)]; // Keep last 100 results
+            const success = this._atomicUpdate(() => {
+                // Update payment
+                const updatedPayments = this._state.payments.map(p =>
+                    p.id == paymentId ? {
+                        ...p,
+                        status: 'completed',
+                        approvedAt: new Date().toISOString(),
+                        approvedBy: 'admin'
+                    } : p
+                );
+                
+                // Update user
+                const updatedUsers = this._state.users.map(u =>
+                    u.id == userId ? {
+                        ...u,
+                        status: 'active',
+                        subscriptionType: activationData.packageId,
+                        subscriptionPackage: activationData.packageName,
+                        subscriptionStatus: 'active', // Add this field
+                        subscriptionExpiry: activationData.expiryDate,
+                        activatedAt: new Date().toISOString(),
+                        activatedBy: source
+                    } : u
+                );
+                
+                // Apply both updates
+                this.updateData('payments', updatedPayments, source);
+                this.updateData('users', updatedUsers, source);
+            });
             
-            this.updateUserData('lotteryResults', newResults, source);
-            return result.id;
-        },
-        
-        createUserSession: function(userData, source = 'UserLogin') {
-            const session = {
-                id: Date.now() + Math.random(),
-                userId: userData.id,
-                user: userData,
-                status: 'active',
-                createdAt: new Date().toISOString(),
-                lastActive: new Date().toISOString(),
-                source
-            };
-            
-            const currentSessions = this._userState.userSessions;
-            const newSessions = [session, ...currentSessions];
-            
-            this.updateUserData('userSessions', newSessions, source);
-            return session.id;
-        },
-        
-        updateUserSession: function(sessionId, updates, source = 'SessionUpdate') {
-            const currentSessions = this._userState.userSessions;
-            const updatedSessions = currentSessions.map(s => 
-                s.id === sessionId ? { ...s, ...updates, lastActive: new Date().toISOString() } : s
-            );
-            
-            this.updateUserData('userSessions', updatedSessions, source);
-            return true;
-        },
-        
-        // ===== INTERNAL HELPER METHODS =====
-        
-        _notifyUserSubscribers: function(key, data) {
-            if (this._userSubscribers[key]) {
-                this._userSubscribers[key].forEach(subscription => {
-                    try {
-                        subscription.callback(data);
-                    } catch (error) {
-                        console.error(`❌ [UserGlobalState] Subscriber error for ${key}:`, error);
-                    }
-                });
+            if (success) {
+                this.addNotification(
+                    `✅ Payment approved and user activated: ${activationData.userName}`,
+                    'success',
+                    source
+                );
                 
                 if (this._debug) {
-                    console.log(`📤 [UserGlobalState] NOTIFY ${key} → ${this._userSubscribers[key].length} subscribers`);
+                    console.log(`✅ [GlobalState] ATOMIC_UPDATE_SUCCESS`, { paymentId, userId });
                 }
+            }
+            
+            return success;
+        },
+        
+        // ===== PRIVATE METHODS =====
+        
+        _atomicUpdate: function(updateFunction) {
+            try {
+                updateFunction.call(this);
+                return true;
+            } catch (error) {
+                console.error('❌ [GlobalState] Atomic update failed:', error);
+                this.addNotification('❌ System error occurred', 'error', 'GlobalState');
+                return false;
             }
         },
         
-        _unsubscribeUser: function(key, subscriptionId) {
-            if (this._userSubscribers[key]) {
-                this._userSubscribers[key] = this._userSubscribers[key].filter(s => s.id !== subscriptionId);
+        _notifySubscribers: function(key, newData) {
+            if (this._subscribers[key]) {
+                this._subscribers[key].forEach((sub, index) => {
+                    try {
+                        if (this._debug) {
+                            console.log(`📤 [GlobalState] NOTIFY ${key} → ${sub.componentName}`);
+                        }
+                        sub.callback([...newData]);
+                    } catch (error) {
+                        console.error(`❌ [GlobalState] Subscriber error in ${sub.componentName}:`, error);
+                    }
+                });
+            }
+        },
+        
+        _unsubscribe: function(key, subscriptionId) {
+            if (this._subscribers[key]) {
+                this._subscribers[key] = this._subscribers[key].filter(sub => sub.id !== subscriptionId);
                 
                 if (this._debug) {
-                    console.log(`🔕 [UserGlobalState] UNSUBSCRIBE ${key}`, { 
-                        remainingSubscribers: this._userSubscribers[key].length 
+                    console.log(`🔕 [GlobalState] UNSUBSCRIBE ${key}`, { 
+                        remainingSubscribers: this._subscribers[key].length 
                     });
                 }
             }
         },
         
-        _saveUserToStorage: function(key, data) {
+        _saveToStorage: function(key, data) {
             try {
-                if (key === 'userSessions' || key === 'userNotifications' || key === 'betSettlements') {
-                    const dataToSave = key === 'userNotifications' ? data.slice(0, 50) : data;
-                    localStorage.setItem(`user_${key}`, JSON.stringify(dataToSave));
+                const dataToSave = key === 'notifications' ? data.slice(0, 50) : data;
+                
+                // ✅ SAVE ALL IMPORTANT DATA WITH USER-COMPATIBLE KEYS
+                if (key === 'users') {
+                    // Save for admin system
+                    localStorage.setItem('admin_users', JSON.stringify(dataToSave));
+                    localStorage.setItem('adminUsers', JSON.stringify(dataToSave));
                     
-                    if (this._debug) {
-                        console.log(`💾 [UserGlobalState] SAVE ${key}`, { count: dataToSave.length });
-                    }
+                    // ✅ CRITICAL: Save for user auth system
+                    localStorage.setItem('registeredUsers', JSON.stringify(dataToSave));
+                    
+                    console.log(`💾 [GlobalState] USERS saved to multiple keys`, { count: dataToSave.length });
+                }
+                
+                if (key === 'packages') {
+                    // Save for admin system
+                    localStorage.setItem('admin_packages', JSON.stringify(dataToSave));
+                    
+                    // ✅ CRITICAL: Save for user system
+                    localStorage.setItem('adminPackages', JSON.stringify(dataToSave));
+                    
+                    console.log(`💾 [GlobalState] PACKAGES saved to user system`, { count: dataToSave.length });
+                }
+                
+                if (key === 'notifications') {
+                    localStorage.setItem('admin_notifications', JSON.stringify(dataToSave));
+                    localStorage.setItem('adminNotifications', JSON.stringify(dataToSave));
+                }
+                
+                if (key === 'payments') {
+                    localStorage.setItem('admin_payments', JSON.stringify(dataToSave));
+                    localStorage.setItem('adminPayments', JSON.stringify(dataToSave));
+                }
+                
+                // Special handling for payment config
+                if (key === 'paymentConfig') {
+                    localStorage.setItem('admin_paymentConfig', JSON.stringify(data));
+                    localStorage.setItem('paymentConfig', JSON.stringify(data));
+                }
+                
+                // ✅ BROADCAST: Notify user system about ALL changes
+                try {
+                    window.dispatchEvent(new CustomEvent('adminDataChanged', {
+                        detail: { 
+                            type: key,
+                            data: dataToSave,
+                            timestamp: new Date().toISOString()
+                        }
+                    }));
+                    console.log(`📡 [GlobalState] BROADCAST ${key} changes to user system`);
+                } catch (broadcastError) {
+                    console.warn('⚠️ [GlobalState] Broadcast failed:', broadcastError);
+                }
+                
+                if (this._debug) {
+                    console.log(`💾 [GlobalState] SAVE ${key}`, { count: Array.isArray(dataToSave) ? dataToSave.length : 'N/A' });
                 }
             } catch (error) {
-                console.warn(`⚠️ [UserGlobalState] Storage failed for ${key}:`, error);
+                console.warn(`⚠️ [GlobalState] Storage failed for ${key}:`, error);
             }
         },
         
-        _loadUserFromStorage: function() {
+        _loadFromStorage: function() {
             try {
-                ['userSessions', 'userNotifications', 'betSettlements'].forEach(key => {
-                    const saved = localStorage.getItem(`user_${key}`);
+                ['users', 'notifications'].forEach(key => {
+                    // ✅ FIX: Load từ cả hai key formats
+                    const keyMapping = {
+                        'users': 'adminUsers',
+                        'notifications': 'adminNotifications'
+                    };
+                    const newKey = keyMapping[key];
+                    const oldKey = `admin_${key}`;
+                    
+                    const saved = localStorage.getItem(newKey) || localStorage.getItem(oldKey);
                     if (saved) {
-                        this._userState[key] = JSON.parse(saved);
+                        this._state[key] = JSON.parse(saved);
                         
                         if (this._debug) {
-                            console.log(`📂 [UserGlobalState] LOAD ${key}`, { count: this._userState[key].length });
+                            console.log(`📂 [GlobalState] LOAD ${key} from ${newKey || oldKey}`, { count: this._state[key].length });
                         }
                     }
                 });
             } catch (error) {
-                console.error('❌ [UserGlobalState] Load from storage failed:', error);
+                console.error('❌ [GlobalState] Load from storage failed:', error);
             }
         },
         
         // ===== INITIALIZATION =====
         
         init: function() {
-            this._loadUserFromStorage();
+            console.log('🚀 [GlobalStateManager] Initializing...');
             
-            if (this._debug) {
-                console.log('🚀 [UserGlobalState] INITIALIZED', {
-                    timestamp: new Date().toISOString(),
-                    state: Object.keys(this._userState).reduce((acc, key) => {
-                        acc[key] = this._userState[key].length;
-                        return acc;
-                    }, {})
-                });
-            }
-        }
+            // Load data from localStorage
+            this._loadFromStorage();
+            
+            // Fix any invalid user IDs
+            this.fixUserIds();
+            
+            // Setup storage event listener
+            window.addEventListener('storage', (e) => {
+                if (this._validKeys.includes(e.key)) {
+                    console.log(`📡 [GlobalState] Storage change detected: ${e.key}`);
+                    this._loadFromStorage();
+                    this._notifySubscribers(e.key, this._state[e.key]);
+                }
+            });
+            
+            console.log('✅ [GlobalStateManager] Initialized successfully');
+        },
     };
     
     // ===== TESTING FUNCTIONS =====
-    const TestUserGlobalState = {
+    const TestGlobalState = {
         testComponentExists: () => {
-            console.assert(window.UserGlobalStateManager, '❌ UserGlobalStateManager not exported to global scope');
-            console.log('✅ [TEST] UserGlobalStateManager exists');
+            console.assert(window.GlobalStateManager, '❌ GlobalStateManager not exported to global scope');
+            console.log('✅ [TEST] GlobalStateManager exists');
         },
         
         testBasicOperations: () => {
                     // NO TEST DATA - Production mode only
-        console.log('✅ [UserGlobalStateManager] No test data loaded');
-            const retrieved = window.UserGlobalStateManager.getUserData('userSessions');
+        console.log('✅ [GlobalStateManager] No test data loaded');
+            const retrieved = window.GlobalStateManager.getData('users');
             console.assert(retrieved.length === 1, '❌ Basic operations failed');
             console.log('✅ [TEST] Basic operations work');
         },
         
         testSubscription: () => {
             let callbackExecuted = false;
-            const unsubscribe = window.UserGlobalStateManager.subscribeToUserData('userSessions', () => {
+            const unsubscribe = window.GlobalStateManager.subscribe('users', () => {
                 callbackExecuted = true;
             }, 'TestComponent');
             
-            window.UserGlobalStateManager.updateUserData('userSessions', [{ id: 1 }], 'Test');
+            window.GlobalStateManager.updateData('users', [{ id: 1 }], 'Test');
             
             console.assert(callbackExecuted, '❌ Subscription failed');
             unsubscribe();
             console.log('✅ [TEST] Subscription works');
         },
         
-        testErrorHandling: () => {
-            const result = window.UserGlobalStateManager.updateUserData('invalidKey', [], 'Test');
-            console.assert(result === false, '❌ Error handling failed');
-            console.log('✅ [TEST] Error handling works');
+        testAtomicUpdate: () => {
+            // Setup test data
+            window.GlobalStateManager.updateData('users', [{ id: 2, status: 'pending' }], 'Test');
+            window.GlobalStateManager.updateData('payments', [{ id: 1, userId: 2, status: 'pending' }], 'Test');
+            
+            const result = window.GlobalStateManager.updatePaymentAndUser(
+                1, 
+                2, 
+                { packageId: 'test', packageName: 'Test Package', expiryDate: '2024-12-31', userName: 'Test User' }
+            );
+            
+            console.assert(result === true, '❌ Atomic update failed');
+            
+            const user = window.GlobalStateManager.findUser(2);
+            console.assert(user.status === 'active', '❌ User not activated');
+            
+            console.log('✅ [TEST] Atomic update works');
         },
         
-        testGetCurrentUser: () => {
-            const currentUser = window.UserGlobalStateManager.getCurrentUser();
-            console.log('✅ [TEST] getCurrentUser works:', currentUser);
+        testErrorHandling: () => {
+            const result = window.GlobalStateManager.updateData('invalidKey', [], 'Test');
+            console.assert(result === false, '❌ Error handling failed');
+            console.log('✅ [TEST] Error handling works');
         }
     };
     
     // ===== DEBUG CONSOLE COMMANDS =====
-    const UserDebug = {
-        viewUserState: () => {
-            console.table(window.UserGlobalStateManager._userState);
+    const AdminDebug = {
+        viewState: () => {
+            console.table(window.GlobalStateManager._state);
         },
         
-        viewUserSubscribers: () => {
-            console.log('📋 Active User Subscribers:', window.UserGlobalStateManager._userSubscribers);
+        viewSubscribers: () => {
+            console.log('📋 Active Subscribers:', window.GlobalStateManager._subscribers);
         },
         
-        clearUserData: () => {
-            ['userSessions', 'userProfiles', 'lotteryResults', 'userCalculations', 'betSettlements', 'agentSettings', 'userNotifications'].forEach(key => {
-                window.UserGlobalStateManager.updateUserData(key, [], 'Debug');
+        testPaymentApproval: (paymentId = 2, userId = 3) => {
+            return window.GlobalStateManager.updatePaymentAndUser(
+                paymentId, 
+                userId, 
+                { 
+                    packageId: 'package_30_days', 
+                    packageName: 'Test Package',
+                    expiryDate: '2024-12-31',
+                    userName: 'Test User'
+                }
+            );
+        },
+        
+        clearData: () => {
+            ['users', 'payments', 'packages', 'notifications'].forEach(key => {
+                window.GlobalStateManager.updateData(key, [], 'Debug');
             });
-            console.log('🧹 All user data cleared');
+            console.log('🧹 All data cleared');
         },
         
         runAllTests: () => {
-            console.log('🧪 Running all user tests...');
-            Object.values(TestUserGlobalState).forEach(test => {
+            console.log('🧪 Running all tests...');
+            Object.values(TestGlobalState).forEach(test => {
                 try {
                     test();
                 } catch (error) {
                     console.error('❌ Test failed:', error);
                 }
             });
-            console.log('✅ All user tests completed');
+            console.log('✅ All tests completed');
         }
     };
     
     // ===== EXPORT TO GLOBAL SCOPE =====
-    window.GlobalStateManager = UserGlobalStateManager;
-    window.UserGlobalStateManager = UserGlobalStateManager;
-    window.TestUserGlobalState = TestUserGlobalState;
-    window.UserDebug = UserDebug;
+    window.GlobalStateManager = GlobalStateManager;
+    window.TestGlobalState = TestGlobalState;
+    window.AdminDebug = AdminDebug;
     
     // Initialize immediately
-    UserGlobalStateManager.init();
+    GlobalStateManager.init();
     
     // Auto-run tests in development
-    if (UserGlobalStateManager._debug) {
+    if (GlobalStateManager._debug) {
         setTimeout(() => {
-            TestUserGlobalState.testComponentExists();
-            TestUserGlobalState.testBasicOperations();
-            TestUserGlobalState.testSubscription();
-            TestUserGlobalState.testErrorHandling();
-            TestUserGlobalState.testGetCurrentUser();
+            TestGlobalState.testComponentExists();
+            TestGlobalState.testBasicOperations();
+            TestGlobalState.testSubscription();
+            TestGlobalState.testErrorHandling();
         }, 100);
     }
     
     // NO TEST DATA - Production mode only
-    console.log('✅ [UserGlobalStateManager] Running in production mode - No test data');
+    console.log('✅ [GlobalStateManager] Running in production mode - No test data');
     
 })(); 

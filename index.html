@@ -1,193 +1,98 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hệ Thống Đối Soát Lô Đề - Dành Cho Đại Lý</title>
+    <title>Admin System</title>
     
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- React & ReactDOM -->
+    <!-- CDN IMPORTS ONLY -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-    
-    <!-- Babel for JSX -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
     
-    <style>
-        .loading-spinner {
-            border: 3px solid #f3f4f6;
-            border-top: 3px solid #3b82f6;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
+    <!-- Tailwind Configuration -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    animation: {
+                        'spin': 'spin 1s linear infinite',
+                    }
+                }
+            }
         }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-    </style>
+    </script>
 </head>
 <body>
-    <!-- Loading Screen -->
-    <div id="loading-screen" class="fixed inset-0 bg-white flex items-center justify-center z-50">
-        <div class="text-center">
-            <div class="loading-spinner mx-auto mb-4"></div>
-            <h2 class="text-xl font-semibold text-gray-900 mb-2">Đang tải hệ thống...</h2>
-            <p class="text-gray-600">Vui lòng đợi trong giây lát</p>
-            <div id="loading-progress" class="text-sm text-gray-500 mt-2">Khởi tạo...</div>
+    <!-- Application Root -->
+    <div id="root">
+        <div style="display: flex; justify-content: center; align-items: center; height: 100vh; background: #f3f4f6;">
+            <div style="text-align: center; background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <div style="width: 3rem; height: 3rem; border: 4px solid #e5e7eb; border-top: 4px solid #3b82f6; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 1rem;"></div>
+                <h2 style="color: #1f2937; margin-bottom: 0.5rem; font-size: 1.5rem; font-weight: bold;">Loading Admin System</h2>
+                <p style="color: #6b7280; font-size: 0.875rem;">Please wait while modules are being loaded...</p>
+            </div>
         </div>
     </div>
-    
-    <!-- Main App Container -->
-    <div id="root" class="min-h-screen"></div>
-    
-    <!-- Scripts - Load theo thứ tự đơn giản -->
-    
-    <!-- 1. Core Services -->
-    <script type="text/babel" src="global-state-manager.js?v=4.0.2" onerror="console.error('Failed to load:', this.src)"></script>
-    <script type="text/babel" src="shared-data-service.js?v=2.3.0" onerror="console.error('Failed to load:', this.src)"></script>
-    <script type="text/babel" src="lottery-data-service.js?v=2.14.0" onerror="console.error('Failed to load:', this.src)"></script>
-    <script type="text/babel" src="bet-parser.js?v=1.3.0" onerror="console.error('Failed to load:', this.src)"></script>
-    <script type="text/babel" src="auth-system.js?v=1.5.0" onerror="console.error('Failed to load:', this.src)"></script>
-    
-    <!-- 2. Page Components - 5 TRANG BẮT BUỘC -->
-    <script type="text/babel" src="landing-page.js?v=2.2.0" onerror="console.error('Failed to load:', this.src)"></script>
-    <script type="text/babel" src="formula-page.js?v=1.0.1" onerror="console.error('Failed to load:', this.src)"></script>
-    <script type="text/babel" src="main-reconciliation-final.js?v=12.0.0" onerror="console.error('Failed to load:', this.src)"></script>
-    <script type="text/babel" src="pricing-page.js?v=1.1.2" onerror="console.error('Failed to load:', this.src)"></script>
-    
-    <!-- 3. Main App -->
-    <script type="text/babel" src="main-agent.js?v=9.1.2" onerror="console.error('Failed to load:', this.src)"></script>
-    
 
+    <!-- MODULE LOADING - ĐÚNG THỨ TỰ -->
+    <!-- 1. Foundation: Global State Manager -->
+    <script type="text/babel" src="global-state-manager.js?v=1.0.3" onerror="console.error('Failed to load:', this.src)"></script>
     
-    <!-- 4. Simple Initializer -->
+    <!-- 2. UI Components: Reusable Components -->
+    <script type="text/babel" src="ui-components.js" onerror="console.error('Failed to load:', this.src)"></script>
+    
+    <!-- 3. System Components: Notifications -->
+    <script type="text/babel" src="notification-system.js" onerror="console.error('Failed to load:', this.src)"></script>
+    
+    <!-- 4. Business Logic Modules -->
+    <script type="text/babel" src="user-management.js?v=1.0.3" onerror="console.error('Failed to load:', this.src)"></script>
+    <script type="text/babel" src="payment-config.js" onerror="console.error('Failed to load:', this.src)"></script>
+    <script type="text/babel" src="payment-management.js?v=1.2.0" onerror="console.error('Failed to load:', this.src)"></script>
+    <script type="text/babel" src="package-management.js" onerror="console.error('Failed to load:', this.src)"></script>
+    <script type="text/babel" src="pending-requests.js" onerror="console.error('Failed to load:', this.src)"></script>
+    
+    <!-- 5. Main Orchestrator (Auto-mounts application) -->
+    <script type="text/babel" src="main-admin.js?v=1.0.2" onerror="console.error('Failed to load:', this.src)"></script>
+    
+    <!-- 6. Initialization Script -->
     <script type="text/babel">
-        (function() {
-            'use strict';
-            
-            console.log('🎯 Starting User System...');
-            
-            const loadingProgress = document.getElementById('loading-progress');
-            const loadingSteps = [
-                'Tải Global State Manager...',
-                'Tải Authentication System...',
-                'Tải 5 trang chính...',
-                'Khởi tạo Main App...',
-                'Sẵn sàng!'
-            ];
-            
-            let currentStep = 0;
-            const updateProgress = () => {
-                if (loadingProgress && currentStep < loadingSteps.length) {
-                    loadingProgress.textContent = loadingSteps[currentStep];
-                    currentStep++;
+        console.log('🚀 Admin System Starting...');
+        
+        // Wait for all modules to load
+        setTimeout(() => {
+            try {
+                if (!window.GlobalStateManager) {
+                    throw new Error('GlobalStateManager not loaded');
                 }
-            };
-            
-            const progressInterval = setInterval(updateProgress, 800);
-            
-            // Simple initialization
-            const initializeApp = () => {
-                try {
-                    console.log('🔧 Initializing...');
-                    console.log('🔍 DEBUG: initializeApp started successfully');
-                    
-                                         // Check required components
-                     const requiredComponents = [
-                         'GlobalStateManager',
-                         'SharedDataService',
-                         'LotteryDataService',
-                         'AuthService', 
-                         'LandingPage',
-                         'LoginPage',
-                         'FormulaPage',
-                         'MainReconciliation',
-                         'PricingPage',
-                         'MainAgentSystem'
-                     ];
-                    
-                    let missingComponents = [];
-                    for (const component of requiredComponents) {
-                        if (!window[component]) {
-                            missingComponents.push(component);
-                        }
-                    }
-                    
-                    if (missingComponents.length > 0) {
-                        throw new Error(`Missing components: ${missingComponents.join(', ')}`);
-                    }
-                    
-                    console.log('✅ All components loaded successfully');
-                    
-                    // Initialize main app
-                    if (window.MainAgentSystem && window.MainAgentSystem.initialize) {
-                        window.MainAgentSystem.initialize();
-                    } else {
-                        throw new Error('MainAgentSystem.initialize not found');
-                    }
-                    
-                    // Hide loading screen
-                    const loadingScreen = document.getElementById('loading-screen');
-                    if (loadingScreen) {
-                        loadingScreen.style.opacity = '0';
-                        setTimeout(() => {
-                            loadingScreen.style.display = 'none';
-                        }, 300);
-                    }
-                    
-                    clearInterval(progressInterval);
-                    console.log('🎉 User System initialized successfully!');
-                    
-                } catch (error) {
-                    console.error('❌ Initialization failed:', error);
-                    if (loadingProgress) {
-                        loadingProgress.textContent = `Lỗi: ${error.message}`;
-                    }
-                    
-                    // Show detailed error message
-                    setTimeout(() => {
-                        const loadingScreen = document.getElementById('loading-screen');
-                        if (loadingScreen) {
-                            loadingScreen.innerHTML = `
-                                <div class="text-center">
-                                    <div class="text-6xl mb-4">❌</div>
-                                    <h2 class="text-xl font-semibold text-red-600 mb-2">Lỗi Loading Modules</h2>
-                                    <p class="text-gray-600 mb-4">Không thể load JavaScript modules. Vui lòng:</p>
-                                    <div class="text-left bg-gray-100 p-4 rounded-lg mb-4 text-sm">
-                                        <p class="mb-2">1. Đảm bảo server đang chạy: <code class="bg-gray-200 px-1 rounded">python -m http.server 8000</code></p>
-                                        <p class="mb-2">2. Truy cập qua: <code class="bg-gray-200 px-1 rounded">http://localhost:8000/user/</code></p>
-                                        <p class="mb-2">3. Không mở file HTML trực tiếp</p>
-                                        <p class="mb-2">4. Kiểm tra Console (F12) để xem lỗi chi tiết</p>
-                                    </div>
-                                    <button onclick="location.reload()" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
-                                        🔄 Thử lại
-                                    </button>
-                                </div>
-                            `;
-                        }
-                    }, 1000);
+                if (!window.MainAdminSystem) {
+                    throw new Error('MainAdminSystem not loaded'); 
                 }
-            };
-            
-            // Start initialization when DOM is ready - WITH DEBUG
-            console.log('🔍 DEBUG: Document readyState:', document.readyState);
-            if (document.readyState === 'loading') {
-                console.log('🔍 DEBUG: Adding DOMContentLoaded listener...');
-                document.addEventListener('DOMContentLoaded', () => {
-                    console.log('🔍 DEBUG: DOMContentLoaded fired, calling initializeApp...');
-                    initializeApp();
-                });
-            } else {
-                console.log('🔍 DEBUG: DOM already ready, calling initializeApp immediately...');
-                initializeApp();
+                
+                console.log('✅ All modules loaded, starting app...');
+                // App should auto-start via main-admin.js
+                
+            } catch (error) {
+                console.error('❌ Module loading failed:', error);
+                document.getElementById('root').innerHTML = `
+                    <div style="display: flex; justify-content: center; align-items: center; height: 100vh; background: #f3f4f6;">
+                        <div style="text-align: center; background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-width: 500px;">
+                            <h2 style="color: #dc2626; margin-bottom: 1rem; font-size: 1.5rem; font-weight: bold;">❌ Lỗi Loading Modules</h2>
+                            <p style="color: #6b7280; font-size: 0.875rem; margin-bottom: 1rem;">Không thể load JavaScript modules. Vui lòng:</p>
+                            <div style="text-align: left; background: #f9fafb; padding: 1rem; border-radius: 4px; margin-bottom: 1rem;">
+                                <p style="margin: 0.5rem 0; font-size: 0.875rem;">1. Đảm bảo server đang chạy: <code>python -m http.server 8000</code></p>
+                                <p style="margin: 0.5rem 0; font-size: 0.875rem;">2. Truy cập qua: <code>http://localhost:8000/admin/</code></p>
+                                <p style="margin: 0.5rem 0; font-size: 0.875rem;">3. Không mở file HTML trực tiếp</p>
+                            </div>
+                            <button onclick="location.reload()" style="background: #3b82f6; color: white; padding: 0.5rem 1rem; border: none; border-radius: 4px; cursor: pointer;">
+                                🔄 Thử lại
+                            </button>
+                        </div>
+                    </div>
+                `;
             }
-            
-        })();
+        }, 2000);
     </script>
 </body>
-</html> 
+</html>
