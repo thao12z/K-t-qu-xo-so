@@ -1,8 +1,18 @@
 // 🚀 MAIN ADMIN MODULE - CORE ORCHESTRATOR
-// Version: 1.0.0 | Created: 2024 | Follows ADMIN SYSTEM DEVELOPMENT GUIDELINES
+// Version: 1.0.1 | Created: 2024 | Follows ADMIN SYSTEM DEVELOPMENT GUIDELINES
 (function() {
     'use strict';
-    
+
+    // ===== ADMIN CONFIGURATION =====
+    // IMPORTANT: Change these credentials before deploying to production!
+    const ADMIN_CONFIG = {
+        username: 'admin',
+        password: 'admin123', // TODO: Change this password in production!
+        email: 'admin@example.com',
+        fullName: 'Administrator',
+        phone: '+1234567890'
+    };
+
     const { useState, useEffect, useCallback, memo } = React;
     
     // ===== DASHBOARD COMPONENT =====
@@ -178,7 +188,7 @@
                 // Simulate login (in real app, this would be an API call)
                 await new Promise(resolve => setTimeout(resolve, 500));
                 
-                if (credentials.username === 'admin' && credentials.password === 'admin123') {
+                if (credentials.username === ADMIN_CONFIG.username && credentials.password === ADMIN_CONFIG.password) {
                     window.GlobalStateManager.addNotification(
                         '✅ Login successful',
                         'success',
@@ -284,11 +294,11 @@
                 // Create only admin user - NO SAMPLE DATA
                 const adminUser = {
                     id: 1,
-                    username: 'admin',
-                    email: 'admin@example.com',
-                    fullName: 'Administrator',
-                    phone: '+1234567890',
-                    password: 'admin123',
+                    username: ADMIN_CONFIG.username,
+                    email: ADMIN_CONFIG.email,
+                    fullName: ADMIN_CONFIG.fullName,
+                    phone: ADMIN_CONFIG.phone,
+                    password: ADMIN_CONFIG.password,
                     role: 'admin',
                     accountType: 'admin',
                     status: 'active',

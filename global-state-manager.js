@@ -258,16 +258,14 @@
             try {
                 const dataToSave = key === 'notifications' ? data.slice(0, 50) : data;
                 
-                // ✅ SAVE ALL IMPORTANT DATA WITH USER-COMPATIBLE KEYS
+                // ✅ SAVE USER DATA WITH STANDARDIZED KEYS
+                // Primary key: adminUsers (for admin system)
+                // Secondary key: registeredUsers (for user auth system)
                 if (key === 'users') {
-                    // Save for admin system
-                    localStorage.setItem('admin_users', JSON.stringify(dataToSave));
                     localStorage.setItem('adminUsers', JSON.stringify(dataToSave));
-                    
-                    // ✅ CRITICAL: Save for user auth system
                     localStorage.setItem('registeredUsers', JSON.stringify(dataToSave));
-                    
-                    console.log(`💾 [GlobalState] USERS saved to multiple keys`, { count: dataToSave.length });
+
+                    console.log(`💾 [GlobalState] USERS saved to adminUsers & registeredUsers`, { count: dataToSave.length });
                 }
                 
                 if (key === 'packages') {

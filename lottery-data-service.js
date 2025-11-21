@@ -17,6 +17,9 @@
             enableRealTimeUpdates: true
         },
 
+        // Store interval IDs for cleanup
+        _intervals: [],
+
         // Data sources (official lottery websites) - MULTIPLE SOURCES + RSS
         sources: {
             // Miền Bắc - Multiple sources + RSS
@@ -180,17 +183,25 @@
                         for (const proxyUrl of proxies) {
                             try {
                                 console.log(`🔗 Trying proxy: ${proxyUrl}`);
-                                
-                                response = await fetch(proxyUrl, {
-                                    method: 'GET',
-                                    headers: {
-                                        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-                                        'Accept-Language': 'vi-VN,vi;q=0.9,en;q=0.8',
-                                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-                                    },
-                                    timeout: 10000
-                                });
-                                
+
+                                // Implement proper timeout using AbortController
+                                const controller = new AbortController();
+                                const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+                                try {
+                                    response = await fetch(proxyUrl, {
+                                        method: 'GET',
+                                        headers: {
+                                            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                                            'Accept-Language': 'vi-VN,vi;q=0.9,en;q=0.8',
+                                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                                        },
+                                        signal: controller.signal
+                                    });
+                                } finally {
+                                    clearTimeout(timeoutId);
+                                }
+
                                 if (response.ok) {
                                     console.log(`Proxy successful: ${proxyUrl}`);
                                     break;
@@ -198,7 +209,8 @@
                                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                                 }
                             } catch (proxyError) {
-                                console.warn(`Proxy failed: ${proxyUrl}`, proxyError.message);
+                                const errorMsg = proxyError.name === 'AbortError' ? 'Request timeout' : proxyError.message;
+                                console.warn(`Proxy failed: ${proxyUrl}`, errorMsg);
                                 lastProxyError = proxyError;
                                 continue;
                             }
@@ -598,23 +610,27 @@
         // Start real-time updates with smart timing
         startRealTimeUpdates: function() {
             console.log('🔄 Starting real-time lottery updates...');
-            
+
+            // Clear any existing intervals first
+            this.stopRealTimeUpdates();
+
             // Regular interval updates (every 5 minutes)
-            setInterval(() => {
+            const regularInterval = setInterval(() => {
                 this.fetchAllRegions();
             }, this.config.updateInterval);
-            
+            this._intervals.push(regularInterval);
+
             // Smart update check every minute after 6:30 PM
-            setInterval(() => {
+            const smartInterval = setInterval(() => {
                 const now = new Date();
                 const currentHour = now.getHours();
                 const currentMinute = now.getMinutes();
-                
+
                 // After 6:30 PM, check more frequently for new results
                 if (currentHour >= 18 && (currentHour > 18 || currentMinute >= 30)) {
                     const todayStr = now.toISOString().split('T')[0];
                     const currentData = this.getCurrentData('bac');
-                    
+
                     // If we don't have today's data, or data is stale, fetch immediately
                     if (!currentData || currentData.date !== todayStr || !this.isDataFresh()) {
                         console.log('🚨 [SMART UPDATE] Post-6:30 PM: Fetching latest lottery data...');
@@ -622,6 +638,14 @@
                     }
                 }
             }, 60000); // Check every minute
+            this._intervals.push(smartInterval);
+        },
+
+        // Stop all real-time updates (cleanup)
+        stopRealTimeUpdates: function() {
+            this._intervals.forEach(id => clearInterval(id));
+            this._intervals = [];
+            console.log('🛑 Stopped real-time lottery updates');
         },
 
         // Get current lottery data
@@ -984,37 +1008,8 @@
                     dataType: 'rss',
                     message: 'Dữ liệu thật từ RSS xosodaiphat.com',
                     lastUpdated: '2025-08-15T18:30:00Z'
-                },
-                '2025-08-20': {
-                    date: '2025-08-20',
-                    region: 'bac',
-                    giai_dac_biet: ['41034'],
-                    giai_nhat: ['63573'],
-                    giai_nhi: ['74104', '87683'],
-                    giai_ba: ['81958', '18532', '91536', '91701', '68466', '45273'],
-                    giai_tu: ['7891', '3332', '7157', '6617'],
-                    giai_nam: ['2203', '8523', '2365', '6996', '1994', '2910'],
-                    giai_sau: ['883', '219', '396'],
-                    giai_bay: ['83', '85', '09', '38'],
-                    dataType: 'rss',
-                    message: 'Dữ liệu thật từ RSS xosodaiphat.com',
-                    lastUpdated: '2025-08-20T18:30:00Z'
-                },
-                '2025-08-21': {
-                    date: '2025-08-21',
-                    region: 'bac',
-                    giai_dac_biet: ['94127'],
-                    giai_nhat: ['42750'],
-                    giai_nhi: ['74104', '87683'],
-                    giai_ba: ['81958', '18532', '91536', '91701', '68466', '45273'],
-                    giai_tu: ['7891', '3332', '7157', '6617'],
-                    giai_nam: ['2203', '8523', '2365', '6996', '1994', '2910'],
-                    giai_sau: ['883', '219', '396'],
-                    giai_bay: ['83', '85', '09', '38'],
-                    dataType: 'rss',
-                    message: 'Dữ liệu thật từ RSS hôm nay 21/8',
-                    lastUpdated: '2025-08-21T18:30:00Z'
                 }
+                // Note: 2025-08-20 and 2025-08-21 data defined above
             };
 
             const data = knownData[date];

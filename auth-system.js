@@ -7,10 +7,12 @@
 
     console.log('🔐 Authentication System v1.3.0 - Rule Compliant');
 
-    const DEMO_ACCOUNTS_FOR_DISPLAY = { // Renamed for clarity, not used for auth
-        admin: { username: "admin", password: "123456", package: "enterprise", status: "active", package_status: "active", package_start: "2024-01-01", package_end: "2024-12-31" },
-        user1: { username: "user1", password: "123456", package: "basic", status: "active", package_status: "active", package_start: "2024-01-01", package_end: "2024-12-31" },
-        demo: { username: "demo", password: "demo", package: null, status: "no_package", package_status: "no_package", package_start: null, package_end: null }
+    // NOTE: These are EXAMPLE accounts for documentation only.
+    // Actual authentication uses users from GlobalStateManager/localStorage.
+    // DO NOT use these for production authentication!
+    const DEMO_ACCOUNTS_EXAMPLE = {
+        // Example format - not used for actual auth
+        // admin: { username: "admin", password: "***", package: "enterprise", ... }
     };
 
     const LoginPage = React.memo(function LoginPage({ onLogin, onNavigate }) {

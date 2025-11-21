@@ -276,7 +276,9 @@
         console.log('🎯 Initializing Main Agent System...');
         const rootElement = document.getElementById('root');
         if (rootElement) {
-            ReactDOM.render(React.createElement(MainApp), rootElement);
+            // Use React 18 createRoot API
+            const root = ReactDOM.createRoot(rootElement);
+            root.render(React.createElement(MainApp));
             console.log('✅ Main Agent System initialized successfully');
         } else {
             console.error('❌ Root element not found');
