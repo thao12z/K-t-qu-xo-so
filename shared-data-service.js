@@ -94,6 +94,21 @@
             }
         },
 
+        // Get packages for user system (called by pricing-page.js)
+        getPackages: function() {
+            // First try to get from cached userPackages
+            const cachedPackages = localStorage.getItem('userPackages');
+            if (cachedPackages) {
+                try {
+                    return JSON.parse(cachedPackages);
+                } catch (e) {
+                    console.warn('Failed to parse cached packages, syncing fresh...');
+                }
+            }
+            // Sync fresh from admin
+            return this.syncPackagesFromAdmin();
+        },
+
         // Enhanced user sync from admin
         syncUsersFromAdmin: function() {
             try {

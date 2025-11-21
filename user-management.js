@@ -362,11 +362,300 @@
             </window.Modal>
         );
     });
-    
+
+    // ===== EDIT USER MODAL =====
+    const EditUserModal = memo(({ isOpen, onClose, user, onUserUpdated }) => {
+        const [formData, setFormData] = useState({
+            username: '',
+            email: '',
+            fullName: '',
+            phone: '',
+            password: '',
+            role: 'user',
+            subscriptionPackage: '',
+            useDefaultDuration: true,
+            customDurationDays: 30,
+            status: 'active'
+        });
+
+        const [packages, setPackages] = useState([]);
+        const [errors, setErrors] = useState({});
+        const [isSubmitting, setIsSubmitting] = useState(false);
+
+        // Load packages on mount
+        useEffect(() => {
+            if (window.GlobalStateManager) {
+                const availablePackages = window.GlobalStateManager.getData('packages');
+                setPackages(availablePackages);
+            }
+        }, []);
+
+        // Load user data when modal opens
+        useEffect(() => {
+            if (isOpen && user) {
+                setFormData({
+                    username: user.username || '',
+                    email: user.email || '',
+                    fullName: user.fullName || '',
+                    phone: user.phone || '',
+                    password: '', // Empty - only update if filled
+                    role: user.role || 'user',
+                    subscriptionPackage: user.subscriptionPackage || '',
+                    useDefaultDuration: true,
+                    customDurationDays: 30,
+                    status: user.status || 'active'
+                });
+                setErrors({});
+            }
+        }, [isOpen, user]);
+
+        // Validation
+        const validateForm = useCallback(() => {
+            const newErrors = {};
+
+            if (!formData.username.trim()) newErrors.username = 'Username is required';
+            if (formData.username.trim().length < 3) newErrors.username = 'Username must be at least 3 characters';
+            if (!formData.email.trim()) newErrors.email = 'Email is required';
+            if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Email is invalid';
+            if (!formData.fullName.trim()) newErrors.fullName = 'Full name is required';
+
+            // Password only required if being changed
+            if (formData.password && formData.password.length < 6) {
+                newErrors.password = 'Password must be at least 6 characters';
+            }
+
+            // Check for duplicate username (excluding current user)
+            if (window.GlobalStateManager) {
+                const existingUsers = window.GlobalStateManager.getData('users');
+
+                if (existingUsers.find(u => u.username === formData.username.trim() && u.id !== user.id)) {
+                    newErrors.username = 'Username already exists';
+                }
+
+                if (existingUsers.find(u => u.email === formData.email.trim() && u.id !== user.id)) {
+                    newErrors.email = 'Email already exists';
+                }
+            }
+
+            setErrors(newErrors);
+            return Object.keys(newErrors).length === 0;
+        }, [formData, user]);
+
+        // Form submission
+        const handleSubmit = useCallback(async (e) => {
+            e.preventDefault();
+
+            if (!validateForm()) return;
+
+            setIsSubmitting(true);
+
+            try {
+                // Calculate subscription info if package changed
+                let subscriptionExpiry = user.subscriptionExpiry;
+                let subscriptionStatus = user.subscriptionStatus;
+
+                if (formData.subscriptionPackage && formData.subscriptionPackage !== user.subscriptionPackage) {
+                    const selectedPkg = packages.find(p => p.name === formData.subscriptionPackage);
+                    if (selectedPkg) {
+                        const durationDays = formData.useDefaultDuration
+                            ? (selectedPkg.duration || 30)
+                            : formData.customDurationDays;
+
+                        const expiry = new Date();
+                        expiry.setDate(expiry.getDate() + durationDays);
+                        subscriptionExpiry = expiry.toISOString().split('T')[0];
+                        subscriptionStatus = 'active';
+                    }
+                }
+
+                // Update user object
+                const updatedUser = {
+                    ...user,
+                    username: formData.username.trim(),
+                    email: formData.email.trim(),
+                    fullName: formData.fullName.trim(),
+                    phone: formData.phone.trim(),
+                    role: formData.role,
+                    status: formData.status,
+                    subscriptionPackage: formData.subscriptionPackage || user.subscriptionPackage,
+                    subscriptionExpiry: subscriptionExpiry,
+                    subscriptionStatus: subscriptionStatus,
+                    updatedAt: new Date().toISOString()
+                };
+
+                // Only update password if provided
+                if (formData.password) {
+                    updatedUser.password = formData.password;
+                }
+
+                // Update in GlobalStateManager
+                const currentUsers = window.GlobalStateManager.getData('users');
+                const updatedUsers = currentUsers.map(u => u.id === user.id ? updatedUser : u);
+
+                window.GlobalStateManager.updateData('users', updatedUsers, 'UserManagement');
+                window.GlobalStateManager.addNotification(
+                    `✅ Updated user: ${updatedUser.fullName}`,
+                    'success',
+                    'UserManagement'
+                );
+
+                if (onUserUpdated) onUserUpdated(updatedUser);
+                onClose();
+
+                console.log('🔄 [UserManagement] USER_UPDATED', { userId: user.id, userName: updatedUser.fullName });
+
+            } catch (error) {
+                console.error('Error updating user:', error);
+                setErrors({ general: 'Failed to update user. Please try again.' });
+            } finally {
+                setIsSubmitting(false);
+            }
+        }, [formData, user, packages, validateForm, onClose, onUserUpdated]);
+
+        const handleInputChange = useCallback((field, value) => {
+            setFormData(prev => ({ ...prev, [field]: value }));
+            if (errors[field]) {
+                setErrors(prev => ({ ...prev, [field]: undefined }));
+            }
+        }, [errors]);
+
+        if (!isOpen || !user) return null;
+
+        return (
+            <window.Modal isOpen={isOpen} onClose={onClose} title={`Edit User: ${user.fullName}`}>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    {errors.general && (
+                        <div className="p-3 bg-red-100 text-red-700 rounded text-sm">
+                            {errors.general}
+                        </div>
+                    )}
+
+                    {/* Username */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Username *</label>
+                        <input
+                            type="text"
+                            value={formData.username}
+                            onChange={(e) => handleInputChange('username', e.target.value)}
+                            className={`w-full px-3 py-2 border rounded-lg ${errors.username ? 'border-red-500' : 'border-gray-300'}`}
+                        />
+                        {errors.username && <p className="mt-1 text-sm text-red-500">{errors.username}</p>}
+                    </div>
+
+                    {/* Email */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                        <input
+                            type="email"
+                            value={formData.email}
+                            onChange={(e) => handleInputChange('email', e.target.value)}
+                            className={`w-full px-3 py-2 border rounded-lg ${errors.email ? 'border-red-500' : 'border-gray-300'}`}
+                        />
+                        {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email}</p>}
+                    </div>
+
+                    {/* Full Name */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
+                        <input
+                            type="text"
+                            value={formData.fullName}
+                            onChange={(e) => handleInputChange('fullName', e.target.value)}
+                            className={`w-full px-3 py-2 border rounded-lg ${errors.fullName ? 'border-red-500' : 'border-gray-300'}`}
+                        />
+                        {errors.fullName && <p className="mt-1 text-sm text-red-500">{errors.fullName}</p>}
+                    </div>
+
+                    {/* Phone */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                        <input
+                            type="tel"
+                            value={formData.phone}
+                            onChange={(e) => handleInputChange('phone', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                        />
+                    </div>
+
+                    {/* Password (optional for edit) */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            New Password <span className="text-gray-400">(leave empty to keep current)</span>
+                        </label>
+                        <input
+                            type="password"
+                            value={formData.password}
+                            onChange={(e) => handleInputChange('password', e.target.value)}
+                            className={`w-full px-3 py-2 border rounded-lg ${errors.password ? 'border-red-500' : 'border-gray-300'}`}
+                            placeholder="Enter new password..."
+                        />
+                        {errors.password && <p className="mt-1 text-sm text-red-500">{errors.password}</p>}
+                    </div>
+
+                    {/* Status */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                        <select
+                            value={formData.status}
+                            onChange={(e) => handleInputChange('status', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                        >
+                            <option value="active">Active</option>
+                            <option value="pending">Pending</option>
+                            <option value="inactive">Inactive</option>
+                        </select>
+                    </div>
+
+                    {/* Subscription Package */}
+                    {formData.role === 'user' && (
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Subscription Package</label>
+                            <select
+                                value={formData.subscriptionPackage}
+                                onChange={(e) => handleInputChange('subscriptionPackage', e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                            >
+                                <option value="">-- Keep current --</option>
+                                {packages.filter(p => p.active !== false).map(pkg => (
+                                    <option key={pkg.id} value={pkg.name}>
+                                        {pkg.name} - {pkg.price}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
+
+                    {/* Action Buttons */}
+                    <div className="flex gap-3 pt-4">
+                        <window.Button
+                            type="submit"
+                            variant="primary"
+                            disabled={isSubmitting}
+                            className="flex-1"
+                        >
+                            {isSubmitting ? 'Saving...' : 'Save Changes'}
+                        </window.Button>
+                        <window.Button
+                            type="button"
+                            variant="secondary"
+                            onClick={onClose}
+                            disabled={isSubmitting}
+                            className="flex-1"
+                        >
+                            Cancel
+                        </window.Button>
+                    </div>
+                </form>
+            </window.Modal>
+        );
+    });
+
     // ===== USER MANAGEMENT COMPONENT =====
     const UserManagement = memo(() => {
         const [users, setUsers] = useState([]);
         const [showAddUser, setShowAddUser] = useState(false);
+        const [showEditUser, setShowEditUser] = useState(false);
+        const [editingUser, setEditingUser] = useState(null);
         const [loading, setLoading] = useState(true);
         
         // Subscribe to global state
@@ -423,20 +712,27 @@
         const handleDeleteUser = useCallback((userId) => {
             const user = window.GlobalStateManager.findUser(userId);
             if (!user) return;
-            
+
             if (confirm(`Are you sure you want to delete user "${user.fullName}"?`)) {
                 const currentUsers = window.GlobalStateManager.getData('users');
                 const updatedUsers = currentUsers.filter(u => u.id !== userId);
-                
+
                 window.GlobalStateManager.updateData('users', updatedUsers, 'UserManagement');
                 window.GlobalStateManager.addNotification(
                     `✅ Deleted user ${user.fullName}`,
                     'success',
                     'UserManagement'
                 );
-                
+
                 console.log('🔄 [UserManagement] USER_DELETED', { userId, userName: user.fullName });
             }
+        }, []);
+
+        // Handle edit user
+        const handleEditUser = useCallback((user) => {
+            setEditingUser(user);
+            setShowEditUser(true);
+            console.log('🔄 [UserManagement] EDIT_USER_OPEN', { userId: user.id, userName: user.fullName });
         }, []);
         
         // Format date
@@ -530,6 +826,15 @@
                                             {formatDate(user.subscriptionExpiry)}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                                            {/* Edit Button */}
+                                            <window.Button
+                                                size="small"
+                                                variant="primary"
+                                                onClick={() => handleEditUser(user)}
+                                            >
+                                                ✏️ Edit
+                                            </window.Button>
+
                                             {/* Status Toggle */}
                                             {user.status === 'pending' && (
                                                 <window.Button
@@ -540,7 +845,7 @@
                                                     ✅ Activate
                                                 </window.Button>
                                             )}
-                                            
+
                                             {user.status === 'active' && user.role !== 'admin' && (
                                                 <window.Button
                                                     size="small"
@@ -550,7 +855,7 @@
                                                     ⏸️ Suspend
                                                 </window.Button>
                                             )}
-                                            
+
                                             {/* Delete (not for admins) */}
                                             {user.role !== 'admin' && (
                                                 <window.Button
@@ -581,6 +886,19 @@
                     onClose={() => setShowAddUser(false)}
                     onUserAdded={() => {
                         console.log('🔄 [UserManagement] USER_ADDED_CALLBACK');
+                    }}
+                />
+
+                {/* Edit User Modal */}
+                <EditUserModal
+                    isOpen={showEditUser}
+                    onClose={() => {
+                        setShowEditUser(false);
+                        setEditingUser(null);
+                    }}
+                    user={editingUser}
+                    onUserUpdated={() => {
+                        console.log('🔄 [UserManagement] USER_UPDATED_CALLBACK');
                     }}
                 />
             </div>
