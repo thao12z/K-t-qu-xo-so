@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Validation</title>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+</head>
+<body>
+    <div id="test-results"></div>
+    
+    <script type="text/babel">
+        // Load bet-parser
+        const testValidation = () => {
+            console.log('🧪 Testing validation...');
+            
+            // Test cases
+            const testCases = [
+                { input: 'L 23 50k', expected: true, desc: 'Valid lô' },
+                { input: 'L 23 45 100k', expected: false, desc: 'Invalid lô (2 numbers)' },
+                { input: 'D 88 100k', expected: true, desc: 'Valid đề' },
+                { input: 'Lx 12 34 200k', expected: true, desc: 'Valid xiên 2' },
+                { input: 'Lx 12 50k', expected: false, desc: 'Invalid xiên (1 number)' },
+                { input: 'BC 123 75k', expected: true, desc: 'Valid ba càng' },
+                { input: 'L 123 50k', expected: false, desc: 'Invalid lô (> 99)' },
+                { input: 'L 23 abc', expected: false, desc: 'Invalid money' }
+            ];
+            
+            console.log('BetParser available:', !!window.BetParser);
+            console.log('parseSingleLine available:', !!window.BetParser?.parseSingleLine);
+            
+            if (!window.BetParser?.parseSingleLine) {
+                console.error('❌ BetParser.parseSingleLine not available!');
+                return;
+            }
+            
+            testCases.forEach((testCase, index) => {
+                try {
+                    const result = window.BetParser.parseSingleLine(testCase.input);
+                    const isValid = !result.error;
+                    const passed = isValid === testCase.expected;
+                    
+                    console.log(`Test ${index + 1}: ${testCase.desc}`);
+                    console.log(`  Input: "${testCase.input}"`);
+                    console.log(`  Expected: ${testCase.expected ? 'VALID' : 'INVALID'}`);
+                    console.log(`  Actual: ${isValid ? 'VALID' : 'INVALID'}`);
+                    console.log(`  Result: ${passed ? '✅ PASS' : '❌ FAIL'}`);
+                    if (result.error) console.log(`  Error: ${result.error}`);
+                    console.log('---');
+                } catch (error) {
+                    console.error(`Test ${index + 1} EXCEPTION:`, error);
+                }
+            });
+        };
+        
+        // Wait for scripts to load
+        setTimeout(testValidation, 1000);
+    </script>
+    
+    <!-- Load bet-parser -->
+    <script type="text/babel" src="bet-parser.js?v=1.3.0"></script>
+</body>
+</html>
