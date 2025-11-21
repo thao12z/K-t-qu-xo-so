@@ -302,7 +302,7 @@
         function accessAdmin() {
             console.log('🔐 Accessing Admin System...');
             // Open admin in new tab with proper access control
-            const adminWindow = window.open('./index.html', '_blank');
+            const adminWindow = window.open('./admin-login/', '_blank');
             
             // Add access control check
             setTimeout(() => {
@@ -314,8 +314,8 @@
         
         function accessUser() {
             console.log('🔐 Accessing User System...');
-            // Open user system in new tab
-            const userWindow = window.open('./user/index.html', '_blank');
+            // Open user system in new tab (now at root)
+            const userWindow = window.open('./', '_blank');
             
             setTimeout(() => {
                 if (userWindow && !userWindow.closed) {

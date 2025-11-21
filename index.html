@@ -1,16 +1,16 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin System</title>
-    
+    <title>Hệ Thống Đối Soát Lô Đề</title>
+
     <!-- CDN IMPORTS - PRODUCTION -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    
+
     <!-- Tailwind Configuration -->
     <script>
         tailwind.config = {
@@ -30,64 +30,73 @@
         <div style="display: flex; justify-content: center; align-items: center; height: 100vh; background: #f3f4f6;">
             <div style="text-align: center; background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
                 <div style="width: 3rem; height: 3rem; border: 4px solid #e5e7eb; border-top: 4px solid #3b82f6; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 1rem;"></div>
-                <h2 style="color: #1f2937; margin-bottom: 0.5rem; font-size: 1.5rem; font-weight: bold;">Loading Admin System</h2>
-                <p style="color: #6b7280; font-size: 0.875rem;">Please wait while modules are being loaded...</p>
+                <h2 style="color: #1f2937; margin-bottom: 0.5rem; font-size: 1.5rem; font-weight: bold;">Đang tải hệ thống...</h2>
+                <p style="color: #6b7280; font-size: 0.875rem;">Vui lòng đợi trong giây lát</p>
             </div>
         </div>
     </div>
 
-    <!-- MODULE LOADING - ĐÚNG THỨ TỰ -->
-    <!-- 1. Foundation: Global State Manager -->
-    <script type="text/babel" src="global-state-manager.js?v=1.0.3" onerror="console.error('Failed to load:', this.src)"></script>
-    
-    <!-- 2. Data Sync Service: Admin ↔ User synchronization -->
-    <script type="text/babel" src="shared-data-service.js" onerror="console.error('Failed to load:', this.src)"></script>
+    <!-- MODULE LOADING - User System -->
 
-    <!-- 3. UI Components: Reusable Components -->
-    <script type="text/babel" src="ui-components.js" onerror="console.error('Failed to load:', this.src)"></script>
+    <!-- 1. Data Sync Service: Đồng bộ dữ liệu từ Admin -->
+    <script type="text/babel" src="./shared-data-service.js" onerror="console.error('Failed to load:', this.src)"></script>
 
-    <!-- 4. System Components: Notifications -->
-    <script type="text/babel" src="notification-system.js" onerror="console.error('Failed to load:', this.src)"></script>
-    
-    <!-- 5. Business Logic Modules -->
-    <script type="text/babel" src="user-management.js?v=1.0.3" onerror="console.error('Failed to load:', this.src)"></script>
-    <script type="text/babel" src="payment-config.js" onerror="console.error('Failed to load:', this.src)"></script>
-    <script type="text/babel" src="payment-management.js?v=1.2.0" onerror="console.error('Failed to load:', this.src)"></script>
-    <script type="text/babel" src="package-management.js" onerror="console.error('Failed to load:', this.src)"></script>
-    <script type="text/babel" src="pending-requests.js" onerror="console.error('Failed to load:', this.src)"></script>
+    <!-- 2. Core Services -->
+    <script type="text/babel" src="./lottery-data-service.js" onerror="console.error('Failed to load:', this.src)"></script>
+    <script type="text/babel" src="./bet-parser.js" onerror="console.error('Failed to load:', this.src)"></script>
 
-    <!-- 6. Main Orchestrator (Auto-mounts application) -->
-    <script type="text/babel" src="main-admin.js?v=1.0.2" onerror="console.error('Failed to load:', this.src)"></script>
+    <!-- 3. User Pages -->
+    <script type="text/babel" src="./landing-page.js" onerror="console.error('Failed to load:', this.src)"></script>
+    <script type="text/babel" src="./auth-system.js" onerror="console.error('Failed to load:', this.src)"></script>
+    <script type="text/babel" src="./formula-page.js" onerror="console.error('Failed to load:', this.src)"></script>
+    <script type="text/babel" src="./pricing-page.js" onerror="console.error('Failed to load:', this.src)"></script>
+    <script type="text/babel" src="./main-reconciliation-final.js" onerror="console.error('Failed to load:', this.src)"></script>
 
-    <!-- 7. Initialization Script -->
+    <!-- 4. Main Orchestrator -->
+    <script type="text/babel" src="./main-agent.js" onerror="console.error('Failed to load:', this.src)"></script>
+
+    <!-- 5. Initialization Script -->
     <script type="text/babel">
-        console.log('🚀 Admin System Starting...');
-        
+        console.log('🚀 User System Starting...');
+
+        // Initialize SharedDataService first
+        if (window.SharedDataService && window.SharedDataService.init) {
+            window.SharedDataService.init();
+            console.log('✅ SharedDataService initialized');
+        }
+
         // Wait for all modules to load
         setTimeout(() => {
             try {
-                if (!window.GlobalStateManager) {
-                    throw new Error('GlobalStateManager not loaded');
+                // Check required modules
+                const requiredModules = [
+                    'SharedDataService',
+                    'LandingPage',
+                    'LoginPage',
+                    'MainAgentSystem'
+                ];
+
+                const missingModules = requiredModules.filter(m => !window[m]);
+
+                if (missingModules.length > 0) {
+                    throw new Error(`Missing modules: ${missingModules.join(', ')}`);
                 }
-                if (!window.MainAdminSystem) {
-                    throw new Error('MainAdminSystem not loaded'); 
+
+                // Initialize the main agent system
+                if (window.MainAgentSystem && window.MainAgentSystem.initialize) {
+                    window.MainAgentSystem.initialize();
+                    console.log('✅ User System initialized successfully');
+                } else {
+                    throw new Error('MainAgentSystem not found or missing initialize method');
                 }
-                
-                console.log('✅ All modules loaded, starting app...');
-                // App should auto-start via main-admin.js
-                
+
             } catch (error) {
                 console.error('❌ Module loading failed:', error);
                 document.getElementById('root').innerHTML = `
                     <div style="display: flex; justify-content: center; align-items: center; height: 100vh; background: #f3f4f6;">
                         <div style="text-align: center; background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-width: 500px;">
-                            <h2 style="color: #dc2626; margin-bottom: 1rem; font-size: 1.5rem; font-weight: bold;">❌ Lỗi Loading Modules</h2>
-                            <p style="color: #6b7280; font-size: 0.875rem; margin-bottom: 1rem;">Không thể load JavaScript modules. Vui lòng:</p>
-                            <div style="text-align: left; background: #f9fafb; padding: 1rem; border-radius: 4px; margin-bottom: 1rem;">
-                                <p style="margin: 0.5rem 0; font-size: 0.875rem;">1. Đảm bảo server đang chạy: <code>python -m http.server 8000</code></p>
-                                <p style="margin: 0.5rem 0; font-size: 0.875rem;">2. Truy cập qua: <code>http://localhost:8000/admin/</code></p>
-                                <p style="margin: 0.5rem 0; font-size: 0.875rem;">3. Không mở file HTML trực tiếp</p>
-                            </div>
+                            <h2 style="color: #dc2626; margin-bottom: 1rem; font-size: 1.5rem; font-weight: bold;">❌ Lỗi tải hệ thống</h2>
+                            <p style="color: #6b7280; font-size: 0.875rem; margin-bottom: 1rem;">${error.message}</p>
                             <button onclick="location.reload()" style="background: #3b82f6; color: white; padding: 0.5rem 1rem; border: none; border-radius: 4px; cursor: pointer;">
                                 🔄 Thử lại
                             </button>
