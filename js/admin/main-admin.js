@@ -4,13 +4,44 @@
     'use strict';
 
     // ===== ADMIN CONFIGURATION =====
-    // IMPORTANT: Change these credentials before deploying to production!
-    const ADMIN_CONFIG = {
-        username: 'admin',
-        password: 'admin123', // TODO: Change this password in production!
-        email: 'admin@example.com',
-        fullName: 'Administrator',
-        phone: '+1234567890'
+    // Production: Set window.ADMIN_CREDENTIALS before loading this script
+    // Or use localStorage 'admin_credentials' for persistence
+    const getAdminConfig = () => {
+        // Priority 1: Window config (set by server/deployment)
+        if (window.ADMIN_CREDENTIALS) {
+            console.log('🔐 Using server-provided admin credentials');
+            return window.ADMIN_CREDENTIALS;
+        }
+
+        // Priority 2: Stored credentials (after first setup)
+        const stored = localStorage.getItem('admin_credentials');
+        if (stored) {
+            try {
+                const creds = JSON.parse(stored);
+                console.log('🔐 Using stored admin credentials');
+                return creds;
+            } catch (e) {
+                console.warn('Invalid stored credentials');
+            }
+        }
+
+        // Priority 3: Development defaults (CHANGE IN PRODUCTION!)
+        console.warn('⚠️ Using DEFAULT admin credentials - CHANGE IN PRODUCTION!');
+        return {
+            username: 'admin',
+            password: 'admin123',
+            email: 'admin@lode.vn',
+            fullName: 'Administrator',
+            phone: ''
+        };
+    };
+
+    const ADMIN_CONFIG = getAdminConfig();
+
+    // Function to update admin credentials at runtime
+    window.setAdminCredentials = (credentials) => {
+        localStorage.setItem('admin_credentials', JSON.stringify(credentials));
+        console.log('🔐 Admin credentials updated - reload page to apply');
     };
 
     const { useState, useEffect, useCallback, memo } = React;

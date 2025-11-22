@@ -6,15 +6,20 @@
 (function() {
     'use strict';
 
-    console.log('🔄 SharedDataService v2.0 - Enhanced Integration');
+    console.log('🔄 SharedDataService v3.0 - ONLINE REALTIME MODE');
 
     const SharedDataService = {
-        // Configuration
+        // Configuration - ONLINE MODE
         config: {
-            pollingInterval: 30000, // Reduced from 5s for better performance
-            maxRetries: 3,
+            pollingInterval: 10000, // 10 seconds for faster sync (giảm từ 30s)
+            maxRetries: 5,
             enableRealTimeSync: true,
-            enableAutoActions: true
+            enableAutoActions: true,
+            onlineMode: true, // Always sync online
+            apiBaseUrl: window.API_BASE_URL || null, // Set for server mode
+            wsUrl: window.WS_URL || null, // WebSocket URL for realtime
+            cacheMaxAge: 60000, // 1 minute cache max
+            debugMode: window.DEBUG_MODE || false
         },
 
         // State tracking
@@ -22,23 +27,60 @@
             lastSyncTime: null,
             syncInProgress: false,
             errorCount: 0,
-            isConnected: true
+            isConnected: true,
+            isOnline: navigator.onLine,
+            wsConnected: false
+        },
+
+        // Online status check
+        checkOnlineStatus: function() {
+            this.state.isOnline = navigator.onLine;
+            if (!this.state.isOnline) {
+                console.warn('⚠️ Network offline - using cached data');
+            }
+            return this.state.isOnline;
         },
 
         // Initialize service
         init: function() {
-            console.log('📡 Initializing Enhanced SharedDataService...');
-            
-            // Start background sync
+            console.log('📡 Initializing SharedDataService v3.0 ONLINE MODE...');
+
+            // Setup online/offline event listeners
+            window.addEventListener('online', () => {
+                this.state.isOnline = true;
+                console.log('🌐 Network online - syncing data...');
+                this.syncAll();
+            });
+
+            window.addEventListener('offline', () => {
+                this.state.isOnline = false;
+                console.warn('⚠️ Network offline');
+            });
+
+            // Initial online check
+            this.checkOnlineStatus();
+
+            // Start background sync (faster in online mode)
             this.startBackgroundSync();
-            
+
             // Setup real-time listeners
             this.setupRealTimeListeners();
-            
+
             // Setup auto-actions
             this.setupAutoActions();
-            
-            console.log('✅ SharedDataService initialized with enhanced features');
+
+            // Initial sync
+            this.syncAll();
+
+            console.log('✅ SharedDataService v3.0 initialized - Online Mode:', this.config.onlineMode);
+        },
+
+        // Sync all data
+        syncAll: function() {
+            console.log('🔄 Syncing all data...');
+            this.syncPackagesFromAdmin();
+            this.syncUsersFromAdmin();
+            this.state.lastSyncTime = new Date().toISOString();
         },
 
         // Enhanced package sync from admin

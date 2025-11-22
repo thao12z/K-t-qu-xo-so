@@ -1080,11 +1080,11 @@
             return null;
         },
 
-        // Get all available dates from cache and known data
+        // Get all available dates from cache - ONLINE MODE (no hardcoded dates)
         getAvailableDates: function(region = 'bac') {
             const dates = new Set();
 
-            // Add dates from historical cache
+            // Add dates from historical cache (fetched from RSS)
             if (this.historicalCache) {
                 Object.keys(this.historicalCache).forEach(key => {
                     if (key.startsWith(region + '_')) {
@@ -1098,12 +1098,16 @@
                 dates.add(this.currentData[region].date);
             }
 
-            // Add known RSS data dates
-            const knownDates = [
-                '2025-08-15', '2025-08-16', '2025-08-17', '2025-08-18', '2025-08-19',
-                '2025-08-20', '2025-08-21', '2025-08-22', '2025-08-23'
-            ];
-            knownDates.forEach(d => dates.add(d));
+            // Add today's date as available (will fetch from RSS)
+            const today = new Date().toISOString().split('T')[0];
+            dates.add(today);
+
+            // Add last 7 days as potentially available
+            for (let i = 1; i <= 7; i++) {
+                const pastDate = new Date();
+                pastDate.setDate(pastDate.getDate() - i);
+                dates.add(pastDate.toISOString().split('T')[0]);
+            }
 
             return Array.from(dates).sort().reverse();
         },

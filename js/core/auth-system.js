@@ -5,14 +5,14 @@
 (function() {
     'use strict';
 
-    console.log('🔐 Authentication System v1.3.0 - Rule Compliant');
+    console.log('🔐 Authentication System v2.0.0 - ONLINE REALTIME MODE');
 
-    // NOTE: These are EXAMPLE accounts for documentation only.
-    // Actual authentication uses users from GlobalStateManager/localStorage.
-    // DO NOT use these for production authentication!
-    const DEMO_ACCOUNTS_EXAMPLE = {
-        // Example format - not used for actual auth
-        // admin: { username: "admin", password: "***", package: "enterprise", ... }
+    // Configuration
+    const AUTH_CONFIG = {
+        onlineMode: true,
+        sessionTimeout: 3600000, // 1 hour session
+        validationInterval: 30000, // 30 seconds validation check
+        debugMode: window.DEBUG_MODE || false
     };
 
     const LoginPage = React.memo(function LoginPage({ onLogin, onNavigate }) {

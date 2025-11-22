@@ -1,10 +1,21 @@
 // 🌐 GLOBAL STATE MANAGER - FOUNDATION MODULE
-// Version: 1.0.0 | Created: 2024 | Follows ADMIN SYSTEM DEVELOPMENT GUIDELINES
+// Version: 2.0.0 | ONLINE REALTIME MODE
 (function() {
     'use strict';
-    
+
+    console.log('🌐 GlobalStateManager v2.0 - ONLINE REALTIME MODE');
+
     // ===== GLOBAL STATE MANAGER IMPLEMENTATION =====
     const GlobalStateManager = {
+        // Configuration - ONLINE MODE
+        _config: {
+            onlineMode: true,
+            debugMode: window.DEBUG_MODE || false, // Disable in production
+            autoSaveInterval: 5000, // 5 seconds auto-save
+            broadcastChanges: true,
+            apiBaseUrl: window.API_BASE_URL || null
+        },
+
         // ✅ REQUIRED - Internal state storage
         _state: {
             users: [],
@@ -13,12 +24,12 @@
             notifications: [],
             paymentConfig: []
         },
-        
+
         // ✅ REQUIRED - Subscriber management
         _subscribers: {},
-        
-        // Debug flag
-        _debug: true,
+
+        // Debug flag (configurable)
+        _debug: window.DEBUG_MODE || false,
         
         // ===== CORE METHODS =====
         
