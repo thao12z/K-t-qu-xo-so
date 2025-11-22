@@ -100,6 +100,9 @@
             isUpdating: false
         },
 
+        // Historical data cache - stores all fetched dates
+        historicalCache: {},
+
         // Initialize service
         init: function() {
             console.log('🎲 Initializing Lottery Data Service...');
@@ -127,6 +130,13 @@
                     this.currentData = { ...this.currentData, ...data };
                     console.log('📦 Loaded cached lottery data:', data.lastUpdate);
                 }
+
+                // Load historical cache
+                const historicalData = localStorage.getItem('lotteryHistoricalCache');
+                if (historicalData) {
+                    this.historicalCache = JSON.parse(historicalData);
+                    console.log('📦 Loaded historical cache with', Object.keys(this.historicalCache).length, 'dates');
+                }
             } catch (error) {
                 console.error('Error loading cached lottery data:', error);
             }
@@ -136,6 +146,7 @@
         saveData: function() {
             try {
                 localStorage.setItem('lotteryData', JSON.stringify(this.currentData));
+                localStorage.setItem('lotteryHistoricalCache', JSON.stringify(this.historicalCache));
                 console.log('💾 Saved lottery data to cache');
             } catch (error) {
                 console.error('Error saving lottery data:', error);
@@ -256,8 +267,16 @@
                 if (lotteryData && lotteryData.results) {
                     this.currentData[region] = lotteryData;
                     this.currentData.lastUpdate = new Date().toISOString();
+
+                    // Store in historical cache with date key
+                    if (lotteryData.date) {
+                        const cacheKey = `${region}_${lotteryData.date}`;
+                        this.historicalCache[cacheKey] = lotteryData;
+                        console.log(`📦 Cached ${region} data for ${lotteryData.date}`);
+                    }
+
                     this.saveData();
-                    
+
                     console.log(`${region} data updated successfully:`, lotteryData);
                     
                     // Broadcast update
@@ -680,7 +699,15 @@
                 console.log(`Found exact data for ${date}`);
                 return currentData;
             }
-            
+
+            // Check historical cache for any previously fetched date
+            const regionKey = region || 'bac';
+            const cacheKey = `${regionKey}_${date}`;
+            if (this.historicalCache && this.historicalCache[cacheKey]) {
+                console.log(`📦 Found cached data for ${date} in historical cache`);
+                return this.historicalCache[cacheKey];
+            }
+
             // For past dates - try to fetch or return mock/fallback data
             const todayDateOnly = new Date(today.toDateString());
             const isPastDate = targetDate < todayDateOnly;
@@ -866,6 +893,34 @@
             // This would normally parse RSS feed for historical data
             // For now, we'll return null and let getKnownRSSData handle it
             return null;
+        },
+
+        // Get all available dates from cache and known data
+        getAvailableDates: function(region = 'bac') {
+            const dates = new Set();
+
+            // Add dates from historical cache
+            if (this.historicalCache) {
+                Object.keys(this.historicalCache).forEach(key => {
+                    if (key.startsWith(region + '_')) {
+                        dates.add(key.replace(region + '_', ''));
+                    }
+                });
+            }
+
+            // Add dates from current data
+            if (this.currentData[region] && this.currentData[region].date) {
+                dates.add(this.currentData[region].date);
+            }
+
+            // Add known RSS data dates
+            const knownDates = [
+                '2025-08-15', '2025-08-16', '2025-08-17', '2025-08-18', '2025-08-19',
+                '2025-08-20', '2025-08-21', '2025-08-22', '2025-08-23'
+            ];
+            knownDates.forEach(d => dates.add(d));
+
+            return Array.from(dates).sort().reverse();
         },
 
         // Get known RSS data from our database (real data from RSS feeds)

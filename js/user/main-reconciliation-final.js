@@ -1437,7 +1437,20 @@
                         actualDataDate = '2025-08-21';
                         console.log('Fallback data loaded for 2025-08-21');
                     } else {
-                        alert(`Không tìm thấy dữ liệu xổ số cho ngày ${parameters.ngay}.\n\nHãy thử:\n1. Chọn ngày 21/08/2025 (có dữ liệu)\n2. Đảm bảo đã qua 18:30 nếu chọn ngày hôm nay\n3. Kiểm tra kết nối internet`);
+                        // Get available dates for better error message
+                        let availableDatesMsg = '';
+                        if (window.LotteryDataService && window.LotteryDataService.getAvailableDates) {
+                            const availableDates = window.LotteryDataService.getAvailableDates(parameters.mien);
+                            if (availableDates.length > 0) {
+                                const topDates = availableDates.slice(0, 5).map(d => {
+                                    const [y, m, day] = d.split('-');
+                                    return `${day}/${m}/${y}`;
+                                }).join(', ');
+                                availableDatesMsg = `\n\nCác ngày có sẵn: ${topDates}`;
+                            }
+                        }
+
+                        alert(`Không tìm thấy dữ liệu xổ số cho ngày ${parameters.ngay}.${availableDatesMsg}\n\nHãy thử:\n1. Chọn một trong các ngày có sẵn trên\n2. Đảm bảo đã qua 18:30 nếu chọn ngày hôm nay\n3. Kiểm tra kết nối internet và thử refresh trang`);
                         setIsLoading(false);
                         return;
                     }
