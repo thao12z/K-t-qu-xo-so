@@ -2471,31 +2471,25 @@
                         React.createElement('div', {},
                             React.createElement('div', {className: 'border rounded-lg p-3 mb-3 bg-red-50'},
                                 React.createElement('div', {className: 'text-sm font-medium text-red-800 mb-2'}, 'Giải Đặc Biệt'),
-                                React.createElement('div', {className: 'text-2xl font-bold text-red-600 font-mono'}, 
-                                    lotteryResults?.giai_dac_biet?.[0] || 
-                                    lotteryResults?.dacbiet?.[0] || 
-                                    lotteryResults?.special?.[0] || 
-                                    (lotteryResults?.date === '2025-08-21' ? '94127' : 'N/A')
+                                React.createElement('div', {className: 'text-2xl font-bold text-red-600 font-mono'},
+                                    lotteryResults?.giai_dac_biet?.[0] ||
+                                    lotteryResults?.dacbiet?.[0] ||
+                                    lotteryResults?.special?.[0] ||
+                                    'Đang tải...'
                                 )
                             ),
                             React.createElement('div', {className: 'border rounded-lg p-3 mb-3 bg-[#FFF7ED]'},
                                 React.createElement('div', {className: 'text-sm font-medium text-[#E36323] mb-2'}, 'Giải Nhất'),
-                                React.createElement('div', {className: 'text-lg font-bold text-[#E36323] font-mono'}, 
-                                    lotteryResults?.giai_nhat?.[0] || 
+                                React.createElement('div', {className: 'text-lg font-bold text-[#E36323] font-mono'},
+                                    lotteryResults?.giai_nhat?.[0] ||
                                     lotteryResults?.nhat?.[0] ||
-                                    (lotteryResults?.date === '2025-08-21' ? '42750' : 'N/A')
+                                    'Đang tải...'
                                 )
                             ),
                             React.createElement('div', {className: 'border rounded-lg p-3 bg-green-50'},
                                 React.createElement('div', {className: 'text-sm font-medium text-green-800 mb-2'}, 'Giải Nhì'),
-                                React.createElement('div', {className: 'text-lg font-bold text-green-600 font-mono'}, 
-                                    (() => {
-                                        const nhi = lotteryResults?.giai_nhi || lotteryResults?.nhi;
-                                        if (lotteryResults?.date === '2025-08-21' && (!nhi || nhi.length === 0)) {
-                                            return '74104 - 87683'; // Hardcoded fallback for 21st
-                                        }
-                                        return nhi?.join(' - ') || 'N/A';
-                                    })()
+                                React.createElement('div', {className: 'text-lg font-bold text-green-600 font-mono'},
+                                    (lotteryResults?.giai_nhi || lotteryResults?.nhi)?.join(' - ') || 'Đang tải...'
                                 )
                             )
                         ),
@@ -2506,29 +2500,17 @@
                                 ['giai_ba', 'giai_tu', 'giai_nam', 'giai_sau', 'giai_bay'].map(prize => {
                                     const prizeNames = {
                                         giai_ba: 'Giải Ba',
-                                        giai_tu: 'Giải Tư', 
+                                        giai_tu: 'Giải Tư',
                                         giai_nam: 'Giải Năm',
                                         giai_sau: 'Giải Sáu',
                                         giai_bay: 'Giải Bảy'
                                     };
-                                    let numbers = lotteryResults[prize] || [];
-                                    
-                                    // Special fallback for 2025-08-21 if data is missing
-                                    if (lotteryResults?.date === '2025-08-21' && (!numbers || numbers.length === 0)) {
-                                        const fallbackData = {
-                                            giai_ba: ['81958', '18532', '91536', '91701', '68466', '45273'],
-                                            giai_tu: ['7891', '3332', '7157', '6617'],
-                                            giai_nam: ['2203', '8523', '2365', '6996', '1994', '2910'],
-                                            giai_sau: ['883', '219', '396'],
-                                            giai_bay: ['83', '85', '09', '38']
-                                        };
-                                        numbers = fallbackData[prize] || [];
-                                    }
-                                    
+                                    const numbers = lotteryResults[prize] || [];
+
                                     return React.createElement('div', {key: prize, className: 'border rounded-lg p-2'},
                                         React.createElement('div', {className: 'text-xs font-medium text-[#7B7B7B] mb-1'}, prizeNames[prize]),
-                                        React.createElement('div', {className: 'text-sm font-mono text-[#7B7B7B]'}, 
-                                            numbers?.join(' - ') || 'N/A'
+                                        React.createElement('div', {className: 'text-sm font-mono text-[#7B7B7B]'},
+                                            numbers?.length > 0 ? numbers.join(' - ') : 'Đang tải...'
                                         )
                                     );
                                 })
