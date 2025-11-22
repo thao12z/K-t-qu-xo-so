@@ -6,7 +6,46 @@
 (function() {
     'use strict';
 
-    console.log('🔒 Loading SecurityUtils v1.0.0');
+    // ===== PRODUCTION LOGGER =====
+    // Silences verbose logs in production, only shows errors
+    const isProduction = !window.DEBUG_MODE &&
+                         window.location.hostname !== 'localhost' &&
+                         window.location.hostname !== '127.0.0.1';
+
+    const ProductionLogger = {
+        log: (...args) => {
+            if (!isProduction) console.log(...args);
+        },
+        warn: (...args) => {
+            if (!isProduction) console.warn(...args);
+        },
+        error: (...args) => {
+            console.error(...args); // Always show errors
+        },
+        info: (...args) => {
+            if (!isProduction) console.info(...args);
+        },
+        debug: (...args) => {
+            if (!isProduction) console.debug(...args);
+        },
+        table: (...args) => {
+            if (!isProduction) console.table(...args);
+        },
+        // Check production mode
+        isProduction: () => isProduction,
+        // Force enable logging temporarily
+        forceEnable: () => {
+            window.DEBUG_MODE = true;
+        }
+    };
+
+    // Export logger globally for other modules
+    window.Logger = ProductionLogger;
+
+    if (!isProduction) {
+        console.log('🔒 Loading SecurityUtils v1.1.0');
+        console.log(`📊 Logger mode: ${isProduction ? 'PRODUCTION' : 'DEVELOPMENT'}`);
+    }
 
     const SecurityUtils = {
         // Password hashing with salt using Web Crypto API
@@ -221,6 +260,8 @@
     // Export to window
     window.SecurityUtils = SecurityUtils;
 
-    console.log('✅ SecurityUtils loaded successfully');
+    if (!isProduction) {
+        console.log('✅ SecurityUtils loaded successfully');
+    }
 
 })(); 

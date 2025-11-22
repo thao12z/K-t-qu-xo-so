@@ -557,7 +557,7 @@
                         
                         <div className="text-center">
                             <p className="text-xs text-[#7B7B7B]">
-                                Demo credentials: admin / admin123
+                                Hệ thống quản trị đối soát lô đề
                             </p>
                         </div>
                     </form>
@@ -874,74 +874,78 @@
                     'System'
                 );
                 
-                // ✅ ADD DEBUG COMMANDS FOR ADMIN SYSTEM
-                window.DEBUG_ADMIN_SYSTEM = {
-                    // Check current users
-                    checkUsers: () => {
-                        const users = window.GlobalStateManager.getData('users');
-                        console.log('👥 Current users:', users);
-                        console.table(users);
-                        return users;
-                    },
-                    
-                    // Create test user
-                    createTestUser: (username = 'testuser', password = 'test123') => {
-                        const newUser = {
-                            id: window.GlobalStateManager.getNextUserId(),
-                            username: username,
-                            email: `${username}@test.com`,
-                            fullName: `Test User ${username}`,
-                            phone: '+1234567890',
-                            password: password,
-                            role: 'user',
-                            accountType: 'user',
-                            status: 'active',
-                            hasAdminAccess: false,
-                            subscriptionType: 'package_30_days',
-                            subscriptionPackage: '30 Days Package',
-                            subscriptionExpiry: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                            subscriptionStatus: 'active',
-                            createdAt: new Date().toISOString(),
-                            createdBy: 'debug_tool',
-                            lastLogin: null,
-                            activatedAt: new Date().toISOString(),
-                            activatedBy: 'debug_tool'
-                        };
-                        
-                        const currentUsers = window.GlobalStateManager.getData('users');
-                        const updatedUsers = [...currentUsers, newUser];
-                        window.GlobalStateManager.updateData('users', updatedUsers, 'DebugTool');
-                        
-                        console.log('✅ Created test user:', newUser);
-                        return newUser;
-                    },
-                    
-                    // Check localStorage keys
-                    checkStorage: () => {
-                        const keys = ['admin_users', 'adminUsers', 'registeredUsers'];
-                        const result = {};
-                        keys.forEach(key => {
-                            const data = localStorage.getItem(key);
-                            result[key] = data ? JSON.parse(data) : null;
-                        });
-                        console.table(result);
-                        return result;
-                    },
-                    
-                    // Clear all user data
-                    clearAllUsers: () => {
-                        if (confirm('Are you sure you want to clear all user data?')) {
-                            window.GlobalStateManager.updateData('users', [], 'DebugTool');
-                            console.log('🧹 Cleared all user data');
+                // ✅ DEBUG COMMANDS - Only in development mode
+                const isDevMode = window.DEBUG_MODE || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
+                if (isDevMode) {
+                    window.DEBUG_ADMIN_SYSTEM = {
+                        // Check current users
+                        checkUsers: () => {
+                            const users = window.GlobalStateManager.getData('users');
+                            console.log('👥 Current users:', users);
+                            console.table(users);
+                            return users;
+                        },
+
+                        // Create test user
+                        createTestUser: (username = 'testuser', password = 'test123') => {
+                            const newUser = {
+                                id: window.GlobalStateManager.getNextUserId(),
+                                username: username,
+                                email: `${username}@test.com`,
+                                fullName: `Test User ${username}`,
+                                phone: '+1234567890',
+                                password: password,
+                                role: 'user',
+                                accountType: 'user',
+                                status: 'active',
+                                hasAdminAccess: false,
+                                subscriptionType: 'package_30_days',
+                                subscriptionPackage: '30 Days Package',
+                                subscriptionExpiry: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                                subscriptionStatus: 'active',
+                                createdAt: new Date().toISOString(),
+                                createdBy: 'debug_tool',
+                                lastLogin: null,
+                                activatedAt: new Date().toISOString(),
+                                activatedBy: 'debug_tool'
+                            };
+
+                            const currentUsers = window.GlobalStateManager.getData('users');
+                            const updatedUsers = [...currentUsers, newUser];
+                            window.GlobalStateManager.updateData('users', updatedUsers, 'DebugTool');
+
+                            console.log('✅ Created test user:', newUser);
+                            return newUser;
+                        },
+
+                        // Check localStorage keys
+                        checkStorage: () => {
+                            const keys = ['admin_users', 'adminUsers', 'registeredUsers'];
+                            const result = {};
+                            keys.forEach(key => {
+                                const data = localStorage.getItem(key);
+                                result[key] = data ? JSON.parse(data) : null;
+                            });
+                            console.table(result);
+                            return result;
+                        },
+
+                        // Clear all user data
+                        clearAllUsers: () => {
+                            if (confirm('Are you sure you want to clear all user data?')) {
+                                window.GlobalStateManager.updateData('users', [], 'DebugTool');
+                                console.log('🧹 Cleared all user data');
+                            }
                         }
-                    }
-                };
-                
-                console.log('🔧 Admin Debug commands available: window.DEBUG_ADMIN_SYSTEM');
-                console.log('- window.DEBUG_ADMIN_SYSTEM.checkUsers()');
-                console.log('- window.DEBUG_ADMIN_SYSTEM.createTestUser(username, password)');
-                console.log('- window.DEBUG_ADMIN_SYSTEM.checkStorage()');
-                console.log('- window.DEBUG_ADMIN_SYSTEM.clearAllUsers()');
+                    };
+
+                    console.log('🔧 Admin Debug commands available: window.DEBUG_ADMIN_SYSTEM');
+                    console.log('- window.DEBUG_ADMIN_SYSTEM.checkUsers()');
+                    console.log('- window.DEBUG_ADMIN_SYSTEM.createTestUser(username, password)');
+                    console.log('- window.DEBUG_ADMIN_SYSTEM.checkStorage()');
+                    console.log('- window.DEBUG_ADMIN_SYSTEM.clearAllUsers()');
+                }
                 
             } catch (error) {
                 console.error('❌ [MainAdmin] MOUNT_ERROR', { error });
