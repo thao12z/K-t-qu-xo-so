@@ -160,7 +160,267 @@
             </div>
         );
     });
-    
+
+    // ===== CONTACT SETTINGS COMPONENT =====
+    const ContactSettings = memo(() => {
+        const [contactInfo, setContactInfo] = useState({
+            methods: ["Zalo", "Telegram", "Hotline"],
+            zalo_number: "0123.456.789",
+            telegram_username: "@admin_lode_b2b",
+            hotline: "1900.1234",
+            working_hours: "8:00 - 22:00 (Thứ 2 - Chủ Nhật)",
+            payment_methods: ["Chuyển khoản", "Tiền mặt"],
+            notes: [
+                "Tất cả giao dịch mua/gia hạn qua Admin",
+                "Thanh toán trước, kích hoạt ngay",
+                "Hỗ trợ kỹ thuật 24/7 cho gói Enterprise",
+                "Có thể tùy chỉnh gói theo yêu cầu"
+            ],
+            purchase_steps: [
+                { step: 1, title: 'Chọn Gói', desc: 'Chọn gói phù hợp với nhu cầu', icon: '🎯' },
+                { step: 2, title: 'Liên Hệ', desc: 'Liên hệ Admin qua Zalo/Telegram', icon: '📞' },
+                { step: 3, title: 'Xác Nhận', desc: 'Admin xác nhận và báo giá', icon: '✅' },
+                { step: 4, title: 'Thanh Toán', desc: 'Thanh toán theo hướng dẫn', icon: '💰' },
+                { step: 5, title: 'Kích Hoạt', desc: 'Nhận tài khoản và sử dụng', icon: '🚀' }
+            ]
+        });
+        const [isSaving, setIsSaving] = useState(false);
+        const [newPaymentMethod, setNewPaymentMethod] = useState('');
+        const [newNote, setNewNote] = useState('');
+
+        // Load saved contact info
+        useEffect(() => {
+            const savedInfo = localStorage.getItem('adminContactInfo');
+            if (savedInfo) {
+                try {
+                    setContactInfo(JSON.parse(savedInfo));
+                } catch (e) {
+                    console.error('Error loading contact info:', e);
+                }
+            }
+        }, []);
+
+        // Save contact info
+        const handleSave = useCallback(() => {
+            setIsSaving(true);
+            try {
+                if (window.SharedDataService && window.SharedDataService.saveContactInfo) {
+                    window.SharedDataService.saveContactInfo(contactInfo);
+                } else {
+                    localStorage.setItem('adminContactInfo', JSON.stringify(contactInfo));
+                }
+
+                window.GlobalStateManager?.addNotification(
+                    '✅ Contact settings saved successfully',
+                    'success',
+                    'ContactSettings'
+                );
+            } catch (error) {
+                window.GlobalStateManager?.addNotification(
+                    '❌ Failed to save contact settings',
+                    'error',
+                    'ContactSettings'
+                );
+            } finally {
+                setIsSaving(false);
+            }
+        }, [contactInfo]);
+
+        // Add payment method
+        const addPaymentMethod = useCallback(() => {
+            if (newPaymentMethod.trim()) {
+                setContactInfo(prev => ({
+                    ...prev,
+                    payment_methods: [...prev.payment_methods, newPaymentMethod.trim()]
+                }));
+                setNewPaymentMethod('');
+            }
+        }, [newPaymentMethod]);
+
+        // Remove payment method
+        const removePaymentMethod = useCallback((index) => {
+            setContactInfo(prev => ({
+                ...prev,
+                payment_methods: prev.payment_methods.filter((_, i) => i !== index)
+            }));
+        }, []);
+
+        // Add note
+        const addNote = useCallback(() => {
+            if (newNote.trim()) {
+                setContactInfo(prev => ({
+                    ...prev,
+                    notes: [...prev.notes, newNote.trim()]
+                }));
+                setNewNote('');
+            }
+        }, [newNote]);
+
+        // Remove note
+        const removeNote = useCallback((index) => {
+            setContactInfo(prev => ({
+                ...prev,
+                notes: prev.notes.filter((_, i) => i !== index)
+            }));
+        }, []);
+
+        // Update purchase step
+        const updatePurchaseStep = useCallback((index, field, value) => {
+            setContactInfo(prev => ({
+                ...prev,
+                purchase_steps: prev.purchase_steps.map((step, i) =>
+                    i === index ? { ...step, [field]: value } : step
+                )
+            }));
+        }, []);
+
+        return (
+            <div className="space-y-6 p-6">
+                <div className="flex justify-between items-center">
+                    <h1 className="text-2xl font-bold">📞 Contact Settings</h1>
+                    <window.Button
+                        variant="primary"
+                        onClick={handleSave}
+                        disabled={isSaving}
+                    >
+                        {isSaving ? 'Saving...' : '💾 Save Changes'}
+                    </window.Button>
+                </div>
+
+                {/* Contact Information */}
+                <window.Card>
+                    <h2 className="text-lg font-semibold mb-4">📱 Thông Tin Liên Hệ</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Zalo</label>
+                            <window.Input
+                                value={contactInfo.zalo_number}
+                                onChange={(value) => setContactInfo(prev => ({ ...prev, zalo_number: value }))}
+                                placeholder="0123.456.789"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Telegram</label>
+                            <window.Input
+                                value={contactInfo.telegram_username}
+                                onChange={(value) => setContactInfo(prev => ({ ...prev, telegram_username: value }))}
+                                placeholder="@username"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Hotline</label>
+                            <window.Input
+                                value={contactInfo.hotline}
+                                onChange={(value) => setContactInfo(prev => ({ ...prev, hotline: value }))}
+                                placeholder="1900.1234"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Giờ Làm Việc</label>
+                            <window.Input
+                                value={contactInfo.working_hours}
+                                onChange={(value) => setContactInfo(prev => ({ ...prev, working_hours: value }))}
+                                placeholder="8:00 - 22:00"
+                            />
+                        </div>
+                    </div>
+                </window.Card>
+
+                {/* Payment Methods */}
+                <window.Card>
+                    <h2 className="text-lg font-semibold mb-4">💳 Phương Thức Thanh Toán</h2>
+                    <div className="space-y-2 mb-4">
+                        {contactInfo.payment_methods.map((method, index) => (
+                            <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
+                                <span>{method}</span>
+                                <button
+                                    type="button"
+                                    onClick={() => removePaymentMethod(index)}
+                                    className="text-red-600 hover:text-red-800"
+                                >
+                                    🗑️
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                    <div className="flex space-x-2">
+                        <window.Input
+                            value={newPaymentMethod}
+                            onChange={setNewPaymentMethod}
+                            placeholder="Thêm phương thức thanh toán"
+                            className="flex-1"
+                        />
+                        <window.Button type="button" variant="secondary" onClick={addPaymentMethod}>
+                            ➕ Thêm
+                        </window.Button>
+                    </div>
+                </window.Card>
+
+                {/* Important Notes */}
+                <window.Card>
+                    <h2 className="text-lg font-semibold mb-4">⚠️ Lưu Ý Quan Trọng</h2>
+                    <div className="space-y-2 mb-4">
+                        {contactInfo.notes.map((note, index) => (
+                            <div key={index} className="flex items-center justify-between bg-yellow-50 p-2 rounded">
+                                <span className="text-sm">{note}</span>
+                                <button
+                                    type="button"
+                                    onClick={() => removeNote(index)}
+                                    className="text-red-600 hover:text-red-800"
+                                >
+                                    🗑️
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                    <div className="flex space-x-2">
+                        <window.Input
+                            value={newNote}
+                            onChange={setNewNote}
+                            placeholder="Thêm lưu ý"
+                            className="flex-1"
+                        />
+                        <window.Button type="button" variant="secondary" onClick={addNote}>
+                            ➕ Thêm
+                        </window.Button>
+                    </div>
+                </window.Card>
+
+                {/* Purchase Steps */}
+                <window.Card>
+                    <h2 className="text-lg font-semibold mb-4">📋 Quy Trình Mua Gói</h2>
+                    <div className="space-y-4">
+                        {contactInfo.purchase_steps.map((step, index) => (
+                            <div key={index} className="bg-blue-50 p-4 rounded-lg">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <span className="text-2xl">{step.icon}</span>
+                                    <span className="font-bold">Bước {step.step}</span>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                                    <window.Input
+                                        value={step.icon}
+                                        onChange={(value) => updatePurchaseStep(index, 'icon', value)}
+                                        placeholder="Icon"
+                                    />
+                                    <window.Input
+                                        value={step.title}
+                                        onChange={(value) => updatePurchaseStep(index, 'title', value)}
+                                        placeholder="Title"
+                                    />
+                                    <window.Input
+                                        value={step.desc}
+                                        onChange={(value) => updatePurchaseStep(index, 'desc', value)}
+                                        placeholder="Description"
+                                    />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </window.Card>
+            </div>
+        );
+    });
+
     // ===== LOGIN COMPONENT =====
     const LoginForm = memo(({ onLogin }) => {
         const [credentials, setCredentials] = useState({ username: '', password: '' });
@@ -374,9 +634,11 @@
                         <window.PackageManagement /> : 
                         <div className="p-6">Package Management module not loaded</div>;
                 case 'notifications':
-                    return window.NotificationSystem ? 
-                        <window.NotificationSystem /> : 
+                    return window.NotificationSystem ?
+                        <window.NotificationSystem /> :
                         <div className="p-6">Notification System module not loaded</div>;
+                case 'contact-settings':
+                    return <ContactSettings />;
                 default:
                     return <Dashboard />;
             }
@@ -390,6 +652,7 @@
             { id: 'payments', label: '💳 Payment Management', icon: '💳' },
             { id: 'payment-config', label: '⚙️ Payment Settings', icon: '⚙️' },
             { id: 'packages', label: '📦 Package Management', icon: '📦' },
+            { id: 'contact-settings', label: '📞 Contact Settings', icon: '📞' },
             { id: 'notifications', label: '🔔 Notifications', icon: '🔔' }
         ];
         

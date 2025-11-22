@@ -564,6 +564,41 @@
             }
         },
 
+        // Get contact info from admin
+        getContactInfo: function() {
+            try {
+                const contactInfoData = localStorage.getItem('adminContactInfo');
+                if (!contactInfoData) {
+                    console.log('📞 No contact info found in localStorage');
+                    return null;
+                }
+
+                const contactInfo = JSON.parse(contactInfoData);
+                console.log('✅ Contact info loaded from admin');
+                return contactInfo;
+            } catch (error) {
+                console.error('❌ Error loading contact info:', error);
+                return null;
+            }
+        },
+
+        // Save contact info (called from admin)
+        saveContactInfo: function(contactInfo) {
+            try {
+                localStorage.setItem('adminContactInfo', JSON.stringify(contactInfo));
+                localStorage.setItem('contactInfo_last_update', new Date().toISOString());
+
+                // Broadcast update
+                this.broadcastUpdate('contact_info_updated', contactInfo);
+
+                console.log('✅ Contact info saved successfully');
+                return { success: true };
+            } catch (error) {
+                console.error('❌ Error saving contact info:', error);
+                return { success: false, error: error.message };
+            }
+        },
+
         // Get payment configuration from admin
         getPaymentConfig: function() {
             try {

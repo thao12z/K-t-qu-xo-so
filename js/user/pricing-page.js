@@ -67,19 +67,37 @@
         };
     };
 
-    const CONTACT_INFO = {
-        methods: ["Zalo", "Telegram", "Hotline"],
-        zalo_number: "0123.456.789",
-        telegram_username: "@admin_lode_b2b",
-        hotline: "1900.1234",
-        working_hours: "8:00 - 22:00 (Thứ 2 - Chủ Nhật)",
-        payment_methods: ["Chuyển khoản", "Tiền mặt"],
-        notes: [
-            "Tất cả giao dịch mua/gia hạn qua Admin",
-            "Thanh toán trước, kích hoạt ngay",
-            "Hỗ trợ kỹ thuật 24/7 cho gói Enterprise",
-            "Có thể tùy chỉnh gói theo yêu cầu"
-        ]
+    // ===== DYNAMIC CONTACT INFO FROM ADMIN =====
+    const getContactInfoFromAdmin = () => {
+        if (window.SharedDataService && window.SharedDataService.getContactInfo) {
+            const adminContactInfo = window.SharedDataService.getContactInfo();
+            if (adminContactInfo) {
+                return adminContactInfo;
+            }
+        }
+
+        // Fallback contact info if SharedDataService not loaded
+        return {
+            methods: ["Zalo", "Telegram", "Hotline"],
+            zalo_number: "0123.456.789",
+            telegram_username: "@admin_lode_b2b",
+            hotline: "1900.1234",
+            working_hours: "8:00 - 22:00 (Thứ 2 - Chủ Nhật)",
+            payment_methods: ["Chuyển khoản", "Tiền mặt"],
+            notes: [
+                "Tất cả giao dịch mua/gia hạn qua Admin",
+                "Thanh toán trước, kích hoạt ngay",
+                "Hỗ trợ kỹ thuật 24/7 cho gói Enterprise",
+                "Có thể tùy chỉnh gói theo yêu cầu"
+            ],
+            purchase_steps: [
+                { step: 1, title: 'Chọn Gói', desc: 'Chọn gói phù hợp với nhu cầu', icon: '🎯' },
+                { step: 2, title: 'Liên Hệ', desc: 'Liên hệ Admin qua Zalo/Telegram', icon: '📞' },
+                { step: 3, title: 'Xác Nhận', desc: 'Admin xác nhận và báo giá', icon: '✅' },
+                { step: 4, title: 'Thanh Toán', desc: 'Thanh toán theo hướng dẫn', icon: '💰' },
+                { step: 5, title: 'Kích Hoạt', desc: 'Nhận tài khoản và sử dụng', icon: '🚀' }
+            ]
+        };
     };
 
     // Pricing Page Component
@@ -88,9 +106,32 @@
         const currentUser = window.AuthService?.getCurrentUser();
         const [selectedPackage, setSelectedPackage] = useState(null);
         const [packages, setPackages] = useState(getPackagesFromAdmin());
+        const [contactInfo, setContactInfo] = useState(getContactInfoFromAdmin());
         const [lastSync, setLastSync] = useState(null);
         const [showPaymentModal, setShowPaymentModal] = useState(false);
         const [paymentConfig, setPaymentConfig] = useState(null);
+
+        // Sync contact info from admin
+        useEffect(() => {
+            const syncContactInfo = () => {
+                const adminContactInfo = getContactInfoFromAdmin();
+                setContactInfo(adminContactInfo);
+            };
+
+            syncContactInfo();
+
+            // Listen for updates
+            const handleStorageChange = (e) => {
+                if (e.key === 'adminContactInfo') {
+                    syncContactInfo();
+                }
+            };
+            window.addEventListener('storage', handleStorageChange);
+
+            return () => {
+                window.removeEventListener('storage', handleStorageChange);
+            };
+        }, []);
 
         const handleBackToLanding = useCallback(() => {
             onNavigate('landing');
@@ -321,7 +362,7 @@
                         React.createElement('div', { className: 'text-center p-6 bg-green-50 rounded-lg border border-green-200' },
                             React.createElement('div', { className: 'text-4xl mb-3' }, '💬'),
                             React.createElement('h3', { className: 'text-xl font-bold text-green-800 mb-2' }, 'Zalo'),
-                            React.createElement('div', { className: 'text-green-700 font-mono text-lg' }, CONTACT_INFO.zalo_number),
+                            React.createElement('div', { className: 'text-green-700 font-mono text-lg' }, contactInfo.zalo_number),
                             React.createElement('div', { className: 'text-sm text-green-600 mt-2' }, 'Phản hồi nhanh nhất')
                         ),
 
@@ -329,7 +370,7 @@
                         React.createElement('div', { className: 'text-center p-6 bg-blue-50 rounded-lg border border-blue-200' },
                             React.createElement('div', { className: 'text-4xl mb-3' }, '✈️'),
                             React.createElement('h3', { className: 'text-xl font-bold text-blue-800 mb-2' }, 'Telegram'),
-                            React.createElement('div', { className: 'text-blue-700 font-mono text-lg' }, CONTACT_INFO.telegram_username),
+                            React.createElement('div', { className: 'text-blue-700 font-mono text-lg' }, contactInfo.telegram_username),
                             React.createElement('div', { className: 'text-sm text-blue-600 mt-2' }, 'Hỗ trợ 24/7')
                         ),
 
@@ -337,7 +378,7 @@
                         React.createElement('div', { className: 'text-center p-6 bg-red-50 rounded-lg border border-red-200' },
                             React.createElement('div', { className: 'text-4xl mb-3' }, '☎️'),
                             React.createElement('h3', { className: 'text-xl font-bold text-red-800 mb-2' }, 'Hotline'),
-                            React.createElement('div', { className: 'text-red-700 font-mono text-lg' }, CONTACT_INFO.hotline),
+                            React.createElement('div', { className: 'text-red-700 font-mono text-lg' }, contactInfo.hotline),
                             React.createElement('div', { className: 'text-sm text-red-600 mt-2' }, 'Gọi trực tiếp')
                         )
                     ),
@@ -349,7 +390,7 @@
                                 React.createElement('span', { className: 'text-2xl' }, '🕐'),
                                 'Giờ Làm Việc'
                             ),
-                            React.createElement('div', { className: 'text-gray-700' }, CONTACT_INFO.working_hours)
+                            React.createElement('div', { className: 'text-gray-700' }, contactInfo.working_hours)
                         ),
 
                         React.createElement('div', { className: 'bg-gray-50 rounded-lg p-6' },
@@ -358,7 +399,7 @@
                                 'Phương Thức Thanh Toán'
                             ),
                             React.createElement('ul', { className: 'text-gray-700 space-y-1' },
-                                CONTACT_INFO.payment_methods.map((method, index) =>
+                                contactInfo.payment_methods.map((method, index) =>
                                     React.createElement('li', { key: index }, `• ${method}`)
                                 )
                             )
@@ -373,13 +414,13 @@
                         'Quy Trình Mua Gói'
                     ),
                     React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-5 gap-4' },
-                        [
+                        (contactInfo.purchase_steps || [
                             { step: 1, title: 'Chọn Gói', desc: 'Chọn gói phù hợp với nhu cầu', icon: '🎯' },
                             { step: 2, title: 'Liên Hệ', desc: 'Liên hệ Admin qua Zalo/Telegram', icon: '📞' },
                             { step: 3, title: 'Xác Nhận', desc: 'Admin xác nhận và báo giá', icon: '✅' },
                             { step: 4, title: 'Thanh Toán', desc: 'Thanh toán theo hướng dẫn', icon: '💰' },
                             { step: 5, title: 'Kích Hoạt', desc: 'Nhận tài khoản và sử dụng', icon: '🚀' }
-                        ].map((item, index) =>
+                        ]).map((item, index) =>
                             React.createElement('div', {
                                 key: index,
                                 className: 'text-center p-4 bg-white rounded-lg shadow-sm'
@@ -401,7 +442,7 @@
                         'Lưu Ý Quan Trọng'
                     ),
                     React.createElement('ul', { className: 'space-y-2 text-yellow-700' },
-                        CONTACT_INFO.notes.map((note, index) =>
+                        contactInfo.notes.map((note, index) =>
                             React.createElement('li', { key: index }, `• ${note}`)
                         )
                     )
