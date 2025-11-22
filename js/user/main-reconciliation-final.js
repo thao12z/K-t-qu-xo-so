@@ -1158,26 +1158,90 @@
             };
         }, [checkPackageAccess]);
         
+        // Ref for debounce timer
+        const validationTimerRef = React.useRef(null);
+
+        // Auto-validate function (debounced)
+        const autoValidate = React.useCallback((text) => {
+            if (!text.trim()) {
+                setValidationResults(null);
+                setShowValidation(false);
+                return;
+            }
+
+            console.log('🔍 [AUTO-VALIDATION] Validating bets...');
+
+            const lines = parseInputText(text);
+
+            const validation = lines.map((line, index) => {
+                const lineNumber = index + 1;
+
+                if (!line.trim()) {
+                    return {
+                        lineNumber,
+                        line,
+                        isValid: true,
+                        error: null,
+                        type: 'empty'
+                    };
+                }
+
+                // Try parsing
+                const result = simpleBetParse(line.trim());
+
+                if (result.success && result.bet) {
+                    return {
+                        lineNumber,
+                        line,
+                        isValid: true,
+                        error: null,
+                        type: result.bet.type,
+                        bet: result.bet
+                    };
+                } else {
+                    return {
+                        lineNumber,
+                        line,
+                        isValid: false,
+                        error: result.error || 'Không thể parse',
+                        type: 'error'
+                    };
+                }
+            });
+
+            setValidationResults(validation);
+            setShowValidation(true);
+
+            const validCount = validation.filter(v => v.isValid && v.line.trim()).length;
+            const errorCount = validation.filter(v => !v.isValid && v.line.trim()).length;
+            console.log(`✅ [AUTO-VALIDATION] Valid: ${validCount}, Errors: ${errorCount}`);
+        }, [parseInputText]);
+
         // Handlers
         const handleBetTextChange = React.useCallback((e) => {
             const newValue = e.target.value;
-            
+
             // Only update if value actually changed
             if (newValue !== betText) {
                 setBetText(newValue);
-                
-                // If text is empty, clear everything
+
+                // Clear previous timer
+                if (validationTimerRef.current) {
+                    clearTimeout(validationTimerRef.current);
+                }
+
+                // If text is empty, clear immediately
                 if (!newValue.trim()) {
                     setValidationResults(null);
                     setShowValidation(false);
-                }
-                // If text changed significantly, clear validation (user needs to re-validate)
-                else if (betText && newValue.trim() !== betText.trim()) {
-                    console.log(`[DEBUG] Text changed, clearing validation. Old: "${betText.trim()}", New: "${newValue.trim()}"`);
-                    setValidationResults(null);
+                } else {
+                    // Auto-validate after 300ms debounce
+                    validationTimerRef.current = setTimeout(() => {
+                        autoValidate(newValue);
+                    }, 300);
                 }
             }
-        }, [betText]);
+        }, [betText, autoValidate]);
 
         // Validation function
         const handleValidateBets = React.useCallback(() => {
@@ -2165,128 +2229,126 @@
                         }, 'Kiểm Tra Cú Pháp')
                     ),
                     
-                    // Textarea with line numbers
-                    React.createElement('div', {className: 'relative'},
-                        React.createElement('div', {className: 'flex'},
-                            // Line numbers
-                            React.createElement('div', {
-                                className: 'bg-[#F8F7F7] border-r border-[#ECECEC] p-3 text-[#7B7B7B] text-sm font-mono min-w-[3rem] text-right select-none',
-                                style: { lineHeight: '1.5' }
-                            }, 
-                                betText.split('\n').map((_, index) => {
-                                    const validation = validationResults?.find(v => v.lineNumber === index + 1);
-                                    const hasError = validation && !validation.isValid;
-                                    return React.createElement('div', { 
-                                        key: index, 
-                                        className: hasError ? 'text-red-500 font-bold' : '',
-                                        title: hasError ? validation.error : ''
-                                    }, index + 1);
-                                }).concat([React.createElement('div', { key: 'end' }, betText.split('\n').length + 1)])
-                            ),
-                            // Textarea with simplified error styling 
-                            React.createElement('div', {className: 'flex-1 relative'},
+                    // Side-by-side: Input và Preview
+                    React.createElement('div', {className: 'grid grid-cols-1 lg:grid-cols-2 gap-4'},
+                        // LEFT: Input textarea
+                        React.createElement('div', {},
+                            React.createElement('div', {className: 'text-sm font-medium text-[#7B7B7B] mb-2'}, 'Nhập cược:'),
+                            React.createElement('div', {className: 'flex border rounded-lg overflow-hidden'},
+                                // Line numbers
+                                React.createElement('div', {
+                                    className: 'bg-[#F8F7F7] border-r border-[#ECECEC] p-3 text-[#7B7B7B] text-sm font-mono min-w-[3rem] text-right select-none',
+                                    style: { lineHeight: '1.5' }
+                                },
+                                    betText.split('\n').map((_, index) =>
+                                        React.createElement('div', { key: index }, index + 1)
+                                    ).concat([React.createElement('div', { key: 'end', className: 'text-[#ECECEC]' }, betText.split('\n').length + 1)])
+                                ),
+                                // Textarea
                                 React.createElement('textarea', {
                                     value: betText,
                                     onChange: handleBetTextChange,
-                                    placeholder: 'Nhập theo format:\nD 16 500k\nL 23 100k\nX2 12 34 200k',
-                                    className: getTextareaClassName(validationResults, betText),
-                                    style: { 
-                                        lineHeight: '1.5', 
-                                        minHeight: '300px',
+                                    placeholder: 'Nhập theo format:\nD 16 500k\nL 23 100k\nX2 12 34 200k\nBC 123 50k',
+                                    className: 'flex-1 p-3 border-0 outline-none resize-none',
+                                    style: {
+                                        lineHeight: '1.5',
+                                        minHeight: '250px',
                                         fontFamily: 'monospace',
                                         fontSize: '14px'
                                     },
                                     spellCheck: false
-                                }),
-                                
-                                // Line-by-line error highlighting overlay
-                                validationResults && React.createElement('div', {
-                                    className: 'absolute inset-0 pointer-events-none',
-                                    style: { 
-                                        padding: '12px',
-                                        lineHeight: '1.5',
-                                        fontFamily: 'monospace',
-                                        fontSize: '14px',
-                                        zIndex: 5
-                                    }
+                                })
+                            )
+                        ),
+
+                        // RIGHT: Preview panel with error highlighting
+                        React.createElement('div', {},
+                            React.createElement('div', {className: 'flex items-center justify-between mb-2'},
+                                React.createElement('span', {className: 'text-sm font-medium text-[#7B7B7B]'}, 'Kiểm tra cú pháp:'),
+                                validationResults && React.createElement('span', {
+                                    className: `text-xs px-2 py-1 rounded ${
+                                        validationResults.filter(v => !v.isValid && v.line.trim()).length > 0
+                                            ? 'bg-red-100 text-red-600'
+                                            : 'bg-green-100 text-green-600'
+                                    }`
                                 },
-                                    betText.split('\n').map((line, index) => {
-                                        const validation = validationResults.find(v => v.lineNumber === index + 1);
-                                        const hasError = validation && !validation.isValid && line.trim();
-                                        
-                                        return React.createElement('div', {
-                                            key: index,
-                                            className: hasError ? 'relative' : '',
-                                            style: { 
-                                                height: '1.5em',
-                                                lineHeight: '1.5',
-                                                backgroundColor: hasError ? 'rgba(239, 68, 68, 0.15)' : 'transparent',
-                                                borderLeft: hasError ? '4px solid #ef4444' : 'none',
-                                                paddingLeft: hasError ? '8px' : '0px',
-                                                marginLeft: hasError ? '-8px' : '0px',
-                                                borderRadius: hasError ? '4px' : 'none',
-                                                border: hasError ? '1px solid rgba(239, 68, 68, 0.3)' : 'none'
-                                            }
-                                        }, hasError ? [
-                                            // Invisible spacer text
-                                            React.createElement('span', {
-                                                key: 'spacer',
-                                                style: { color: 'transparent', userSelect: 'none' }
-                                            }, line || ' '),
-                                            // Red wavy underline at bottom
-                                            React.createElement('div', {
-                                                key: 'underline',
-                                                style: {
-                                                    position: 'absolute',
-                                                    bottom: '1px',
-                                                    left: '8px',
-                                                    right: '8px',
-                                                    height: '2px',
-                                                    backgroundColor: '#ef4444',
-                                                    borderRadius: '1px',
-                                                    opacity: '0.7'
-                                                }
-                                            })
-                                        ] : React.createElement('span', {
-                                            style: { color: 'transparent', userSelect: 'none' }
-                                        }, line || ' '));
-                                    })
-                                ),
-                                
-                                // Error indicators on the right side
-                                validationResults && React.createElement('div', {
-                                    className: 'absolute right-2 top-3 pointer-events-none',
-                                    style: { lineHeight: '1.5', zIndex: 10 }
-                                },
-                                    betText.split('\n').map((line, index) => {
-                                        const validation = validationResults.find(v => v.lineNumber === index + 1);
-                                        const hasError = validation && !validation.isValid && line.trim();
-                                        return React.createElement('div', {
-                                            key: index,
-                                            style: { 
-                                                height: '1.5em',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'flex-end'
-                                            }
-                                        }, hasError && React.createElement('div', {
-                                            title: `Dòng ${index + 1}: ${validation.error}`,
-                                            style: {
-                                                color: '#ef4444',
-                                                fontSize: '12px',
-                                                fontWeight: 'bold',
-                                                backgroundColor: 'white',
-                                                borderRadius: '50%',
-                                                width: '16px',
-                                                height: '16px',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                border: '1px solid #ef4444',
-                                                cursor: 'help'
-                                            }
-                                        }, '!'));
-                                    })
+                                    validationResults.filter(v => !v.isValid && v.line.trim()).length > 0
+                                        ? `${validationResults.filter(v => !v.isValid && v.line.trim()).length} lỗi`
+                                        : '✓ Hợp lệ'
+                                )
+                            ),
+                            React.createElement('div', {
+                                className: 'border rounded-lg overflow-hidden bg-white',
+                                style: { minHeight: '250px' }
+                            },
+                                React.createElement('div', {className: 'flex'},
+                                    // Line numbers with error highlighting
+                                    React.createElement('div', {
+                                        className: 'bg-[#F8F7F7] border-r border-[#ECECEC] p-3 text-sm font-mono min-w-[3rem] text-right select-none',
+                                        style: { lineHeight: '1.5' }
+                                    },
+                                        betText.split('\n').map((line, index) => {
+                                            const validation = validationResults?.find(v => v.lineNumber === index + 1);
+                                            const hasError = validation && !validation.isValid && line.trim();
+                                            return React.createElement('div', {
+                                                key: index,
+                                                className: hasError ? 'text-red-500 font-bold' : 'text-[#7B7B7B]',
+                                                title: hasError ? validation.error : ''
+                                            }, index + 1);
+                                        }).concat([React.createElement('div', { key: 'end', className: 'text-[#ECECEC]' }, betText.split('\n').length + 1)])
+                                    ),
+                                    // Preview content with error underlines
+                                    React.createElement('div', {
+                                        className: 'flex-1 p-3 overflow-x-auto',
+                                        style: {
+                                            lineHeight: '1.5',
+                                            fontFamily: 'monospace',
+                                            fontSize: '14px'
+                                        }
+                                    },
+                                        betText.split('\n').map((line, index) => {
+                                            const validation = validationResults?.find(v => v.lineNumber === index + 1);
+                                            const hasError = validation && !validation.isValid && line.trim();
+                                            const isValid = validation && validation.isValid && line.trim();
+
+                                            return React.createElement('div', {
+                                                key: index,
+                                                className: 'relative group',
+                                                style: { minHeight: '1.5em' }
+                                            },
+                                                // Line content with styling
+                                                React.createElement('span', {
+                                                    className: hasError
+                                                        ? 'text-red-600 border-b-2 border-red-500 border-dashed'
+                                                        : isValid
+                                                            ? 'text-green-700'
+                                                            : 'text-[#7B7B7B]',
+                                                    style: {
+                                                        display: 'inline-block',
+                                                        minWidth: '100%',
+                                                        paddingBottom: hasError ? '2px' : '0'
+                                                    }
+                                                }, line || '\u00A0'),
+                                                // Error tooltip on hover
+                                                hasError && React.createElement('div', {
+                                                    className: 'absolute left-0 top-full mt-1 bg-red-600 text-white text-xs px-2 py-1 rounded shadow-lg z-20 hidden group-hover:block whitespace-nowrap'
+                                                }, validation.error)
+                                            );
+                                        })
+                                    )
+                                )
+                            ),
+                            // Error summary
+                            validationResults && validationResults.filter(v => !v.isValid && v.line.trim()).length > 0 &&
+                            React.createElement('div', {className: 'mt-2 p-2 bg-red-50 border border-red-200 rounded text-sm'},
+                                React.createElement('div', {className: 'font-medium text-red-700 mb-1'}, 'Dòng lỗi:'),
+                                React.createElement('ul', {className: 'text-red-600 text-xs space-y-1'},
+                                    validationResults.filter(v => !v.isValid && v.line.trim()).map(v =>
+                                        React.createElement('li', {key: v.lineNumber},
+                                            React.createElement('span', {className: 'font-bold'}, `Dòng ${v.lineNumber}: `),
+                                            v.error
+                                        )
+                                    )
                                 )
                             )
                         )
