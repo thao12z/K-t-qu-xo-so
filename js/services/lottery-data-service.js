@@ -423,18 +423,18 @@
                     };
                     
                     results = {
-                        dacbiet: [db],
-                        nhat: [g1], 
-                        nhi: [g2_1, g2_2],
-                        ba: parseNumbers(g3_raw, 'G.3'),
-                        tu: parseNumbers(g4_raw, 'G.4'), 
-                        nam: parseNumbers(g5_raw, 'G.5'),
-                        sau: parseNumbers(g6_raw, 'G.6'),
-                        bay: parseNumbers(g7_raw, 'G.7')
+                        giai_dac_biet: [db],
+                        giai_nhat: [g1],
+                        giai_nhi: [g2_1, g2_2],
+                        giai_ba: parseNumbers(g3_raw, 'G.3'),
+                        giai_tu: parseNumbers(g4_raw, 'G.4'),
+                        giai_nam: parseNumbers(g5_raw, 'G.5'),
+                        giai_sau: parseNumbers(g6_raw, 'G.6'),
+                        giai_bay: parseNumbers(g7_raw, 'G.7')
                     };
                     
                     // Special case: if G.7 is still empty, try to find it independently
-                    if (!results.bay || results.bay.length === 0) {
+                    if (!results.giai_bay || results.giai_bay.length === 0) {
                         console.warn('🚨 [DEBUG] G.7 still empty! Trying independent G.7 search...');
                         
                         // Try multiple independent patterns for G.7
@@ -453,21 +453,21 @@
                                 console.log(`🔍 [DEBUG] G.7 found with pattern ${i + 1}:`, match[1]);
                                 const g7Numbers = parseNumbers(match[1], `G.7-Pattern${i + 1}`);
                                 if (g7Numbers.length > 0) {
-                                    results.bay = g7Numbers;
-                                    console.log('[DEBUG] G.7 rescued with independent search!', results.bay);
+                                    results.giai_bay = g7Numbers;
+                                    console.log('[DEBUG] G.7 rescued with independent search!', results.giai_bay);
                                     break;
                                 }
                             }
                         }
-                        
+
                         // Last resort: find ANY numbers at the end of content
-                        if (!results.bay || results.bay.length === 0) {
+                        if (!results.giai_bay || results.giai_bay.length === 0) {
                             console.warn('🚨 [DEBUG] Last resort: looking for numbers at end of text...');
                             const endNumbers = normalized.substring(normalized.length - 200).match(/\d{2,5}/g);
                             if (endNumbers && endNumbers.length > 0) {
                                 console.log('🔍 [DEBUG] Found numbers at end:', endNumbers);
-                                results.bay = endNumbers.slice(-4); // Take last 4 numbers as G.7
-                                console.log('[DEBUG] G.7 rescued from end of text!', results.bay);
+                                results.giai_bay = endNumbers.slice(-4); // Take last 4 numbers as G.7
+                                console.log('[DEBUG] G.7 rescued from end of text!', results.giai_bay);
                             }
                         }
                     }
@@ -496,31 +496,31 @@
                     };
                     
                     results = {
-                        dacbiet: takeGroup('DB|ĐB'),
-                        nhat: takeGroup('G\\.1'),
-                        nhi: takeGroup('G\\.2'), 
-                        ba: takeGroup('G\\.3'),
-                        tu: takeGroup('G\\.4'),
-                        nam: takeGroup('G\\.5'),
-                        sau: takeGroup('G\\.6'),
-                        bay: takeGroup('G\\.7')
+                        giai_dac_biet: takeGroup('DB|ĐB'),
+                        giai_nhat: takeGroup('G\\.1'),
+                        giai_nhi: takeGroup('G\\.2'),
+                        giai_ba: takeGroup('G\\.3'),
+                        giai_tu: takeGroup('G\\.4'),
+                        giai_nam: takeGroup('G\\.5'),
+                        giai_sau: takeGroup('G\\.6'),
+                        giai_bay: takeGroup('G\\.7')
                     };
                 }
 
                 // Validate at least ĐB and G1, and check for G.7
-                if (!results.dacbiet.length || !results.nhat.length) {
+                if (!results.giai_dac_biet || !results.giai_dac_biet.length || !results.giai_nhat || !results.giai_nhat.length) {
                     console.warn('[DEBUG] RSS parsed but insufficient prizes');
                     console.log('📊 [DEBUG] Extracted prizes:', results);
                     return null;
                 }
-                
+
                 // Special check for G.7 (giải 7)
-                if (!results.bay || results.bay.length === 0) {
+                if (!results.giai_bay || results.giai_bay.length === 0) {
                     console.warn('[DEBUG] Missing G.7 (giải 7) - this is critical!');
                     console.log('📊 [DEBUG] Current results:', results);
                     console.log('📝 [DEBUG] Original normalized text for debugging:', normalized);
                 } else {
-                    console.log('[DEBUG] G.7 found with', results.bay.length, 'numbers:', results.bay);
+                    console.log('[DEBUG] G.7 found with', results.giai_bay.length, 'numbers:', results.giai_bay);
                 }
 
                 console.log('Parsed RSS data (robust):', { date: drawDate, results });
@@ -540,7 +540,7 @@
         // Extract all prizes from HTML - IMPROVED VERSION
         extractAllPrizesImproved: function(html, patterns, region) {
             const results = {};
-            const prizeNames = ['dacbiet', 'nhat', 'nhi', 'ba', 'tu', 'nam', 'sau', 'bay'];
+            const prizeNames = ['giai_dac_biet', 'giai_nhat', 'giai_nhi', 'giai_ba', 'giai_tu', 'giai_nam', 'giai_sau', 'giai_bay'];
             
             try {
                 // Use patterns array to extract each prize
