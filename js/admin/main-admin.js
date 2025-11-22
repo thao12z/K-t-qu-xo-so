@@ -6,6 +6,9 @@
     // ===== ADMIN CONFIGURATION =====
     // Production: Set window.ADMIN_CREDENTIALS before loading this script
     // Or use localStorage 'admin_credentials' for persistence
+    const isProductionEnv = window.location.hostname !== 'localhost' &&
+                            window.location.hostname !== '127.0.0.1';
+
     const getAdminConfig = () => {
         // Priority 1: Window config (set by server/deployment)
         if (window.ADMIN_CREDENTIALS) {
@@ -25,8 +28,23 @@
             }
         }
 
-        // Priority 3: Development defaults (CHANGE IN PRODUCTION!)
-        console.warn('⚠️ Using DEFAULT admin credentials - CHANGE IN PRODUCTION!');
+        // Priority 3: Block on production, allow defaults only on localhost
+        if (isProductionEnv) {
+            console.error('❌ PRODUCTION: Admin credentials not configured!');
+            console.error('Set window.ADMIN_CREDENTIALS or use window.setAdminCredentials()');
+            // Return blocked credentials that won't work
+            return {
+                username: '__CREDENTIALS_NOT_SET__',
+                password: '__CHANGE_IN_PRODUCTION__',
+                email: '',
+                fullName: 'Not Configured',
+                phone: '',
+                blocked: true
+            };
+        }
+
+        // Development defaults (only on localhost)
+        console.warn('⚠️ Using DEFAULT admin credentials - localhost only');
         return {
             username: 'admin',
             password: 'admin123',
@@ -479,7 +497,15 @@
                 // Simulate login (in real app, this would be an API call)
                 await new Promise(resolve => setTimeout(resolve, 500));
                 
-                if (credentials.username === ADMIN_CONFIG.username && credentials.password === ADMIN_CONFIG.password) {
+                // Check if credentials are blocked (production without config)
+                if (ADMIN_CONFIG.blocked) {
+                    setErrors({ general: 'Admin credentials not configured. Run window.setAdminCredentials({username, password, ...}) in console.' });
+                    window.GlobalStateManager.addNotification(
+                        '❌ Credentials not configured for production',
+                        'error',
+                        'Authentication'
+                    );
+                } else if (credentials.username === ADMIN_CONFIG.username && credentials.password === ADMIN_CONFIG.password) {
                     window.GlobalStateManager.addNotification(
                         '✅ Login successful',
                         'success',

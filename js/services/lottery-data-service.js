@@ -6,7 +6,15 @@
 (function() {
     'use strict';
 
-    console.log('🎲 Lottery Data Service v3.0.0 - ONLINE REALTIME MODE');
+    // Use ProductionLogger if available (loaded from security-utils.js)
+    const logger = {
+        log: (...args) => window.Logger ? window.Logger.log(...args) : logger.log(...args),
+        warn: (...args) => window.Logger ? window.Logger.warn(...args) : logger.warn(...args),
+        error: (...args) => window.Logger ? window.Logger.error(...args) : logger.error(...args),
+        info: (...args) => window.Logger ? window.Logger.info(...args) : console.info(...args)
+    };
+
+    logger.log('🎲 Lottery Data Service v3.1.0 - ONLINE REALTIME MODE');
 
     const LotteryDataService = {
         // Configuration
@@ -15,7 +23,7 @@
             retryInterval: 30000, // 30 seconds (giảm từ 1 phút)
             maxRetries: 5,
             enableRealTimeUpdates: true,
-            cacheMaxAge: 300000, // 5 minutes cache max age
+            cacheMaxAge: 60000, // 1 minute cache max age (sync với shared-data-service)
             forceOnlineMode: true // Always fetch fresh data
         },
 
@@ -107,7 +115,7 @@
 
         // Initialize service
         init: function() {
-            console.log('🎲 Initializing Lottery Data Service...');
+            logger.log('🎲 Initializing Lottery Data Service...');
             
             // Load cached data
             this.loadCachedData();
@@ -120,7 +128,7 @@
             // Initial data fetch
             this.fetchAllRegions();
             
-            console.log('Lottery Data Service initialized');
+            logger.log('Lottery Data Service initialized');
         },
 
         // Load cached data from localStorage - WITH FRESHNESS CHECK
@@ -136,9 +144,9 @@
                         // Chỉ load cache nếu còn trong max age
                         if (cacheAge < this.config.cacheMaxAge) {
                             this.currentData = { ...this.currentData, ...data };
-                            console.log('📦 Loaded fresh cached data (age: ' + Math.round(cacheAge/1000) + 's)');
+                            logger.log('📦 Loaded fresh cached data (age: ' + Math.round(cacheAge/1000) + 's)');
                         } else {
-                            console.log('⚠️ Cache expired (age: ' + Math.round(cacheAge/1000) + 's), will fetch fresh');
+                            logger.log('⚠️ Cache expired (age: ' + Math.round(cacheAge/1000) + 's), will fetch fresh');
                         }
                     }
                 } else {
@@ -146,7 +154,7 @@
                     if (cachedData) {
                         const data = JSON.parse(cachedData);
                         this.currentData = { ...this.currentData, ...data };
-                        console.log('📦 Loaded cached lottery data:', data.lastUpdate);
+                        logger.log('📦 Loaded cached lottery data:', data.lastUpdate);
                     }
                 }
 
@@ -155,11 +163,11 @@
                     const historicalData = localStorage.getItem('lotteryHistoricalCache');
                     if (historicalData) {
                         this.historicalCache = JSON.parse(historicalData);
-                        console.log('📦 Loaded historical cache with', Object.keys(this.historicalCache).length, 'dates');
+                        logger.log('📦 Loaded historical cache with', Object.keys(this.historicalCache).length, 'dates');
                     }
                 }
             } catch (error) {
-                console.error('Error loading cached lottery data:', error);
+                logger.error('Error loading cached lottery data:', error);
             }
         },
 
@@ -168,21 +176,21 @@
             try {
                 localStorage.setItem('lotteryData', JSON.stringify(this.currentData));
                 localStorage.setItem('lotteryHistoricalCache', JSON.stringify(this.historicalCache));
-                console.log('💾 Saved lottery data to cache');
+                logger.log('💾 Saved lottery data to cache');
             } catch (error) {
-                console.error('Error saving lottery data:', error);
+                logger.error('Error saving lottery data:', error);
             }
         },
 
         // Fetch lottery data for a specific region - MULTIPLE SOURCES + DEBUG
         fetchRegionData: async function(region) {
             if (this.currentData.isUpdating) {
-                console.log('⏳ Already updating, skipping...');
+                logger.log('⏳ Already updating, skipping...');
                 return;
             }
 
             this.currentData.isUpdating = true;
-            console.log(`🎲 [DEBUG] Fetching ${region} lottery data from multiple sources...`);
+            logger.log(`🎲 [DEBUG] Fetching ${region} lottery data from multiple sources...`);
 
             try {
                 const source = this.sources[region];
@@ -190,7 +198,7 @@
                     throw new Error(`Unknown region: ${region}`);
                 }
                 
-                console.log(`🔍 [DEBUG] Available sources for ${region}:`, source.urls.length);
+                logger.log(`🔍 [DEBUG] Available sources for ${region}:`, source.urls.length);
 
                 // Try multiple URLs until one works
                 let lotteryData = null;
@@ -198,7 +206,7 @@
 
                 for (let i = 0; i < source.urls.length; i++) {
                     const url = source.urls[i];
-                    console.log(`🔍 Trying source ${i + 1}/${source.urls.length}: ${url}`);
+                    logger.log(`🔍 Trying source ${i + 1}/${source.urls.length}: ${url}`);
 
                     try {
                         // Try multiple proxies to avoid CORS issues
@@ -214,7 +222,7 @@
                         
                         for (const proxyUrl of proxies) {
                             try {
-                                console.log(`🔗 Trying proxy: ${proxyUrl}`);
+                                logger.log(`🔗 Trying proxy: ${proxyUrl}`);
 
                                 // Implement proper timeout using AbortController
                                 const controller = new AbortController();
@@ -235,14 +243,14 @@
                                 }
 
                                 if (response.ok) {
-                                    console.log(`Proxy successful: ${proxyUrl}`);
+                                    logger.log(`Proxy successful: ${proxyUrl}`);
                                     break;
                                 } else {
                                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                                 }
                             } catch (proxyError) {
                                 const errorMsg = proxyError.name === 'AbortError' ? 'Request timeout' : proxyError.message;
-                                console.warn(`Proxy failed: ${proxyUrl}`, errorMsg);
+                                logger.warn(`Proxy failed: ${proxyUrl}`, errorMsg);
                                 lastProxyError = proxyError;
                                 continue;
                             }
@@ -256,16 +264,16 @@
                         
                         // Check if this is RSS feed (for Miền Bắc)
                         if (url.includes('xosodaiphat.com') && url.includes('.rss')) {
-                            console.log('📡 [DEBUG] Processing RSS feed content...');
+                            logger.log('📡 [DEBUG] Processing RSS feed content...');
                             lotteryData = this.parseRSSFeed(content, region);
                         } else {
-                            console.log('📡 [DEBUG] Processing HTML content...');
+                            logger.log('📡 [DEBUG] Processing HTML content...');
                             lotteryData = this.parseLotteryData(content, source.patterns, region);
                         }
                         
                         if (lotteryData && lotteryData.results) {
-                            console.log(`[DEBUG] Successfully fetched data from source ${i + 1} (${lotteryData.source})`);
-                            console.log(`[DEBUG] Data preview:`, {
+                            logger.log(`[DEBUG] Successfully fetched data from source ${i + 1} (${lotteryData.source})`);
+                            logger.log(`[DEBUG] Data preview:`, {
                                 date: lotteryData.date,
                                 source: lotteryData.source,
                                 prizeCount: Object.keys(lotteryData.results).length,
@@ -274,12 +282,12 @@
                             });
                             break;
                         } else {
-                            console.warn(`[DEBUG] No valid lottery data found in response from source ${i + 1}`);
+                            logger.warn(`[DEBUG] No valid lottery data found in response from source ${i + 1}`);
                             throw new Error('No valid lottery data found in response');
                         }
 
                     } catch (error) {
-                        console.warn(`Source ${i + 1} failed:`, error.message);
+                        logger.warn(`Source ${i + 1} failed:`, error.message);
                         lastError = error;
                         continue;
                     }
@@ -293,12 +301,12 @@
                     if (lotteryData.date) {
                         const cacheKey = `${region}_${lotteryData.date}`;
                         this.historicalCache[cacheKey] = lotteryData;
-                        console.log(`📦 Cached ${region} data for ${lotteryData.date}`);
+                        logger.log(`📦 Cached ${region} data for ${lotteryData.date}`);
                     }
 
                     this.saveData();
 
-                    console.log(`${region} data updated successfully:`, lotteryData);
+                    logger.log(`${region} data updated successfully:`, lotteryData);
                     
                     // Broadcast update
                     this.broadcastUpdate('lottery_data_updated', {
@@ -310,10 +318,10 @@
                 }
 
             } catch (error) {
-                console.error(`Error fetching ${region} data:`, error);
+                logger.error(`Error fetching ${region} data:`, error);
                 
                 // NO FALLBACK DATA - Only real data allowed
-                console.error(`Cannot fetch real data for ${region} - No fallback available`);
+                logger.error(`Cannot fetch real data for ${region} - No fallback available`);
                 throw new Error(`Không thể lấy dữ liệu xổ số thật cho ${region}. Vui lòng thử lại sau.`);
             } finally {
                 this.currentData.isUpdating = false;
@@ -331,7 +339,7 @@
                 const results = this.extractAllPrizesImproved(html, patterns, region);
                 
                 if (!results || Object.keys(results).length === 0) {
-                    console.warn(`No lottery results found for ${region}`);
+                    logger.warn(`No lottery results found for ${region}`);
                     return null;
                 }
 
@@ -344,7 +352,7 @@
                 };
 
             } catch (error) {
-                console.error(`Error parsing ${region} data:`, error);
+                logger.error(`Error parsing ${region} data:`, error);
                 return null;
             }
         },
@@ -352,8 +360,8 @@
         // Parse RSS feed from xosodaiphat.com (robust)
         parseRSSFeed: function(xmlContent, region) {
             try {
-                console.log('📡 [DEBUG] Parsing RSS feed for', region);
-                console.log('📝 [DEBUG] RSS content length:', xmlContent.length);
+                logger.log('📡 [DEBUG] Parsing RSS feed for', region);
+                logger.log('📝 [DEBUG] RSS content length:', xmlContent.length);
                 
                 // Use DOMParser when available (browser)
                 let textContent = '';
@@ -390,8 +398,8 @@
                 }
                 if (!dateMatch) {
                     // If no date found, use today's date as fallback for RSS
-                    console.warn('[DEBUG] RSS: date not found, using today as fallback');
-                    console.log('📝 [DEBUG] Normalized text preview:', normalized.substring(0, 500));
+                    logger.warn('[DEBUG] RSS: date not found, using today as fallback');
+                    logger.log('📝 [DEBUG] Normalized text preview:', normalized.substring(0, 500));
                     const today = new Date();
                     const todayStr = today.toISOString().split('T')[0]; // YYYY-MM-DD
                     const [y, m, d] = todayStr.split('-');
@@ -401,15 +409,15 @@
                 const drawDate = `${y}-${m}-${d}`;
 
                 // EXACT PARSER for "DB: 12421 G.1: 98854 G.2: 59095 - 02817" format
-                                    console.log('🔍 [DEBUG] Raw normalized text (first 1000 chars):', normalized.substring(0, 1000));
-                    console.log('🔍 [DEBUG] Full normalized text length:', normalized.length);
+                                    logger.log('🔍 [DEBUG] Raw normalized text (first 1000 chars):', normalized.substring(0, 1000));
+                    logger.log('🔍 [DEBUG] Full normalized text length:', normalized.length);
                     
                     // SPECIAL DEBUG for G.7 location
                     const g7Index = normalized.indexOf('G.7');
-                    console.log('🔍 [DEBUG] G.7 position in text:', g7Index);
+                    logger.log('🔍 [DEBUG] G.7 position in text:', g7Index);
                     if (g7Index !== -1) {
                         const g7Context = normalized.substring(Math.max(0, g7Index - 50), g7Index + 100);
-                        console.log('🔍 [DEBUG] G.7 context (±50 chars):', g7Context);
+                        logger.log('🔍 [DEBUG] G.7 context (±50 chars):', g7Context);
                     }
                 
                 // Multiple patterns to try for better G.7 capture
@@ -417,34 +425,34 @@
                 
                 // Alternative pattern if first one fails (more generous G.7 capture)
                 if (!exactMatch) {
-                    console.log('[DEBUG] First pattern failed, trying alternative pattern...');
+                    logger.log('[DEBUG] First pattern failed, trying alternative pattern...');
                     exactMatch = normalized.match(/DB:\s*(\d+)\s+G\.1:\s*(\d+)\s+G\.2:\s*(\d+)\s*-\s*(\d+)\s+G\.3:\s*([\d\s\-]+?)\s+G\.4:\s*([\d\s\-]+?)\s+G\.5:\s*([\d\s\-]+?)\s+G\.6:\s*([\d\s\-]+?)\s+G\.7:\s*([\d\s\-]+)$/i);
                 }
                 
                 // Even more aggressive pattern for G.7 - capture everything after G.7:
                 if (!exactMatch) {
-                    console.log('[DEBUG] Both patterns failed, trying super aggressive pattern...');
+                    logger.log('[DEBUG] Both patterns failed, trying super aggressive pattern...');
                     exactMatch = normalized.match(/DB:\s*(\d+)\s+G\.1:\s*(\d+)\s+G\.2:\s*(\d+)\s*-\s*(\d+)\s+G\.3:\s*([\d\s\-]+)\s+G\.4:\s*([\d\s\-]+)\s+G\.5:\s*([\d\s\-]+)\s+G\.6:\s*([\d\s\-]+)\s+G\.7:\s*([\d\s\-]+)$/i);
                 }
                 
                 let results;
                 
                 if (exactMatch) {
-                    console.log('[DEBUG] EXACT MATCH found!', exactMatch);
+                    logger.log('[DEBUG] EXACT MATCH found!', exactMatch);
                     const [, db, g1, g2_1, g2_2, g3_raw, g4_raw, g5_raw, g6_raw, g7_raw] = exactMatch;
                     
-                    console.log('🔍 [DEBUG] Raw groups extracted:', {
+                    logger.log('🔍 [DEBUG] Raw groups extracted:', {
                         db, g1, g2_1, g2_2, g3_raw, g4_raw, g5_raw, g6_raw, g7_raw
                     });
                     
                     // Parse multi-number groups - SUPER IMPROVED
                     const parseNumbers = (raw, groupName) => {
                         if (!raw) {
-                            console.warn(`[DEBUG] Empty raw data for ${groupName}`);
+                            logger.warn(`[DEBUG] Empty raw data for ${groupName}`);
                             return [];
                         }
                         
-                        console.log(`🔍 [DEBUG] Processing ${groupName} raw data: "${raw}"`);
+                        logger.log(`🔍 [DEBUG] Processing ${groupName} raw data: "${raw}"`);
                         
                         // Multiple parsing strategies
                         let numbers = [];
@@ -458,7 +466,7 @@
                         // Use the strategy that gives more numbers
                         numbers = strategy1.length >= strategy2.length ? strategy1 : strategy2;
                         
-                        console.log(`🔍 [DEBUG] Parsed ${groupName}: "${raw}" -> [${numbers.join(', ')}] (using ${strategy1.length >= strategy2.length ? 'strategy1' : 'strategy2'})`);
+                        logger.log(`🔍 [DEBUG] Parsed ${groupName}: "${raw}" -> [${numbers.join(', ')}] (using ${strategy1.length >= strategy2.length ? 'strategy1' : 'strategy2'})`);
                         return numbers;
                     };
                     
@@ -475,7 +483,7 @@
                     
                     // Special case: if G.7 is still empty, try to find it independently
                     if (!results.giai_bay || results.giai_bay.length === 0) {
-                        console.warn('🚨 [DEBUG] G.7 still empty! Trying independent G.7 search...');
+                        logger.warn('🚨 [DEBUG] G.7 still empty! Trying independent G.7 search...');
                         
                         // Try multiple independent patterns for G.7
                         const g7Patterns = [
@@ -490,11 +498,11 @@
                             const pattern = g7Patterns[i];
                             const match = normalized.match(pattern);
                             if (match && match[1]) {
-                                console.log(`🔍 [DEBUG] G.7 found with pattern ${i + 1}:`, match[1]);
+                                logger.log(`🔍 [DEBUG] G.7 found with pattern ${i + 1}:`, match[1]);
                                 const g7Numbers = parseNumbers(match[1], `G.7-Pattern${i + 1}`);
                                 if (g7Numbers.length > 0) {
                                     results.giai_bay = g7Numbers;
-                                    console.log('[DEBUG] G.7 rescued with independent search!', results.giai_bay);
+                                    logger.log('[DEBUG] G.7 rescued with independent search!', results.giai_bay);
                                     break;
                                 }
                             }
@@ -502,20 +510,20 @@
 
                         // Last resort: find ANY numbers at the end of content
                         if (!results.giai_bay || results.giai_bay.length === 0) {
-                            console.warn('🚨 [DEBUG] Last resort: looking for numbers at end of text...');
+                            logger.warn('🚨 [DEBUG] Last resort: looking for numbers at end of text...');
                             const endNumbers = normalized.substring(normalized.length - 200).match(/\d{2,5}/g);
                             if (endNumbers && endNumbers.length > 0) {
-                                console.log('🔍 [DEBUG] Found numbers at end:', endNumbers);
+                                logger.log('🔍 [DEBUG] Found numbers at end:', endNumbers);
                                 results.giai_bay = endNumbers.slice(-4); // Take last 4 numbers as G.7
-                                console.log('[DEBUG] G.7 rescued from end of text!', results.giai_bay);
+                                logger.log('[DEBUG] G.7 rescued from end of text!', results.giai_bay);
                             }
                         }
                     }
                     
-                    console.log('[DEBUG] Final parsed results:', results);
+                    logger.log('[DEBUG] Final parsed results:', results);
                 } else {
                     // Fallback: extract individual numbers
-                    console.log('[DEBUG] Using fallback extraction method');
+                    logger.log('[DEBUG] Using fallback extraction method');
                     const takeGroup = (label) => {
                         // Special handling for G.7 - it's often at the end of content
                         let pattern;
@@ -528,10 +536,10 @@
                         const m = normalized.match(pattern);
                         if (m && m[1]) {
                             const numbers = m[1].split(/[\-\s]+/).map(s => s.trim()).filter(s => /^\d{2,5}$/.test(s));
-                            console.log(`🔍 [DEBUG] Fallback - Extracted ${label}: "${m[1]}" -> [${numbers.join(', ')}]`);
+                            logger.log(`🔍 [DEBUG] Fallback - Extracted ${label}: "${m[1]}" -> [${numbers.join(', ')}]`);
                             return numbers;
                         }
-                        console.log(`🔍 [DEBUG] No numbers found for ${label}`);
+                        logger.log(`🔍 [DEBUG] No numbers found for ${label}`);
                         return [];
                     };
                     
@@ -549,21 +557,21 @@
 
                 // Validate at least ĐB and G1, and check for G.7
                 if (!results.giai_dac_biet || !results.giai_dac_biet.length || !results.giai_nhat || !results.giai_nhat.length) {
-                    console.warn('[DEBUG] RSS parsed but insufficient prizes');
-                    console.log('📊 [DEBUG] Extracted prizes:', results);
+                    logger.warn('[DEBUG] RSS parsed but insufficient prizes');
+                    logger.log('📊 [DEBUG] Extracted prizes:', results);
                     return null;
                 }
 
                 // Special check for G.7 (giải 7)
                 if (!results.giai_bay || results.giai_bay.length === 0) {
-                    console.warn('[DEBUG] Missing G.7 (giải 7) - this is critical!');
-                    console.log('📊 [DEBUG] Current results:', results);
-                    console.log('📝 [DEBUG] Original normalized text for debugging:', normalized);
+                    logger.warn('[DEBUG] Missing G.7 (giải 7) - this is critical!');
+                    logger.log('📊 [DEBUG] Current results:', results);
+                    logger.log('📝 [DEBUG] Original normalized text for debugging:', normalized);
                 } else {
-                    console.log('[DEBUG] G.7 found with', results.giai_bay.length, 'numbers:', results.giai_bay);
+                    logger.log('[DEBUG] G.7 found with', results.giai_bay.length, 'numbers:', results.giai_bay);
                 }
 
-                console.log('Parsed RSS data (robust):', { date: drawDate, results });
+                logger.log('Parsed RSS data (robust):', { date: drawDate, results });
                 return {
                     region,
                     date: drawDate,
@@ -572,7 +580,7 @@
                     source: 'rss_official'
                 };
             } catch (error) {
-                console.error('Error parsing RSS feed (robust):', error);
+                logger.error('Error parsing RSS feed (robust):', error);
                 return null;
             }
         },
@@ -596,15 +604,15 @@
 
                 // Validate that we have at least some prizes
                 if (Object.keys(results).length === 0) {
-                    console.warn(`No prizes extracted for ${region}`);
+                    logger.warn(`No prizes extracted for ${region}`);
                     return null;
                 }
 
-                console.log(`Extracted ${region} results:`, results);
+                logger.log(`Extracted ${region} results:`, results);
                 return results;
 
             } catch (error) {
-                console.error(`Error extracting prizes for ${region}:`, error);
+                logger.error(`Error extracting prizes for ${region}:`, error);
                 return null;
             }
         },
@@ -619,13 +627,13 @@
                         return numMatch ? numMatch[0] : null;
                     }).filter(num => num !== null);
                     
-                    console.log(`Extracted ${prizeName}:`, numbers);
+                    logger.log(`Extracted ${prizeName}:`, numbers);
                     return numbers;
                 }
-                console.warn(`No matches found for ${prizeName}`);
+                logger.warn(`No matches found for ${prizeName}`);
                 return null;
             } catch (error) {
-                console.error(`Error extracting ${prizeName}:`, error);
+                logger.error(`Error extracting ${prizeName}:`, error);
                 return null;
             }
         },
@@ -634,22 +642,22 @@
 
         // Fetch data for all regions
         fetchAllRegions: async function() {
-            console.log('🎲 Fetching all regions...');
+            logger.log('🎲 Fetching all regions...');
             
             const regions = Object.keys(this.sources);
             const promises = regions.map(region => this.fetchRegionData(region));
             
             try {
                 await Promise.allSettled(promises);
-                console.log('All regions fetched');
+                logger.log('All regions fetched');
             } catch (error) {
-                console.error('Error fetching all regions:', error);
+                logger.error('Error fetching all regions:', error);
             }
         },
 
         // Start real-time updates with smart timing
         startRealTimeUpdates: function() {
-            console.log('🔄 Starting real-time lottery updates...');
+            logger.log('🔄 Starting real-time lottery updates...');
 
             // Clear any existing intervals first
             this.stopRealTimeUpdates();
@@ -673,7 +681,7 @@
 
                     // If we don't have today's data, or data is stale, fetch immediately
                     if (!currentData || currentData.date !== todayStr || !this.isDataFresh()) {
-                        console.log('🚨 [SMART UPDATE] Post-6:30 PM: Fetching latest lottery data...');
+                        logger.log('🚨 [SMART UPDATE] Post-6:30 PM: Fetching latest lottery data...');
                         this.fetchAllRegions();
                     }
                 }
@@ -685,13 +693,13 @@
         stopRealTimeUpdates: function() {
             this._intervals.forEach(id => clearInterval(id));
             this._intervals = [];
-            console.log('🛑 Stopped real-time lottery updates');
+            logger.log('🛑 Stopped real-time lottery updates');
         },
 
         // Get current lottery data
         getCurrentData: function(region = null) {
             if (region) {
-                console.log(`🔍 [DEBUG] Getting current data for ${region}:`, this.currentData[region] ? 'Available' : 'Not Available');
+                logger.log(`🔍 [DEBUG] Getting current data for ${region}:`, this.currentData[region] ? 'Available' : 'Not Available');
                 return this.currentData[region];
             }
             return this.currentData;
@@ -699,14 +707,14 @@
 
         // Get lottery data for a specific date - ONLINE REALTIME VERSION
         getDataForDate: async function(date, region = null) {
-            console.log(`🌐 [ONLINE getDataForDate] Called with date: "${date}", region: "${region || 'bac'}"`);
+            logger.log(`🌐 [ONLINE getDataForDate] Called with date: "${date}", region: "${region || 'bac'}"`);
 
             const regionKey = region || 'bac';
             const today = new Date().toISOString().split('T')[0];
 
             // ONLINE MODE: Always try to fetch fresh data first
             if (this.config.forceOnlineMode) {
-                console.log(`🌐 [ONLINE MODE] Fetching fresh RSS data for ${date}...`);
+                logger.log(`🌐 [ONLINE MODE] Fetching fresh RSS data for ${date}...`);
 
                 // Check short-term cache first (within 1 minute)
                 const cacheKey = `${regionKey}_${date}`;
@@ -716,7 +724,7 @@
 
                     // Cache valid for 1 minute in online mode
                     if (cacheAge < 60000) {
-                        console.log(`📦 Using fresh cache (${Math.round(cacheAge/1000)}s old) for ${date}`);
+                        logger.log(`📦 Using fresh cache (${Math.round(cacheAge/1000)}s old) for ${date}`);
                         return cachedData;
                     }
                 }
@@ -725,16 +733,16 @@
                 try {
                     const freshData = await this.fetchRSSForDate(date, regionKey);
                     if (freshData) {
-                        console.log(`✅ [ONLINE] Got fresh data for ${date}:`, freshData.results.giai_dac_biet);
+                        logger.log(`✅ [ONLINE] Got fresh data for ${date}:`, freshData.results.giai_dac_biet);
                         return freshData;
                     }
                 } catch (error) {
-                    console.error(`❌ [ONLINE] Failed to fetch ${date}:`, error);
+                    logger.error(`❌ [ONLINE] Failed to fetch ${date}:`, error);
                 }
 
                 // Fallback to any cached data if online fetch failed
                 if (this.historicalCache && this.historicalCache[cacheKey]) {
-                    console.log(`⚠️ [ONLINE] Using stale cache for ${date} (fetch failed)`);
+                    logger.log(`⚠️ [ONLINE] Using stale cache for ${date} (fetch failed)`);
                     return this.historicalCache[cacheKey];
                 }
 
@@ -744,7 +752,7 @@
                     return currentData;
                 }
 
-                console.log(`❌ [ONLINE] No data available for ${date}`);
+                logger.log(`❌ [ONLINE] No data available for ${date}`);
                 return null;
             }
 
@@ -755,14 +763,14 @@
 
             // Check if we have data for the specific date
             if (currentData && currentData.date === date) {
-                console.log(`Found exact data for ${date}`);
+                logger.log(`Found exact data for ${date}`);
                 return currentData;
             }
 
             // Check historical cache
             const cacheKey = `${regionKey}_${date}`;
             if (this.historicalCache && this.historicalCache[cacheKey]) {
-                console.log(`📦 Found cached data for ${date}`);
+                logger.log(`📦 Found cached data for ${date}`);
                 return this.historicalCache[cacheKey];
             }
 
@@ -774,7 +782,7 @@
 
             // For past dates - try to fetch from RSS
             if (isPastDate || isToday) {
-                console.log(`📅 Fetching RSS for date ${date}`);
+                logger.log(`📅 Fetching RSS for date ${date}`);
 
                 // Try to fetch fresh
                 try {
@@ -783,7 +791,7 @@
                         return freshData;
                     }
                 } catch (error) {
-                    console.error(`Failed to fetch RSS for ${date}:`, error);
+                    logger.error(`Failed to fetch RSS for ${date}:`, error);
                 }
 
                 // Return current data if matches
@@ -796,7 +804,7 @@
 
             // For future dates
             if (isFutureDate) {
-                console.log(`🚫 Future date ${date} - not allowed`);
+                logger.log(`🚫 Future date ${date} - not allowed`);
                 return null;
             }
 
@@ -821,7 +829,7 @@
             // Trigger async fetch in background
             this.fetchRSSForDate(date, regionKey).then(data => {
                 if (data) {
-                    console.log(`Background fetch completed for ${date}`);
+                    logger.log(`Background fetch completed for ${date}`);
                 }
             });
 
@@ -844,19 +852,19 @@
             if (isAfter630PM) {
                 // More aggressive freshness check after 6:30 PM
                 const freshThreshold = 10; // 10 minutes
-                console.log(`🕐 [FRESHNESS] After 6:30 PM: Data age ${diffMinutes.toFixed(1)} min (threshold: ${freshThreshold} min)`);
+                logger.log(`🕐 [FRESHNESS] After 6:30 PM: Data age ${diffMinutes.toFixed(1)} min (threshold: ${freshThreshold} min)`);
                 return diffMinutes < freshThreshold;
             } else {
                 // Normal freshness check (1 hour)
                 const freshThreshold = 60; // 60 minutes
-                console.log(`🕐 [FRESHNESS] Before 6:30 PM: Data age ${diffMinutes.toFixed(1)} min (threshold: ${freshThreshold} min)`);
+                logger.log(`🕐 [FRESHNESS] Before 6:30 PM: Data age ${diffMinutes.toFixed(1)} min (threshold: ${freshThreshold} min)`);
                 return diffMinutes < freshThreshold;
             }
         },
 
         // Manual refresh
         refresh: function() {
-            console.log('🔄 Manual refresh requested');
+            logger.log('🔄 Manual refresh requested');
             this.fetchAllRegions();
         },
 
@@ -868,36 +876,36 @@
             });
             window.dispatchEvent(customEvent);
             
-            console.log(`📡 Broadcasted ${event}:`, data);
+            logger.log(`📡 Broadcasted ${event}:`, data);
         },
 
         // Test function
         // Force refresh data - bypass cache completely
         forceRefresh: function() {
-            console.log('🔄 [DEBUG] FORCING FRESH FETCH - clearing all cache');
+            logger.log('🔄 [DEBUG] FORCING FRESH FETCH - clearing all cache');
             this.currentData = {};
             this.currentData.isUpdating = false;
             localStorage.removeItem('lotteryData');
-            console.log('🔄 [DEBUG] Cache cleared, fetching fresh RSS data...');
+            logger.log('🔄 [DEBUG] Cache cleared, fetching fresh RSS data...');
             return this.fetchRegionData('bac');
         },
 
         test: function() {
-            console.log('🧪 Testing Lottery Data Service...');
+            logger.log('🧪 Testing Lottery Data Service...');
             
             // Test real data fetching only
-            console.log('Testing real data fetching...');
+            logger.log('Testing real data fetching...');
             
             // Test data freshness
             const isFresh = this.isDataFresh();
-            console.log('Data freshness check:', isFresh);
+            logger.log('Data freshness check:', isFresh);
             
             return true;
         },
 
         // Fetch RSS data for specific date - REALTIME ONLINE
         fetchRSSForDate: async function(date, region = 'bac') {
-            console.log(`🌐 [ONLINE] Fetching RSS for date: ${date}, region: ${region}`);
+            logger.log(`🌐 [ONLINE] Fetching RSS for date: ${date}, region: ${region}`);
 
             try {
                 // RSS URL cho ngày cụ thể
@@ -913,7 +921,7 @@
 
                 for (const proxyUrl of proxies) {
                     try {
-                        console.log(`🔗 Trying proxy: ${proxyUrl}`);
+                        logger.log(`🔗 Trying proxy: ${proxyUrl}`);
 
                         const controller = new AbortController();
                         const timeoutId = setTimeout(() => controller.abort(), 15000);
@@ -932,11 +940,11 @@
                         }
 
                         if (response.ok) {
-                            console.log(`✅ Proxy success: ${proxyUrl}`);
+                            logger.log(`✅ Proxy success: ${proxyUrl}`);
                             break;
                         }
                     } catch (proxyError) {
-                        console.warn(`Proxy failed: ${proxyUrl}`, proxyError.message);
+                        logger.warn(`Proxy failed: ${proxyUrl}`, proxyError.message);
                         continue;
                     }
                 }
@@ -954,13 +962,13 @@
                     this.historicalCache[cacheKey] = lotteryData;
                     this.saveData();
 
-                    console.log(`✅ Fetched RSS data for ${date}:`, lotteryData.results.giai_dac_biet);
+                    logger.log(`✅ Fetched RSS data for ${date}:`, lotteryData.results.giai_dac_biet);
                     return lotteryData;
                 }
 
                 return null;
             } catch (error) {
-                console.error(`❌ Failed to fetch RSS for ${date}:`, error);
+                logger.error(`❌ Failed to fetch RSS for ${date}:`, error);
                 return null;
             }
         },
@@ -972,7 +980,7 @@
                 const xml = parser.parseFromString(xmlContent, 'text/xml');
                 const items = xml.getElementsByTagName('item');
 
-                console.log(`📡 Found ${items.length} RSS items, looking for date: ${targetDate}`);
+                logger.log(`📡 Found ${items.length} RSS items, looking for date: ${targetDate}`);
 
                 for (let i = 0; i < items.length; i++) {
                     const item = items[i];
@@ -989,10 +997,10 @@
                         const [_, d, m, y] = dateMatch;
                         const itemDate = `${y}-${m}-${d}`;
 
-                        console.log(`📅 RSS item ${i} date: ${itemDate}`);
+                        logger.log(`📅 RSS item ${i} date: ${itemDate}`);
 
                         if (itemDate === targetDate) {
-                            console.log(`✅ Found matching date: ${targetDate}`);
+                            logger.log(`✅ Found matching date: ${targetDate}`);
                             // Parse this item's data
                             return this.parseRSSItemContent(normalized, region, targetDate);
                         }
@@ -1004,14 +1012,14 @@
                     const firstDesc = items[0].getElementsByTagName('description')[0];
                     if (firstDesc && firstDesc.textContent) {
                         const normalized = firstDesc.textContent.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-                        console.log(`⚠️ Date ${targetDate} not in RSS, using latest data`);
+                        logger.log(`⚠️ Date ${targetDate} not in RSS, using latest data`);
                         return this.parseRSSItemContent(normalized, region, null);
                     }
                 }
 
                 return null;
             } catch (error) {
-                console.error('Error parsing RSS for date:', error);
+                logger.error('Error parsing RSS for date:', error);
                 return null;
             }
         },
@@ -1053,7 +1061,7 @@
                     giai_bay: parseNumbers(g7_raw)
                 };
             } else {
-                console.warn('Cannot parse RSS content format');
+                logger.warn('Cannot parse RSS content format');
                 return null;
             }
 
@@ -1117,7 +1125,7 @@
         getKnownRSSData: function(date, region = 'bac') {
             // ONLINE MODE: Always return null to force fresh RSS fetch
             if (this.config.forceOnlineMode) {
-                console.log(`🌐 [ONLINE] getKnownRSSData disabled - use fetchRSSForDate instead`);
+                logger.log(`🌐 [ONLINE] getKnownRSSData disabled - use fetchRSSForDate instead`);
                 return null;
             }
 
@@ -1133,13 +1141,13 @@
         // Toggle online/offline mode
         setOnlineMode: function(enabled) {
             this.config.forceOnlineMode = enabled;
-            console.log(`🌐 Online mode: ${enabled ? 'ENABLED' : 'DISABLED'}`);
+            logger.log(`🌐 Online mode: ${enabled ? 'ENABLED' : 'DISABLED'}`);
 
             if (enabled) {
                 // Clear old cache when enabling online mode
                 this.historicalCache = {};
                 localStorage.removeItem('lotteryHistoricalCache');
-                console.log('📦 Cleared historical cache for online mode');
+                logger.log('📦 Cleared historical cache for online mode');
             }
         },
 
@@ -1165,7 +1173,7 @@
     // Export to global scope
     window.LotteryDataService = LotteryDataService;
     
-    console.log('Lottery Data Service loaded successfully');
+    logger.log('Lottery Data Service loaded successfully');
 
 })();
 
