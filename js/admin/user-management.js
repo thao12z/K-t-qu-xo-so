@@ -270,7 +270,7 @@
                     {/* Conditional Package Selection for Users */}
                     {formData.role === 'user' && (
                         <div className="border-t pt-4">
-                            <h4 className="font-medium text-gray-700 mb-3">📦 Subscription Settings</h4>
+                            <h4 className="font-medium text-[#121212] mb-3">📦 Subscription Settings</h4>
                             
                             <window.Select
                                 label="Subscription Package"
@@ -315,9 +315,9 @@
                     {/* Admin Info */}
                     {formData.role === 'admin' && (
                         <div className="border-t pt-4">
-                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                                <h4 className="font-medium text-blue-800 mb-2">👑 Admin Privileges</h4>
-                                <ul className="text-sm text-blue-700 space-y-1">
+                            <div className="bg-[#FFF3EE] border border-[#E36323]/20 rounded-lg p-4">
+                                <h4 className="font-medium text-[#E36323] mb-2">👑 Admin Privileges</h4>
+                                <ul className="text-sm text-[#E36323] space-y-1">
                                     <li>• Full user management access</li>
                                     <li>• Payment approval capabilities</li>
                                     <li>• System configuration access</li>
@@ -525,80 +525,80 @@
             <window.Modal isOpen={isOpen} onClose={onClose} title={`Edit User: ${user.fullName}`}>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     {errors.general && (
-                        <div className="p-3 bg-red-100 text-red-700 rounded text-sm">
+                        <div className="p-3 bg-[#FFF5F5] text-[#FE5938] rounded text-sm">
                             {errors.general}
                         </div>
                     )}
 
                     {/* Username */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Username *</label>
+                        <label className="block text-sm font-medium text-[#121212] mb-1">Username *</label>
                         <input
                             type="text"
                             value={formData.username}
                             onChange={(e) => handleInputChange('username', e.target.value)}
-                            className={`w-full px-3 py-2 border rounded-lg ${errors.username ? 'border-red-500' : 'border-gray-300'}`}
+                            className={`w-full px-3 py-2 border rounded-lg ${errors.username ? 'border-[#FE5938]' : 'border-[#E2E2E2]'}`}
                         />
-                        {errors.username && <p className="mt-1 text-sm text-red-500">{errors.username}</p>}
+                        {errors.username && <p className="mt-1 text-sm text-[#FE5938]">{errors.username}</p>}
                     </div>
 
                     {/* Email */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                        <label className="block text-sm font-medium text-[#121212] mb-1">Email *</label>
                         <input
                             type="email"
                             value={formData.email}
                             onChange={(e) => handleInputChange('email', e.target.value)}
-                            className={`w-full px-3 py-2 border rounded-lg ${errors.email ? 'border-red-500' : 'border-gray-300'}`}
+                            className={`w-full px-3 py-2 border rounded-lg ${errors.email ? 'border-[#FE5938]' : 'border-[#E2E2E2]'}`}
                         />
-                        {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email}</p>}
+                        {errors.email && <p className="mt-1 text-sm text-[#FE5938]">{errors.email}</p>}
                     </div>
 
                     {/* Full Name */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
+                        <label className="block text-sm font-medium text-[#121212] mb-1">Full Name *</label>
                         <input
                             type="text"
                             value={formData.fullName}
                             onChange={(e) => handleInputChange('fullName', e.target.value)}
-                            className={`w-full px-3 py-2 border rounded-lg ${errors.fullName ? 'border-red-500' : 'border-gray-300'}`}
+                            className={`w-full px-3 py-2 border rounded-lg ${errors.fullName ? 'border-[#FE5938]' : 'border-[#E2E2E2]'}`}
                         />
-                        {errors.fullName && <p className="mt-1 text-sm text-red-500">{errors.fullName}</p>}
+                        {errors.fullName && <p className="mt-1 text-sm text-[#FE5938]">{errors.fullName}</p>}
                     </div>
 
                     {/* Phone */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                        <label className="block text-sm font-medium text-[#121212] mb-1">Phone</label>
                         <input
                             type="tel"
                             value={formData.phone}
                             onChange={(e) => handleInputChange('phone', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                            className="w-full px-3 py-2 border border-[#E2E2E2] rounded-lg"
                         />
                     </div>
 
                     {/* Password (optional for edit) */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            New Password <span className="text-gray-400">(leave empty to keep current)</span>
+                        <label className="block text-sm font-medium text-[#121212] mb-1">
+                            New Password <span className="text-[#7B7B7B]">(leave empty to keep current)</span>
                         </label>
                         <input
                             type="password"
                             value={formData.password}
                             onChange={(e) => handleInputChange('password', e.target.value)}
-                            className={`w-full px-3 py-2 border rounded-lg ${errors.password ? 'border-red-500' : 'border-gray-300'}`}
+                            className={`w-full px-3 py-2 border rounded-lg ${errors.password ? 'border-[#FE5938]' : 'border-[#E2E2E2]'}`}
                             placeholder="Enter new password..."
                         />
-                        {errors.password && <p className="mt-1 text-sm text-red-500">{errors.password}</p>}
+                        {errors.password && <p className="mt-1 text-sm text-[#FE5938]">{errors.password}</p>}
                     </div>
 
                     {/* Status */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                        <label className="block text-sm font-medium text-[#121212] mb-1">Status</label>
                         <select
                             value={formData.status}
                             onChange={(e) => handleInputChange('status', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                            className="w-full px-3 py-2 border border-[#E2E2E2] rounded-lg"
                         >
                             <option value="active">Active</option>
                             <option value="pending">Pending</option>
@@ -609,11 +609,11 @@
                     {/* Subscription Package */}
                     {formData.role === 'user' && (
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Subscription Package</label>
+                            <label className="block text-sm font-medium text-[#121212] mb-1">Subscription Package</label>
                             <select
                                 value={formData.subscriptionPackage}
                                 onChange={(e) => handleInputChange('subscriptionPackage', e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                                className="w-full px-3 py-2 border border-[#E2E2E2] rounded-lg"
                             >
                                 <option value="">-- Keep current --</option>
                                 {packages.filter(p => p.active !== false).map(pkg => (
@@ -769,7 +769,7 @@
                                 console.log('🧪 [UserManagement] Running test user creation...');
                                 TestUserManagement.testUserCreation();
                             }}
-                            className="bg-purple-600 hover:bg-purple-700 text-white"
+                            className="bg-[#E36323] hover:bg-[#DF5A18] text-white"
                         >
                             🧪 Test User Creation
                         </window.Button>
@@ -788,30 +788,30 @@
                 <window.Card>
                     <div className="overflow-x-auto">
                         <table className="min-w-full">
-                            <thead className="bg-gray-50">
+                            <thead className="bg-[#F8F7F7]">
                                 <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Package</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Expires</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-[#7B7B7B] uppercase">ID</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-[#7B7B7B] uppercase">User</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-[#7B7B7B] uppercase">Role</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-[#7B7B7B] uppercase">Status</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-[#7B7B7B] uppercase">Package</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-[#7B7B7B] uppercase">Expires</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-[#7B7B7B] uppercase">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody className="bg-white divide-y divide-gray-200">
+                            <tbody className="bg-white divide-y divide-[#ECECEC]">
                                 {users.map((user) => (
                                     <tr key={user.id}>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-[#121212]">
                                             {user.id}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div>
-                                                <div className="font-medium text-gray-900">{user.fullName}</div>
-                                                <div className="text-sm text-gray-500">{user.email}</div>
+                                                <div className="font-medium text-[#121212]">{user.fullName}</div>
+                                                <div className="text-sm text-[#7B7B7B]">{user.email}</div>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-[#121212]">
                                             {user.role === 'admin' ? '👑 Admin' : '👤 User'}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
@@ -819,10 +819,10 @@
                                                 {user.status}
                                             </window.Badge>
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-[#121212]">
                                             {user.subscriptionPackage || 'No package'}
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-[#121212]">
                                             {formatDate(user.subscriptionExpiry)}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
@@ -874,7 +874,7 @@
                         
                         {users.length === 0 && (
                             <div className="text-center py-8">
-                                <p className="text-gray-500">No users found</p>
+                                <p className="text-[#7B7B7B]">No users found</p>
                             </div>
                         )}
                     </div>

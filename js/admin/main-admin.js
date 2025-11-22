@@ -90,8 +90,8 @@
                         <div className="flex items-center">
                             <span className="text-3xl">👥</span>
                             <div className="ml-4">
-                                <p className="text-sm font-medium text-gray-600">Total Users</p>
-                                <p className="text-2xl font-bold text-gray-900">{currentStats.totalUsers}</p>
+                                <p className="text-sm font-medium text-[#7B7B7B]">Total Users</p>
+                                <p className="text-2xl font-bold text-[#121212]">{currentStats.totalUsers}</p>
                             </div>
                         </div>
                     </window.Card>
@@ -100,8 +100,8 @@
                         <div className="flex items-center">
                             <span className="text-3xl">✅</span>
                             <div className="ml-4">
-                                <p className="text-sm font-medium text-gray-600">Active Users</p>
-                                <p className="text-2xl font-bold text-green-900">{currentStats.activeUsers}</p>
+                                <p className="text-sm font-medium text-[#7B7B7B]">Active Users</p>
+                                <p className="text-2xl font-bold text-[#10B981]">{currentStats.activeUsers}</p>
                             </div>
                         </div>
                     </window.Card>
@@ -110,8 +110,8 @@
                         <div className="flex items-center">
                             <span className="text-3xl">💰</span>
                             <div className="ml-4">
-                                <p className="text-sm font-medium text-gray-600">Revenue</p>
-                                <p className="text-2xl font-bold text-green-900">
+                                <p className="text-sm font-medium text-[#7B7B7B]">Revenue</p>
+                                <p className="text-2xl font-bold text-[#10B981]">
                                     {formatCurrency(currentStats.totalRevenue)}
                                 </p>
                             </div>
@@ -122,8 +122,8 @@
                         <div className="flex items-center">
                             <span className="text-3xl">⏳</span>
                             <div className="ml-4">
-                                <p className="text-sm font-medium text-gray-600">Pending Payments</p>
-                                <p className="text-2xl font-bold text-yellow-900">{currentStats.pendingPayments}</p>
+                                <p className="text-sm font-medium text-[#7B7B7B]">Pending Payments</p>
+                                <p className="text-2xl font-bold text-[#F59E0B]">{currentStats.pendingPayments}</p>
                             </div>
                         </div>
                     </window.Card>
@@ -136,17 +136,17 @@
                             {notifications.slice(0, 5).map((notification) => (
                                 <div
                                     key={notification.id}
-                                    className="flex items-start space-x-3 p-3 rounded-lg bg-gray-50"
+                                    className="flex items-start space-x-3 p-3 rounded-lg bg-[#F8F7F7]"
                                 >
                                     <div className="flex-shrink-0">
-                                        {notification.type === 'success' && <span className="text-green-600">✅</span>}
-                                        {notification.type === 'error' && <span className="text-red-600">❌</span>}
-                                        {notification.type === 'warning' && <span className="text-yellow-600">⚠️</span>}
-                                        {notification.type === 'info' && <span className="text-blue-600">ℹ️</span>}
+                                        {notification.type === 'success' && <span className="text-[#10B981]">✅</span>}
+                                        {notification.type === 'error' && <span className="text-[#FE5938]">❌</span>}
+                                        {notification.type === 'warning' && <span className="text-[#F59E0B]">⚠️</span>}
+                                        {notification.type === 'info' && <span className="text-[#E36323]">ℹ️</span>}
                                     </div>
                                     <div className="flex-1">
-                                        <p className="text-sm text-gray-900">{notification.message}</p>
-                                        <p className="text-xs text-gray-500">
+                                        <p className="text-sm text-[#121212]">{notification.message}</p>
+                                        <p className="text-xs text-[#7B7B7B]">
                                             {new Date(notification.timestamp).toLocaleString()}
                                         </p>
                                     </div>
@@ -154,7 +154,7 @@
                             ))}
                         </div>
                     ) : (
-                        <p className="text-gray-500 text-center py-4">No recent activities</p>
+                        <p className="text-[#7B7B7B] text-center py-4">No recent activities</p>
                     )}
                 </window.Card>
             </div>
@@ -292,7 +292,7 @@
                     <h2 className="text-lg font-semibold mb-4">📱 Thông Tin Liên Hệ</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Zalo</label>
+                            <label className="block text-sm font-medium text-[#121212] mb-1">Zalo</label>
                             <window.Input
                                 value={contactInfo.zalo_number}
                                 onChange={(value) => setContactInfo(prev => ({ ...prev, zalo_number: value }))}
@@ -300,7 +300,7 @@
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Telegram</label>
+                            <label className="block text-sm font-medium text-[#121212] mb-1">Telegram</label>
                             <window.Input
                                 value={contactInfo.telegram_username}
                                 onChange={(value) => setContactInfo(prev => ({ ...prev, telegram_username: value }))}
@@ -308,7 +308,7 @@
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Hotline</label>
+                            <label className="block text-sm font-medium text-[#121212] mb-1">Hotline</label>
                             <window.Input
                                 value={contactInfo.hotline}
                                 onChange={(value) => setContactInfo(prev => ({ ...prev, hotline: value }))}
@@ -316,7 +316,7 @@
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Giờ Làm Việc</label>
+                            <label className="block text-sm font-medium text-[#121212] mb-1">Giờ Làm Việc</label>
                             <window.Input
                                 value={contactInfo.working_hours}
                                 onChange={(value) => setContactInfo(prev => ({ ...prev, working_hours: value }))}
@@ -331,12 +331,12 @@
                     <h2 className="text-lg font-semibold mb-4">💳 Phương Thức Thanh Toán</h2>
                     <div className="space-y-2 mb-4">
                         {contactInfo.payment_methods.map((method, index) => (
-                            <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
+                            <div key={index} className="flex items-center justify-between bg-[#F8F7F7] p-2 rounded">
                                 <span>{method}</span>
                                 <button
                                     type="button"
                                     onClick={() => removePaymentMethod(index)}
-                                    className="text-red-600 hover:text-red-800"
+                                    className="text-[#FE5938] hover:text-[#E54A2A]"
                                 >
                                     🗑️
                                 </button>
@@ -361,12 +361,12 @@
                     <h2 className="text-lg font-semibold mb-4">⚠️ Lưu Ý Quan Trọng</h2>
                     <div className="space-y-2 mb-4">
                         {contactInfo.notes.map((note, index) => (
-                            <div key={index} className="flex items-center justify-between bg-yellow-50 p-2 rounded">
+                            <div key={index} className="flex items-center justify-between bg-[#FFF9E6] p-2 rounded">
                                 <span className="text-sm">{note}</span>
                                 <button
                                     type="button"
                                     onClick={() => removeNote(index)}
-                                    className="text-red-600 hover:text-red-800"
+                                    className="text-[#FE5938] hover:text-[#E54A2A]"
                                 >
                                     🗑️
                                 </button>
@@ -391,7 +391,7 @@
                     <h2 className="text-lg font-semibold mb-4">📋 Quy Trình Mua Gói</h2>
                     <div className="space-y-4">
                         {contactInfo.purchase_steps.map((step, index) => (
-                            <div key={index} className="bg-blue-50 p-4 rounded-lg">
+                            <div key={index} className="bg-[#FFF3EE] p-4 rounded-lg">
                                 <div className="flex items-center gap-2 mb-2">
                                     <span className="text-2xl">{step.icon}</span>
                                     <span className="font-bold">Bước {step.step}</span>
@@ -479,20 +479,20 @@
         }, [errors]);
         
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4">
+            <div className="min-h-screen flex items-center justify-center bg-[#F8F7F7] py-12 px-4">
                 <div className="max-w-md w-full space-y-8">
                     <div className="text-center">
-                        <div className="mx-auto h-16 w-16 bg-blue-600 rounded-full flex items-center justify-center mb-4">
+                        <div className="mx-auto h-16 w-16 bg-[#E36323] rounded-full flex items-center justify-center mb-4">
                             <span className="text-white text-2xl font-bold">A</span>
                         </div>
-                        <h2 className="text-3xl font-bold text-gray-900">Admin System</h2>
-                        <p className="text-gray-600 mt-2">Please sign in to continue</p>
+                        <h2 className="text-3xl font-bold text-[#121212]">Admin System</h2>
+                        <p className="text-[#7B7B7B] mt-2">Please sign in to continue</p>
                     </div>
                     
                     <form onSubmit={handleSubmit} className="space-y-6">
                         {errors.general && (
-                            <div className="bg-red-50 border border-red-200 rounded-md p-4">
-                                <p className="text-red-700 text-sm">{errors.general}</p>
+                            <div className="bg-[#FFF5F5] border border-[#FE5938]/20 rounded-md p-4">
+                                <p className="text-[#FE5938] text-sm">{errors.general}</p>
                             </div>
                         )}
                         
@@ -525,7 +525,7 @@
                         </window.Button>
                         
                         <div className="text-center">
-                            <p className="text-xs text-gray-500">
+                            <p className="text-xs text-[#7B7B7B]">
                                 Demo credentials: admin / admin123
                             </p>
                         </div>
@@ -663,11 +663,11 @@
         
         // Main admin interface
         return (
-            <div className="min-h-screen bg-gray-50 flex">
+            <div className="min-h-screen bg-[#F8F7F7] flex">
                 {/* Mobile sidebar overlay */}
                 {sidebarOpen && (
                     <div 
-                        className="fixed inset-0 bg-gray-600 bg-opacity-75 z-40 lg:hidden"
+                        className="fixed inset-0 bg-[#121212] bg-opacity-50 z-40 lg:hidden"
                         onClick={() => setSidebarOpen(false)}
                     />
                 )}
@@ -677,11 +677,11 @@
                     sidebarOpen ? 'translate-x-0' : '-translate-x-full'
                 }`}>
                     {/* Sidebar header */}
-                    <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200">
-                        <h1 className="text-xl font-bold text-gray-900">Admin System</h1>
+                    <div className="flex items-center justify-between h-16 px-6 border-b border-[#ECECEC]">
+                        <h1 className="text-xl font-bold text-[#121212]">Admin System</h1>
                         <button
                             onClick={() => setSidebarOpen(false)}
-                            className="lg:hidden p-2 text-gray-400 hover:text-gray-600"
+                            className="lg:hidden p-2 text-[#7B7B7B] hover:text-[#7B7B7B]"
                         >
                             ✕
                         </button>
@@ -696,8 +696,8 @@
                                     onClick={() => handlePageChange(item.id)}
                                     className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
                                         currentPage === item.id
-                                            ? 'bg-blue-100 text-blue-700 border-r-2 border-blue-500'
-                                            : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                                            ? 'bg-[#FFF3EE] text-[#E36323] border-r-2 border-[#E36323]'
+                                            : 'text-[#7B7B7B] hover:bg-[#F8F7F7] hover:text-[#121212]'
                                     }`}
                                 >
                                     <span className="mr-3">{item.icon}</span>
@@ -708,22 +708,22 @@
                     </nav>
                     
                     {/* User info & logout */}
-                    <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
+                    <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-[#ECECEC]">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center">
-                                <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                                <div className="w-8 h-8 bg-[#E36323] rounded-full flex items-center justify-center">
                                     <span className="text-white text-sm font-medium">
                                         {user?.username?.charAt(0).toUpperCase()}
                                     </span>
                                 </div>
                                 <div className="ml-3">
-                                    <p className="text-sm font-medium text-gray-900">{user?.username}</p>
-                                    <p className="text-xs text-gray-500">Administrator</p>
+                                    <p className="text-sm font-medium text-[#121212]">{user?.username}</p>
+                                    <p className="text-xs text-[#7B7B7B]">Administrator</p>
                                 </div>
                             </div>
                             <button
                                 onClick={handleLogout}
-                                className="p-2 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100"
+                                className="p-2 text-[#7B7B7B] hover:text-[#7B7B7B] rounded-md hover:bg-[#F8F7F7]"
                                 title="Logout"
                             >
                                 🚪
@@ -735,17 +735,17 @@
                 {/* Main content */}
                 <div className="lg:pl-64 flex-1">
                     {/* Top header */}
-                    <div className="bg-white shadow-sm border-b border-gray-200">
+                    <div className="bg-white shadow-sm border-b border-[#ECECEC]">
                         <div className="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
                             <button
                                 onClick={() => setSidebarOpen(true)}
-                                className="lg:hidden p-2 text-gray-400 hover:text-gray-600"
+                                className="lg:hidden p-2 text-[#7B7B7B] hover:text-[#7B7B7B]"
                             >
                                 ☰
                             </button>
                             
                             <div className="flex-1 flex items-center justify-center lg:justify-start">
-                                <h2 className="text-lg font-semibold text-gray-900">
+                                <h2 className="text-lg font-semibold text-[#121212]">
                                     {menuItems.find(item => item.id === currentPage)?.label || 'Dashboard'}
                                 </h2>
                             </div>

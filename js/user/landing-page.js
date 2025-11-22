@@ -257,17 +257,17 @@
             return methods;
         }, [paymentConfig]);
 
-        return React.createElement('div', { className: 'min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100' },
+        return React.createElement('div', { className: 'min-h-screen bg-gradient-to-br from-[#F8F7F7] to-[#FCFCFC]' },
             // Header - Simple logo + login
             React.createElement('header', { className: 'bg-white shadow-sm' },
                 React.createElement('div', { className: 'max-w-7xl mx-auto px-4 py-4' },
                     React.createElement('div', { className: 'flex items-center justify-between' },
                         React.createElement('div', { className: 'flex items-center gap-2' },
                             React.createElement('div', { className: 'text-2xl' }, '🎯'),
-                            React.createElement('h1', { className: 'text-xl font-bold text-gray-800' }, 'Hệ Thống Đối Soát Lô Đề')
+                            React.createElement('h1', { className: 'text-xl font-bold text-[#121212]' }, 'Hệ Thống Đối Soát Lô Đề')
                         ),
                         React.createElement('button', {
-                            className: 'px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium',
+                            className: 'px-4 py-2 bg-[#E36323] text-white rounded-lg hover:bg-[#DF5A18] font-medium',
                             onClick: handleLogin
                         }, 'Đăng Nhập')
                     )
@@ -279,13 +279,13 @@
                 // Admin Contact Info (if available)
                 paymentConfig && React.createElement('div', { className: 'bg-white p-6 rounded-lg shadow-md mb-8' },
                     React.createElement('div', { className: 'text-center' },
-                        React.createElement('h2', { className: 'text-2xl font-bold text-gray-900 mb-4' }, 'Liên Hệ Admin'),
+                        React.createElement('h2', { className: 'text-2xl font-bold text-[#121212] mb-4' }, 'Liên Hệ Admin'),
                         
                         // Telegram info
                         (paymentConfig.telegramId || paymentConfig.bankInfo?.telegramId) && React.createElement('div', { className: 'mb-4' },
-                            React.createElement('p', { className: 'text-gray-600 mb-2' }, 'Telegram Admin:'),
+                            React.createElement('p', { className: 'text-[#7B7B7B] mb-2' }, 'Telegram Admin:'),
                             React.createElement('button', {
-                                className: 'px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-medium inline-flex items-center gap-2',
+                                className: 'px-4 py-2 bg-[#E36323] text-white rounded-lg hover:bg-[#DF5A18] font-medium inline-flex items-center gap-2',
                                 onClick: openTelegram
                             }, 
                                 React.createElement('span', {}, '📱'),
@@ -294,7 +294,7 @@
                         ),
                         
                         // Bank info if available
-                        paymentConfig.bankInfo && paymentConfig.bankInfo.enabled && React.createElement('div', { className: 'text-sm text-gray-600' },
+                        paymentConfig.bankInfo && paymentConfig.bankInfo.enabled && React.createElement('div', { className: 'text-sm text-[#7B7B7B]' },
                             paymentConfig.bankInfo.bankName && React.createElement('p', {}, `Ngân hàng: ${paymentConfig.bankInfo.bankName}`),
                             paymentConfig.bankInfo.accountNumber && React.createElement('p', {}, `STK: ${paymentConfig.bankInfo.accountNumber}`),
                             paymentConfig.bankInfo.accountName && React.createElement('p', {}, `Chủ TK: ${paymentConfig.bankInfo.accountName}`)
@@ -304,27 +304,27 @@
 
                 // Packages Section
                 React.createElement('div', { className: 'mb-8' },
-                    React.createElement('h2', { className: 'text-3xl font-bold text-center text-gray-900 mb-8' }, 'Gói Dịch Vụ'),
+                    React.createElement('h2', { className: 'text-3xl font-bold text-center text-[#121212] mb-8' }, 'Gói Dịch Vụ'),
                     
                     packages.length > 0 ? 
                         React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' },
                             packages.map(pkg => 
                                 React.createElement('div', {
                                     key: pkg.id,
-                                    className: `bg-white rounded-lg shadow-lg p-6 relative ${pkg.popular ? 'ring-2 ring-blue-500 transform scale-105' : ''}`
+                                    className: `bg-white rounded-lg shadow-lg p-6 relative ${pkg.popular ? 'ring-2 ring-[#E36323] transform scale-105' : ''}`
                                 },
                                     // Popular badge
                                     pkg.popular && React.createElement('div', {
-                                        className: 'absolute -top-3 left-1/2 transform -translate-x-1/2 bg-blue-500 text-white px-3 py-1 rounded-full text-sm font-bold'
+                                        className: 'absolute -top-3 left-1/2 transform -translate-x-1/2 bg-[#E36323] text-white px-3 py-1 rounded-full text-sm font-bold'
                                     }, 'PHỔ BIẾN'),
 
                                     // Package info
                                     React.createElement('div', { className: 'text-center mb-6' },
-                                        React.createElement('h3', { className: 'text-xl font-bold text-gray-900 mb-2' }, pkg.name),
-                                        React.createElement('div', { className: 'text-3xl font-bold text-blue-600 mb-2' }, 
+                                        React.createElement('h3', { className: 'text-xl font-bold text-[#121212] mb-2' }, pkg.name),
+                                        React.createElement('div', { className: 'text-3xl font-bold text-[#E36323] mb-2' }, 
                                             formatCurrency(pkg.price)
                                         ),
-                                        React.createElement('div', { className: 'text-sm text-gray-600' }, 
+                                        React.createElement('div', { className: 'text-sm text-[#7B7B7B]' }, 
                                             `Thời hạn: ${pkg.duration} ngày`
                                         )
                                     ),
@@ -334,9 +334,9 @@
                                         pkg.features.map((feature, idx) =>
                                             React.createElement('li', {
                                                 key: idx,
-                                                className: 'flex items-center gap-2 text-sm text-gray-700'
+                                                className: 'flex items-center gap-2 text-sm text-[#121212]'
                                             },
-                                                React.createElement('span', { className: 'text-green-500' }, '✓'),
+                                                React.createElement('span', { className: 'text-[#10B981]' }, '✓'),
                                                 feature
                                             )
                                         )
@@ -346,8 +346,8 @@
                                     React.createElement('button', {
                                         className: `w-full py-3 px-4 rounded-lg font-semibold transition-all ${
                                             pkg.popular 
-                                                ? 'bg-blue-600 text-white hover:bg-blue-700' 
-                                                : 'bg-gray-800 text-white hover:bg-gray-900'
+                                                ? 'bg-[#E36323] text-white hover:bg-[#DF5A18]' 
+                                                : 'bg-[#121212] text-white hover:bg-[#333333]'
                                         }`,
                                         onClick: () => handleBuyPackage(pkg)
                                     }, 'Mua Gói')
@@ -356,9 +356,9 @@
                         ) :
                         React.createElement('div', { className: 'text-center py-16' },
                             React.createElement('div', { className: 'text-6xl mb-4' }, '📦'),
-                            React.createElement('h3', { className: 'text-xl font-semibold text-gray-700 mb-2' }, 'Chưa có gói dịch vụ'),
-                            React.createElement('p', { className: 'text-gray-500 mb-4' }, 'Admin chưa tạo gói dịch vụ nào.'),
-                            paymentConfig && React.createElement('p', { className: 'text-blue-600' }, 'Vui lòng liên hệ Admin qua Telegram để được tư vấn.')
+                            React.createElement('h3', { className: 'text-xl font-semibold text-[#121212] mb-2' }, 'Chưa có gói dịch vụ'),
+                            React.createElement('p', { className: 'text-[#7B7B7B] mb-4' }, 'Admin chưa tạo gói dịch vụ nào.'),
+                            paymentConfig && React.createElement('p', { className: 'text-[#E36323]' }, 'Vui lòng liên hệ Admin qua Telegram để được tư vấn.')
                         )
                 )
             ),
@@ -377,15 +377,15 @@
                                     currentStep === 2 ? 'Thanh toán' : 'Xác nhận'
                                 ),
                                 React.createElement('div', { className: 'flex items-center mt-2 space-x-2' },
-                                    React.createElement('div', { className: `w-3 h-3 rounded-full ${currentStep >= 1 ? 'bg-blue-500' : 'bg-gray-300'}` }),
+                                    React.createElement('div', { className: `w-3 h-3 rounded-full ${currentStep >= 1 ? 'bg-[#E36323]' : 'bg-gray-300'}` }),
                                     React.createElement('div', { className: 'w-8 h-0.5 bg-gray-300' }),
-                                    React.createElement('div', { className: `w-3 h-3 rounded-full ${currentStep >= 2 ? 'bg-blue-500' : 'bg-gray-300'}` }),
+                                    React.createElement('div', { className: `w-3 h-3 rounded-full ${currentStep >= 2 ? 'bg-[#E36323]' : 'bg-gray-300'}` }),
                                     React.createElement('div', { className: 'w-8 h-0.5 bg-gray-300' }),
-                                    React.createElement('div', { className: `w-3 h-3 rounded-full ${currentStep >= 3 ? 'bg-blue-500' : 'bg-gray-300'}` })
+                                    React.createElement('div', { className: `w-3 h-3 rounded-full ${currentStep >= 3 ? 'bg-[#E36323]' : 'bg-gray-300'}` })
                                 )
                             ),
                             React.createElement('button', {
-                                className: 'text-gray-400 hover:text-gray-600 text-2xl',
+                                className: 'text-[#7B7B7B] hover:text-[#7B7B7B] text-2xl',
                                 onClick: handleFormClose
                             }, '×')
                         ),
@@ -393,10 +393,10 @@
                         // Step 1: Registration Form
                         currentStep === 1 && React.createElement('form', { onSubmit: handleRegisterSubmit, className: 'space-y-4' },
                             React.createElement('div', {},
-                                React.createElement('label', { className: 'block text-sm font-medium text-gray-700 mb-1' }, 'Họ tên *'),
+                                React.createElement('label', { className: 'block text-sm font-medium text-[#121212] mb-1' }, 'Họ tên *'),
                                 React.createElement('input', {
                                     type: 'text',
-                                    className: 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500',
+                                    className: 'w-full px-3 py-2 border border-[#E2E2E2] rounded-md focus:outline-none focus:ring-2 focus:ring-[#E36323]',
                                     value: registerData.fullName,
                                     onChange: (e) => handleInputChange('fullName', e.target.value),
                                     required: true
@@ -404,10 +404,10 @@
                             ),
 
                             React.createElement('div', {},
-                                React.createElement('label', { className: 'block text-sm font-medium text-gray-700 mb-1' }, 'Tên đăng nhập *'),
+                                React.createElement('label', { className: 'block text-sm font-medium text-[#121212] mb-1' }, 'Tên đăng nhập *'),
                                 React.createElement('input', {
                                     type: 'text',
-                                    className: 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500',
+                                    className: 'w-full px-3 py-2 border border-[#E2E2E2] rounded-md focus:outline-none focus:ring-2 focus:ring-[#E36323]',
                                     value: registerData.username,
                                     onChange: (e) => handleInputChange('username', e.target.value),
                                     required: true
@@ -415,10 +415,10 @@
                             ),
 
                             React.createElement('div', {},
-                                React.createElement('label', { className: 'block text-sm font-medium text-gray-700 mb-1' }, 'Email *'),
+                                React.createElement('label', { className: 'block text-sm font-medium text-[#121212] mb-1' }, 'Email *'),
                                 React.createElement('input', {
                                     type: 'email',
-                                    className: 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500',
+                                    className: 'w-full px-3 py-2 border border-[#E2E2E2] rounded-md focus:outline-none focus:ring-2 focus:ring-[#E36323]',
                                     value: registerData.email,
                                     onChange: (e) => handleInputChange('email', e.target.value),
                                     required: true
@@ -426,10 +426,10 @@
                             ),
 
                             React.createElement('div', {},
-                                React.createElement('label', { className: 'block text-sm font-medium text-gray-700 mb-1' }, 'Số điện thoại *'),
+                                React.createElement('label', { className: 'block text-sm font-medium text-[#121212] mb-1' }, 'Số điện thoại *'),
                                 React.createElement('input', {
                                     type: 'tel',
-                                    className: 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500',
+                                    className: 'w-full px-3 py-2 border border-[#E2E2E2] rounded-md focus:outline-none focus:ring-2 focus:ring-[#E36323]',
                                     value: registerData.phone,
                                     onChange: (e) => handleInputChange('phone', e.target.value),
                                     required: true
@@ -437,10 +437,10 @@
                             ),
 
                             React.createElement('div', {},
-                                React.createElement('label', { className: 'block text-sm font-medium text-gray-700 mb-1' }, 'Mật khẩu *'),
+                                React.createElement('label', { className: 'block text-sm font-medium text-[#121212] mb-1' }, 'Mật khẩu *'),
                                 React.createElement('input', {
                                     type: 'password',
-                                    className: 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500',
+                                    className: 'w-full px-3 py-2 border border-[#E2E2E2] rounded-md focus:outline-none focus:ring-2 focus:ring-[#E36323]',
                                     value: registerData.password,
                                     onChange: (e) => handleInputChange('password', e.target.value),
                                     required: true
@@ -448,10 +448,10 @@
                             ),
 
                             React.createElement('div', {},
-                                React.createElement('label', { className: 'block text-sm font-medium text-gray-700 mb-1' }, 'Xác nhận mật khẩu *'),
+                                React.createElement('label', { className: 'block text-sm font-medium text-[#121212] mb-1' }, 'Xác nhận mật khẩu *'),
                                 React.createElement('input', {
                                     type: 'password',
-                                    className: 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500',
+                                    className: 'w-full px-3 py-2 border border-[#E2E2E2] rounded-md focus:outline-none focus:ring-2 focus:ring-[#E36323]',
                                     value: registerData.confirmPassword,
                                     onChange: (e) => handleInputChange('confirmPassword', e.target.value),
                                     required: true
@@ -459,12 +459,12 @@
                             ),
 
                             // Package info
-                            React.createElement('div', { className: 'bg-gray-50 p-4 rounded-md' },
-                                React.createElement('h4', { className: 'font-medium text-gray-900 mb-2' }, 'Thông tin gói đã chọn:'),
-                                React.createElement('p', { className: 'text-sm text-gray-600' }, 
+                            React.createElement('div', { className: 'bg-[#F8F7F7] p-4 rounded-md' },
+                                React.createElement('h4', { className: 'font-medium text-[#121212] mb-2' }, 'Thông tin gói đã chọn:'),
+                                React.createElement('p', { className: 'text-sm text-[#7B7B7B]' }, 
                                     `${selectedPackage?.name} - ${formatCurrency(selectedPackage?.price || 0)}`
                                 ),
-                                React.createElement('p', { className: 'text-xs text-gray-500 mt-1' }, 
+                                React.createElement('p', { className: 'text-xs text-[#7B7B7B] mt-1' }, 
                                     `Thời hạn: ${selectedPackage?.duration} ngày`
                                 )
                             ),
@@ -472,38 +472,38 @@
                             React.createElement('div', { className: 'flex gap-3 pt-4' },
                                 React.createElement('button', {
                                     type: 'button',
-                                    className: 'flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50',
+                                    className: 'flex-1 px-4 py-2 border border-[#E2E2E2] text-[#121212] rounded-md hover:bg-[#F8F7F7]',
                                     onClick: handleFormClose
                                 }, 'Hủy'),
                                 React.createElement('button', {
                                     type: 'submit',
-                                    className: 'flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700'
+                                    className: 'flex-1 px-4 py-2 bg-[#E36323] text-white rounded-md hover:bg-[#DF5A18]'
                                 }, 'Tiếp tục')
                             )
                         ),
 
                         // Step 2: Payment Method Selection
                         currentStep === 2 && React.createElement('form', { onSubmit: handlePaymentSubmit, className: 'space-y-4' },
-                            React.createElement('div', { className: 'bg-blue-50 p-4 rounded-md mb-4' },
-                                React.createElement('h4', { className: 'font-medium text-blue-900 mb-2' }, 'Thông tin thanh toán'),
-                                React.createElement('p', { className: 'text-sm text-blue-800' }, 
+                            React.createElement('div', { className: 'bg-[#FFF3EE] p-4 rounded-md mb-4' },
+                                React.createElement('h4', { className: 'font-medium text-[#E36323] mb-2' }, 'Thông tin thanh toán'),
+                                React.createElement('p', { className: 'text-sm text-[#E36323]' }, 
                                     `Gói: ${selectedPackage?.name}`
                                 ),
-                                React.createElement('p', { className: 'text-sm text-blue-800' }, 
+                                React.createElement('p', { className: 'text-sm text-[#E36323]' }, 
                                     `Số tiền: ${formatCurrency(selectedPackage?.price || 0)}`
                                 )
                             ),
 
                             React.createElement('div', {},
-                                React.createElement('label', { className: 'block text-sm font-medium text-gray-700 mb-3' }, 'Chọn phương thức thanh toán *'),
+                                React.createElement('label', { className: 'block text-sm font-medium text-[#121212] mb-3' }, 'Chọn phương thức thanh toán *'),
                                 React.createElement('div', { className: 'space-y-3' },
                                     getAvailablePaymentMethods().map(method => 
                                         React.createElement('div', {
                                             key: method.id,
                                             className: `border rounded-lg p-4 cursor-pointer transition-colors ${
                                                 selectedPaymentMethod?.id === method.id 
-                                                    ? 'border-blue-500 bg-blue-50' 
-                                                    : 'border-gray-300 hover:border-gray-400'
+                                                    ? 'border-blue-500 bg-[#FFF3EE]' 
+                                                    : 'border-[#E2E2E2] hover:border-[#ECECEC]'
                                             }`,
                                             onClick: () => handlePaymentMethodSelect(method)
                                         },
@@ -513,12 +513,12 @@
                                                     name: 'paymentMethod',
                                                     checked: selectedPaymentMethod?.id === method.id,
                                                     onChange: () => handlePaymentMethodSelect(method),
-                                                    className: 'text-blue-600'
+                                                    className: 'text-[#E36323]'
                                                 }),
                                                 React.createElement('span', { className: 'text-2xl' }, method.icon),
                                                 React.createElement('div', {},
-                                                    React.createElement('div', { className: 'font-medium text-gray-900' }, method.name),
-                                                    method.type === 'bank' && method.config && React.createElement('div', { className: 'text-sm text-gray-600' },
+                                                    React.createElement('div', { className: 'font-medium text-[#121212]' }, method.name),
+                                                    method.type === 'bank' && method.config && React.createElement('div', { className: 'text-sm text-[#7B7B7B]' },
                                                         `${method.config.bankName} - ${method.config.accountNumber}`
                                                     )
                                                 )
@@ -529,8 +529,8 @@
                             ),
 
                             // Payment Details
-                            selectedPaymentMethod && React.createElement('div', { className: 'bg-gray-50 p-4 rounded-md' },
-                                React.createElement('h4', { className: 'font-medium text-gray-900 mb-3' }, 'Thông tin chuyển khoản'),
+                            selectedPaymentMethod && React.createElement('div', { className: 'bg-[#F8F7F7] p-4 rounded-md' },
+                                React.createElement('h4', { className: 'font-medium text-[#121212] mb-3' }, 'Thông tin chuyển khoản'),
                                 
                                 selectedPaymentMethod.type === 'bank' && selectedPaymentMethod.config && React.createElement('div', { className: 'space-y-2 text-sm' },
                                     selectedPaymentMethod.config.bankName && React.createElement('p', {}, 
@@ -545,13 +545,13 @@
                                     React.createElement('p', {}, 
                                         React.createElement('strong', {}, 'Số tiền: '), formatCurrency(selectedPackage?.price || 0)
                                     ),
-                                    React.createElement('p', { className: 'text-red-600 font-medium' }, 
+                                    React.createElement('p', { className: 'text-[#FE5938] font-medium' }, 
                                         'Nội dung CK: ', `${registerData.fullName} - ${selectedPackage?.name}`
                                     )
                                 ),
 
                                 selectedPaymentMethod.type === 'qr' && selectedPaymentMethod.config?.url && React.createElement('div', { className: 'text-center' },
-                                    React.createElement('p', { className: 'text-sm text-gray-600 mb-3' }, 'Quét mã QR để thanh toán'),
+                                    React.createElement('p', { className: 'text-sm text-[#7B7B7B] mb-3' }, 'Quét mã QR để thanh toán'),
                                     React.createElement('img', {
                                         src: selectedPaymentMethod.config.url,
                                         alt: 'QR Code Payment',
@@ -562,12 +562,12 @@
 
                             // Payment Proof Upload
                             selectedPaymentMethod && React.createElement('div', {},
-                                React.createElement('label', { className: 'block text-sm font-medium text-gray-700 mb-2' }, 'Tải lên bằng chứng thanh toán'),
+                                React.createElement('label', { className: 'block text-sm font-medium text-[#121212] mb-2' }, 'Tải lên bằng chứng thanh toán'),
                                 React.createElement('input', {
                                     type: 'file',
                                     accept: 'image/*',
                                     onChange: handlePaymentProofUpload,
-                                    className: 'block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100'
+                                    className: 'block w-full text-sm text-[#7B7B7B] file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#FFF3EE] file:text-blue-700 hover:file:bg-blue-100'
                                 }),
                                 paymentProof && React.createElement('div', { className: 'mt-2' },
                                     React.createElement('img', {
@@ -575,19 +575,19 @@
                                         alt: 'Payment Proof',
                                         className: 'max-w-32 max-h-32 border rounded-lg'
                                     }),
-                                    React.createElement('p', { className: 'text-xs text-gray-500 mt-1' }, paymentProof.name)
+                                    React.createElement('p', { className: 'text-xs text-[#7B7B7B] mt-1' }, paymentProof.name)
                                 )
                             ),
 
                             React.createElement('div', { className: 'flex gap-3 pt-4' },
                                 React.createElement('button', {
                                     type: 'button',
-                                    className: 'flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50',
+                                    className: 'flex-1 px-4 py-2 border border-[#E2E2E2] text-[#121212] rounded-md hover:bg-[#F8F7F7]',
                                     onClick: () => setCurrentStep(1)
                                 }, 'Quay lại'),
                                 React.createElement('button', {
                                     type: 'submit',
-                                    className: 'flex-1 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700',
+                                    className: 'flex-1 px-4 py-2 bg-[#10B981] text-white rounded-md hover:bg-[#059669]',
                                     disabled: !selectedPaymentMethod
                                 }, 'Xác nhận thanh toán')
                             )
@@ -596,19 +596,19 @@
                         // Step 3: Confirmation
                         currentStep === 3 && React.createElement('div', { className: 'text-center py-8' },
                             React.createElement('div', { className: 'text-6xl mb-4' }, '✅'),
-                            React.createElement('h3', { className: 'text-xl font-bold text-green-900 mb-4' }, 'Đăng ký thành công!'),
-                            React.createElement('div', { className: 'bg-green-50 p-4 rounded-md mb-6' },
-                                React.createElement('p', { className: 'text-sm text-green-800 mb-2' }, 
+                            React.createElement('h3', { className: 'text-xl font-bold text-[#10B981] mb-4' }, 'Đăng ký thành công!'),
+                            React.createElement('div', { className: 'bg-[#ECFDF5] p-4 rounded-md mb-6' },
+                                React.createElement('p', { className: 'text-sm text-[#059669] mb-2' }, 
                                     `Gói: ${selectedPackage?.name}`
                                 ),
-                                React.createElement('p', { className: 'text-sm text-green-800 mb-2' }, 
+                                React.createElement('p', { className: 'text-sm text-[#059669] mb-2' }, 
                                     `Số tiền: ${formatCurrency(selectedPackage?.price || 0)}`
                                 ),
-                                React.createElement('p', { className: 'text-sm text-green-800' }, 
+                                React.createElement('p', { className: 'text-sm text-[#059669]' }, 
                                     `Phương thức: ${selectedPaymentMethod?.name}`
                                 )
                             ),
-                            React.createElement('div', { className: 'text-sm text-gray-600 mb-6' },
+                            React.createElement('div', { className: 'text-sm text-[#7B7B7B] mb-6' },
                                 React.createElement('p', { className: 'mb-2' }, 'Yêu cầu đăng ký và thanh toán đã được gửi đến Admin.'),
                                 React.createElement('p', { className: 'mb-2' }, 'Admin sẽ xác nhận thanh toán và kích hoạt tài khoản trong vòng 24h.'),
                                 paymentConfig?.bankInfo?.telegramId && React.createElement('p', {}, 
@@ -617,7 +617,7 @@
                                 )
                             ),
                             React.createElement('button', {
-                                className: 'px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700',
+                                className: 'px-6 py-2 bg-[#E36323] text-white rounded-md hover:bg-[#DF5A18]',
                                 onClick: handleFormClose
                             }, 'Đóng')
                         )
