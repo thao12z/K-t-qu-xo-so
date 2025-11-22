@@ -6,15 +6,17 @@
 (function() {
     'use strict';
 
-    console.log('🎲 Lottery Data Service v2.6.0 - Real Data Scraping');
+    console.log('🎲 Lottery Data Service v3.0.0 - ONLINE REALTIME MODE');
 
     const LotteryDataService = {
         // Configuration
         config: {
-            updateInterval: 300000, // 5 minutes
-            retryInterval: 60000, // 1 minute
-            maxRetries: 3,
-            enableRealTimeUpdates: true
+            updateInterval: 60000, // 1 minute (giảm từ 5 phút)
+            retryInterval: 30000, // 30 seconds (giảm từ 1 phút)
+            maxRetries: 5,
+            enableRealTimeUpdates: true,
+            cacheMaxAge: 300000, // 5 minutes cache max age
+            forceOnlineMode: true // Always fetch fresh data
         },
 
         // Store interval IDs for cleanup
@@ -121,21 +123,40 @@
             console.log('Lottery Data Service initialized');
         },
 
-        // Load cached data from localStorage
+        // Load cached data from localStorage - WITH FRESHNESS CHECK
         loadCachedData: function() {
             try {
-                const cachedData = localStorage.getItem('lotteryData');
-                if (cachedData) {
-                    const data = JSON.parse(cachedData);
-                    this.currentData = { ...this.currentData, ...data };
-                    console.log('📦 Loaded cached lottery data:', data.lastUpdate);
+                // Trong online mode, chỉ load cache nếu còn fresh
+                if (this.config.forceOnlineMode) {
+                    const cachedData = localStorage.getItem('lotteryData');
+                    if (cachedData) {
+                        const data = JSON.parse(cachedData);
+                        const cacheAge = Date.now() - new Date(data.lastUpdate).getTime();
+
+                        // Chỉ load cache nếu còn trong max age
+                        if (cacheAge < this.config.cacheMaxAge) {
+                            this.currentData = { ...this.currentData, ...data };
+                            console.log('📦 Loaded fresh cached data (age: ' + Math.round(cacheAge/1000) + 's)');
+                        } else {
+                            console.log('⚠️ Cache expired (age: ' + Math.round(cacheAge/1000) + 's), will fetch fresh');
+                        }
+                    }
+                } else {
+                    const cachedData = localStorage.getItem('lotteryData');
+                    if (cachedData) {
+                        const data = JSON.parse(cachedData);
+                        this.currentData = { ...this.currentData, ...data };
+                        console.log('📦 Loaded cached lottery data:', data.lastUpdate);
+                    }
                 }
 
-                // Load historical cache
-                const historicalData = localStorage.getItem('lotteryHistoricalCache');
-                if (historicalData) {
-                    this.historicalCache = JSON.parse(historicalData);
-                    console.log('📦 Loaded historical cache with', Object.keys(this.historicalCache).length, 'dates');
+                // Load historical cache - nhưng không dùng cho online mode
+                if (!this.config.forceOnlineMode) {
+                    const historicalData = localStorage.getItem('lotteryHistoricalCache');
+                    if (historicalData) {
+                        this.historicalCache = JSON.parse(historicalData);
+                        console.log('📦 Loaded historical cache with', Object.keys(this.historicalCache).length, 'dates');
+                    }
                 }
             } catch (error) {
                 console.error('Error loading cached lottery data:', error);
@@ -676,148 +697,134 @@
             return this.currentData;
         },
 
-        // Get lottery data for a specific date - ENHANCED FOR PAST DATES
-        getDataForDate: function(date, region = null) {
-            console.log(`[DEBUG getDataForDate] Called with date: "${date}" (type: ${typeof date}), region: "${region || 'bac'}"`);
-            
+        // Get lottery data for a specific date - ONLINE REALTIME VERSION
+        getDataForDate: async function(date, region = null) {
+            console.log(`🌐 [ONLINE getDataForDate] Called with date: "${date}", region: "${region || 'bac'}"`);
+
+            const regionKey = region || 'bac';
+            const today = new Date().toISOString().split('T')[0];
+
+            // ONLINE MODE: Always try to fetch fresh data first
+            if (this.config.forceOnlineMode) {
+                console.log(`🌐 [ONLINE MODE] Fetching fresh RSS data for ${date}...`);
+
+                // Check short-term cache first (within 1 minute)
+                const cacheKey = `${regionKey}_${date}`;
+                if (this.historicalCache && this.historicalCache[cacheKey]) {
+                    const cachedData = this.historicalCache[cacheKey];
+                    const cacheAge = Date.now() - new Date(cachedData.timestamp).getTime();
+
+                    // Cache valid for 1 minute in online mode
+                    if (cacheAge < 60000) {
+                        console.log(`📦 Using fresh cache (${Math.round(cacheAge/1000)}s old) for ${date}`);
+                        return cachedData;
+                    }
+                }
+
+                // Fetch fresh RSS data
+                try {
+                    const freshData = await this.fetchRSSForDate(date, regionKey);
+                    if (freshData) {
+                        console.log(`✅ [ONLINE] Got fresh data for ${date}:`, freshData.results.giai_dac_biet);
+                        return freshData;
+                    }
+                } catch (error) {
+                    console.error(`❌ [ONLINE] Failed to fetch ${date}:`, error);
+                }
+
+                // Fallback to any cached data if online fetch failed
+                if (this.historicalCache && this.historicalCache[cacheKey]) {
+                    console.log(`⚠️ [ONLINE] Using stale cache for ${date} (fetch failed)`);
+                    return this.historicalCache[cacheKey];
+                }
+
+                // Check current data
+                const currentData = this.getCurrentData(regionKey);
+                if (currentData && currentData.date === date) {
+                    return currentData;
+                }
+
+                console.log(`❌ [ONLINE] No data available for ${date}`);
+                return null;
+            }
+
+            // OFFLINE MODE (legacy behavior)
             const targetDate = new Date(date);
-            const today = new Date();
-            const currentData = this.getCurrentData(region);
-            
-            console.log(`[DEBUG getDataForDate] Date parsing result:`, {
-                inputDate: date,
-                targetDate: targetDate.toISOString(),
-                targetDateString: targetDate.toDateString(),
-                isValidDate: !isNaN(targetDate.getTime())
-            });
-            
-            console.log(`🔍 [getDataForDate] Target: ${targetDate.toDateString()}, Today: ${today.toDateString()}`);
-            console.log(`🔍 [getDataForDate] Current data date: ${currentData?.date || 'none'}`);
-            
+            const todayDate = new Date();
+            const currentData = this.getCurrentData(regionKey);
+
             // Check if we have data for the specific date
             if (currentData && currentData.date === date) {
                 console.log(`Found exact data for ${date}`);
                 return currentData;
             }
 
-            // Check historical cache for any previously fetched date
-            const regionKey = region || 'bac';
+            // Check historical cache
             const cacheKey = `${regionKey}_${date}`;
             if (this.historicalCache && this.historicalCache[cacheKey]) {
-                console.log(`📦 Found cached data for ${date} in historical cache`);
+                console.log(`📦 Found cached data for ${date}`);
                 return this.historicalCache[cacheKey];
             }
 
-            // For past dates - try to fetch or return mock/fallback data
-            const todayDateOnly = new Date(today.toDateString());
+            // Determine date type
+            const todayDateOnly = new Date(todayDate.toDateString());
             const isPastDate = targetDate < todayDateOnly;
-            const isToday = targetDate.toDateString() === today.toDateString();
+            const isToday = date === today;
             const isFutureDate = targetDate > todayDateOnly;
-            
-            console.log(`🔍 [getDataForDate] Date comparison:
-                Target: ${targetDate.toDateString()} (${targetDate.toISOString()})
-                Today: ${todayDateOnly.toDateString()} (${today.toISOString()})
-                Input date string: "${date}"
-                isPastDate: ${isPastDate}
-                isToday: ${isToday}
-                isFutureDate: ${isFutureDate}
-                Target === Today strings: ${targetDate.toDateString() === today.toDateString()}`);
-                
-            // For past dates - try to fetch from RSS archives
-            if (isPastDate) {
-                console.log(`📅 Past date ${date} - attempting to fetch from RSS archives`);
-                
-                // Check if we have this date in RSS feed history
-                const rssHistoricalData = this.getRSSDataForDate(date, region);
-                if (rssHistoricalData) {
-                    console.log(`Found RSS data for past date ${date}`);
-                    return rssHistoricalData;
-                }
-                
-                // Fallback to known dates from RSS feed
-                console.log(`[DEBUG] Calling getKnownRSSData with date: "${date}", region: "${region}"`);
-                const knownRSSData = this.getKnownRSSData(date, region);
-                console.log(`[DEBUG] getKnownRSSData result:`, {
-                    hasData: !!knownRSSData,
-                    dataDate: knownRSSData?.date,
-                    dataKeys: knownRSSData ? Object.keys(knownRSSData) : null
-                });
-                if (knownRSSData) {
-                    console.log(`[SUCCESS] Using known RSS data for ${date}`);
-                    return knownRSSData;
-                }
-                
-                console.log(`No RSS data available for past date ${date}`);
-                return null;
-            }
-            
-            // Handle current date and any date after 18:30
-            console.log(`[CRITICAL] Checking current/today date "${date}", isToday: ${isToday}`);
-            if (isToday || (date >= '2025-08-21' && !isPastDate)) {
-                const now = new Date();
-                const currentHour = now.getHours();
-                const currentMinute = now.getMinutes();
-                const isAfter6_30PM = currentHour > 18 || (currentHour === 18 && currentMinute >= 30);
-                
-                if (!isAfter6_30PM) {
-                    console.log(`⏰ Current date ${date} - before 18:30, no results available yet`);
-                    return null;
-                }
-                
-                console.log(`📡 Current date ${date} - after 18:30, attempting auto-fetch RSS`);
-                
-                // Try to auto-fetch current RSS data
+
+            // For past dates - try to fetch from RSS
+            if (isPastDate || isToday) {
+                console.log(`📅 Fetching RSS for date ${date}`);
+
+                // Try to fetch fresh
                 try {
-                    console.log('🔄 Triggering RSS fetch for current date...');
-                    this.fetchAllRegions(); // This is async, will update in background
-                    console.log('Auto-fetch RSS initiated (background)');
+                    const freshData = await this.fetchRSSForDate(date, regionKey);
+                    if (freshData) {
+                        return freshData;
+                    }
                 } catch (error) {
-                    console.log('Auto-fetch RSS failed:', error);
+                    console.error(`Failed to fetch RSS for ${date}:`, error);
                 }
-                
-                // Return current data if available (might be from previous fetch)
-                if (currentData && currentData.date === date) {
-                    console.log(`Using existing current data for ${date}:`, {
-                        date: currentData.date,
-                        hasGiaiDacBiet: !!currentData.giai_dac_biet,
-                        specialPrize: currentData.giai_dac_biet?.[0],
-                        dataKeys: Object.keys(currentData)
-                    });
+
+                // Return current data if matches
+                if (currentData) {
                     return currentData;
                 }
-                
-                // Fallback: Try to get today's data from knownRSSData as well
-                console.log(`🔄 No current data, trying knownRSSData for today ${date}...`);
-                console.log(`[CRITICAL] About to call getKnownRSSData("${date}", "${region}")`);
-                const todayFallback = this.getKnownRSSData(date, region);
-                console.log(`[CRITICAL] getKnownRSSData result:`, todayFallback);
-                if (todayFallback) {
-                    console.log(`✅ Using today's fallback data for ${date}:`, todayFallback);
-                    return todayFallback;
-                } else {
-                    console.log(`❌ No fallback data found for ${date}`);
-                }
-                
-                console.log(`No RSS data for ${date}, auto-fetch in progress. Please refresh in a moment.`);
+
                 return null;
             }
-            
+
             // For future dates
             if (isFutureDate) {
                 console.log(`🚫 Future date ${date} - not allowed`);
                 return null;
             }
-            
-            // LAST RESORT: Force check knownRSSData for any date that slipped through
-            console.log(`🔄 Fallback: Trying knownRSSData for ${date} as last resort`);
-            const fallbackData = this.getKnownRSSData(date, region);
-            if (fallbackData) {
-                console.log(`FALLBACK SUCCESS: Found data for ${date} in knownRSSData`);
-                return fallbackData;
+
+            return null;
+        },
+
+        // Synchronous wrapper for backwards compatibility
+        getDataForDateSync: function(date, region = null) {
+            const regionKey = region || 'bac';
+            const cacheKey = `${regionKey}_${date}`;
+
+            // Return cached data immediately if available
+            if (this.historicalCache && this.historicalCache[cacheKey]) {
+                return this.historicalCache[cacheKey];
             }
-            
-            // Absolute fallback
-            console.log(`ABSOLUTE FAILURE: No data available for ${date}`);
+
+            const currentData = this.getCurrentData(regionKey);
+            if (currentData && currentData.date === date) {
+                return currentData;
+            }
+
+            // Trigger async fetch in background
+            this.fetchRSSForDate(date, regionKey).then(data => {
+                if (data) {
+                    console.log(`Background fetch completed for ${date}`);
+                }
+            });
+
             return null;
         },
 
@@ -888,10 +895,188 @@
             return true;
         },
 
+        // Fetch RSS data for specific date - REALTIME ONLINE
+        fetchRSSForDate: async function(date, region = 'bac') {
+            console.log(`🌐 [ONLINE] Fetching RSS for date: ${date}, region: ${region}`);
+
+            try {
+                // RSS URL cho ngày cụ thể
+                const rssUrl = `https://xosodaiphat.com/ket-qua-xo-so-mien-bac-xsmb.rss`;
+
+                const proxies = [
+                    `https://api.allorigins.win/raw?url=${encodeURIComponent(rssUrl)}`,
+                    `https://corsproxy.io/?${encodeURIComponent(rssUrl)}`,
+                    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(rssUrl)}`
+                ];
+
+                let response = null;
+
+                for (const proxyUrl of proxies) {
+                    try {
+                        console.log(`🔗 Trying proxy: ${proxyUrl}`);
+
+                        const controller = new AbortController();
+                        const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+                        try {
+                            response = await fetch(proxyUrl, {
+                                method: 'GET',
+                                headers: {
+                                    'Accept': 'application/rss+xml, application/xml, text/xml',
+                                    'Cache-Control': 'no-cache'
+                                },
+                                signal: controller.signal
+                            });
+                        } finally {
+                            clearTimeout(timeoutId);
+                        }
+
+                        if (response.ok) {
+                            console.log(`✅ Proxy success: ${proxyUrl}`);
+                            break;
+                        }
+                    } catch (proxyError) {
+                        console.warn(`Proxy failed: ${proxyUrl}`, proxyError.message);
+                        continue;
+                    }
+                }
+
+                if (!response || !response.ok) {
+                    throw new Error('All proxies failed');
+                }
+
+                const content = await response.text();
+                const lotteryData = this.parseRSSFeedForDate(content, region, date);
+
+                if (lotteryData && lotteryData.results) {
+                    // Cache the result
+                    const cacheKey = `${region}_${date}`;
+                    this.historicalCache[cacheKey] = lotteryData;
+                    this.saveData();
+
+                    console.log(`✅ Fetched RSS data for ${date}:`, lotteryData.results.giai_dac_biet);
+                    return lotteryData;
+                }
+
+                return null;
+            } catch (error) {
+                console.error(`❌ Failed to fetch RSS for ${date}:`, error);
+                return null;
+            }
+        },
+
+        // Parse RSS feed and find data for specific date
+        parseRSSFeedForDate: function(xmlContent, region, targetDate) {
+            try {
+                const parser = new DOMParser();
+                const xml = parser.parseFromString(xmlContent, 'text/xml');
+                const items = xml.getElementsByTagName('item');
+
+                console.log(`📡 Found ${items.length} RSS items, looking for date: ${targetDate}`);
+
+                for (let i = 0; i < items.length; i++) {
+                    const item = items[i];
+                    const descriptionNode = item.getElementsByTagName('description')[0];
+
+                    if (!descriptionNode || !descriptionNode.textContent) continue;
+
+                    const textContent = descriptionNode.textContent;
+                    const normalized = textContent.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+
+                    // Extract date from this item
+                    const dateMatch = normalized.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+                    if (dateMatch) {
+                        const [_, d, m, y] = dateMatch;
+                        const itemDate = `${y}-${m}-${d}`;
+
+                        console.log(`📅 RSS item ${i} date: ${itemDate}`);
+
+                        if (itemDate === targetDate) {
+                            console.log(`✅ Found matching date: ${targetDate}`);
+                            // Parse this item's data
+                            return this.parseRSSItemContent(normalized, region, targetDate);
+                        }
+                    }
+                }
+
+                // If target date not found in RSS, return first item (latest)
+                if (items.length > 0) {
+                    const firstDesc = items[0].getElementsByTagName('description')[0];
+                    if (firstDesc && firstDesc.textContent) {
+                        const normalized = firstDesc.textContent.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+                        console.log(`⚠️ Date ${targetDate} not in RSS, using latest data`);
+                        return this.parseRSSItemContent(normalized, region, null);
+                    }
+                }
+
+                return null;
+            } catch (error) {
+                console.error('Error parsing RSS for date:', error);
+                return null;
+            }
+        },
+
+        // Parse single RSS item content
+        parseRSSItemContent: function(normalized, region, targetDate) {
+            // Extract date if not provided
+            if (!targetDate) {
+                const dateMatch = normalized.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+                if (dateMatch) {
+                    const [_, d, m, y] = dateMatch;
+                    targetDate = `${y}-${m}-${d}`;
+                } else {
+                    targetDate = new Date().toISOString().split('T')[0];
+                }
+            }
+
+            // Parse lottery numbers
+            const exactMatch = normalized.match(/DB:\s*(\d+)\s+G\.1:\s*(\d+)\s+G\.2:\s*(\d+)\s*-\s*(\d+)\s+G\.3:\s*([\d\s\-]+?)\s+G\.4:\s*([\d\s\-]+?)\s+G\.5:\s*([\d\s\-]+?)\s+G\.6:\s*([\d\s\-]+?)\s+G\.7:\s*([\d\s\-]+)/i);
+
+            let results;
+
+            if (exactMatch) {
+                const [, db, g1, g2_1, g2_2, g3_raw, g4_raw, g5_raw, g6_raw, g7_raw] = exactMatch;
+
+                const parseNumbers = (raw) => {
+                    if (!raw) return [];
+                    return raw.split(/[\s\-]+/).map(s => s.trim()).filter(s => /^\d{2,5}$/.test(s));
+                };
+
+                results = {
+                    giai_dac_biet: [db],
+                    giai_nhat: [g1],
+                    giai_nhi: [g2_1, g2_2],
+                    giai_ba: parseNumbers(g3_raw),
+                    giai_tu: parseNumbers(g4_raw),
+                    giai_nam: parseNumbers(g5_raw),
+                    giai_sau: parseNumbers(g6_raw),
+                    giai_bay: parseNumbers(g7_raw)
+                };
+            } else {
+                console.warn('Cannot parse RSS content format');
+                return null;
+            }
+
+            if (!results.giai_dac_biet || !results.giai_dac_biet.length) {
+                return null;
+            }
+
+            return {
+                region,
+                date: targetDate,
+                results,
+                timestamp: new Date().toISOString(),
+                source: 'rss_online',
+                dataType: 'rss'
+            };
+        },
+
         // Get RSS data for specific date from feed archives
         getRSSDataForDate: function(date, region = 'bac') {
-            // This would normally parse RSS feed for historical data
-            // For now, we'll return null and let getKnownRSSData handle it
+            // Trong online mode, trả về null để force fetch fresh
+            if (this.config.forceOnlineMode) {
+                return null;
+            }
             return null;
         },
 
@@ -923,178 +1108,47 @@
             return Array.from(dates).sort().reverse();
         },
 
-        // Get known RSS data from our database (real data from RSS feeds)
+        // Get known RSS data - DEPRECATED in online mode
+        // In online mode, this always returns null to force fresh fetch
         getKnownRSSData: function(date, region = 'bac') {
-            console.log(`[DEBUG getKnownRSSData] Looking for date: "${date}" (type: ${typeof date}), region: "${region}"`);
-            
-            // Real RSS data from the feeds you provided
-            const knownData = {
-                '2025-08-23': {
-                    date: '2025-08-23',
-                    region: 'bac',
-                    giai_dac_biet: ['12345'],
-                    giai_nhat: ['67890'],
-                    giai_nhi: ['12356', '78901'],
-                    giai_ba: ['23456', '34567', '45678', '56789', '67890', '78012'],
-                    giai_tu: ['2345', '3456', '4567', '5678'],
-                    giai_nam: ['1234', '2345', '3456', '4567', '5678', '6789'],
-                    giai_sau: ['123', '234', '345'],
-                    giai_bay: ['12', '23', '34', '45'],
-                    dataType: 'pending',
-                    message: 'Chưa có kết quả - Sẽ cập nhật sau 18:30',
-                    lastUpdated: new Date().toISOString()
-                },
-                '2025-08-22': {
-                    date: '2025-08-22',
-                    region: 'bac',
-                    giai_dac_biet: ['75624'],
-                    giai_nhat: ['39817'],
-                    giai_nhi: ['64928', '10573'],
-                    giai_ba: ['85294', '73615', '40826', '91347', '52068', '18479'],
-                    giai_tu: ['8260', '4571', '9182', '3693'],
-                    giai_nam: ['5204', '6815', '2026', '7137', '8548', '9259'],
-                    giai_sau: ['360', '471', '582'],
-                    giai_bay: ['60', '71', '82', '93'],
-                    dataType: 'rss',
-                    message: 'Dữ liệu thật từ RSS xosodaiphat.com',
-                    lastUpdated: '2025-08-22T18:30:00Z'
-                },
-                '2025-08-21': {
-                    date: '2025-08-21',
-                    region: 'bac',
-                    giai_dac_biet: ['94127'],
-                    giai_nhat: ['42750'],
-                    giai_nhi: ['74104', '87683'],
-                    giai_ba: ['81958', '18532', '91536', '91701', '68466', '45273'],
-                    giai_tu: ['7891', '3332', '7157', '6617'],
-                    giai_nam: ['2203', '8523', '2365', '6996', '1994', '2910'],
-                    giai_sau: ['883', '219', '396'],
-                    giai_bay: ['83', '85', '09', '38'],
-                    dataType: 'rss',
-                    message: 'Dữ liệu thật từ RSS xosodaiphat.com',
-                    lastUpdated: '2025-08-21T18:32:22Z'
-                },
-                '2025-08-20': {
-                    date: '2025-08-20',
-                    region: 'bac',
-                    giai_dac_biet: ['41034'],
-                    giai_nhat: ['68764'],
-                    giai_nhi: ['89982', '55217'],
-                    giai_ba: ['01035', '17781', '17010', '46410', '62464', '92796'],
-                    giai_tu: ['1978', '0635', '8009', '1108'],
-                    giai_nam: ['7300', '7964', '6030', '3432', '4071', '8050'],
-                    giai_sau: ['497', '492', '121'],
-                    giai_bay: ['53', '66', '10', '19'],
-                    dataType: 'rss',
-                    message: 'Dữ liệu thật từ RSS xosodaiphat.com',
-                    lastUpdated: '2025-08-20T18:30:00Z'
-                },
-                '2025-08-19': {
-                    date: '2025-08-19',
-                    region: 'bac',
-                    giai_dac_biet: ['68250'],
-                    giai_nhat: ['36916'],
-                    giai_nhi: ['59454', '10859'],
-                    giai_ba: ['34748', '55450', '30493', '20731', '15598', '37489'],
-                    giai_tu: ['5641', '6263', '2491', '4961'],
-                    giai_nam: ['3226', '1133', '7102', '3073', '4059', '5985'],
-                    giai_sau: ['431', '233', '613'],
-                    giai_bay: ['33', '44', '51', '56'],
-                    dataType: 'rss',
-                    message: 'Dữ liệu thật từ RSS xosodaiphat.com',
-                    lastUpdated: '2025-08-19T18:30:00Z'
-                },
-                '2025-08-18': {
-                    date: '2025-08-18',
-                    region: 'bac',
-                    giai_dac_biet: ['66945'],
-                    giai_nhat: ['06825'],
-                    giai_nhi: ['73129', '97637'],
-                    giai_ba: ['14543', '31195', '94954', '41783', '87361', '46231'],
-                    giai_tu: ['6832', '7527', '8762', '5685'],
-                    giai_nam: ['2777', '9919', '2163', '6462', '5582', '2821'],
-                    giai_sau: ['812', '133', '101'],
-                    giai_bay: ['14', '31', '61', '09'],
-                    dataType: 'rss',
-                    message: 'Dữ liệu thật từ RSS xosodaiphat.com',
-                    lastUpdated: '2025-08-18T18:30:00Z'
-                },
-                '2025-08-17': {
-                    date: '2025-08-17',
-                    region: 'bac',
-                    giai_dac_biet: ['85091'],
-                    giai_nhat: ['45023'],
-                    giai_nhi: ['27537', '70047'],
-                    giai_ba: ['10505', '72959', '74871', '90305', '68081', '14710'],
-                    giai_tu: ['0946', '8780', '4857', '5313'],
-                    giai_nam: ['9084', '0667', '4841', '3449', '2677', '3791'],
-                    giai_sau: ['978', '992', '876'],
-                    giai_bay: ['51', '44', '34', '80'],
-                    dataType: 'rss',
-                    message: 'Dữ liệu thật từ RSS xosodaiphat.com',
-                    lastUpdated: '2025-08-17T18:30:00Z'
-                },
-                '2025-08-16': {
-                    date: '2025-08-16',
-                    region: 'bac',
-                    giai_dac_biet: ['60194'],
-                    giai_nhat: ['62277'],
-                    giai_nhi: ['00451', '45358'],
-                    giai_ba: ['88537', '43486', '67190', '26032', '33701', '04696'],
-                    giai_tu: ['4653', '6227', '2119', '3839'],
-                    giai_nam: ['1249', '3897', '9885', '9263', '8819', '5188'],
-                    giai_sau: ['567', '778', '573'],
-                    giai_bay: ['48', '83', '80', '93'],
-                    dataType: 'rss',
-                    message: 'Dữ liệu thật từ RSS xosodaiphat.com',
-                    lastUpdated: '2025-08-16T18:30:00Z'
-                },
-                '2025-08-15': {
-                    date: '2025-08-15',
-                    region: 'bac',
-                    giai_dac_biet: ['07177'],
-                    giai_nhat: ['54892'],
-                    giai_nhi: ['92421', '71460'],
-                    giai_ba: ['44985', '05178', '94864', '14874', '32245', '07484'],
-                    giai_tu: ['5180', '1930', '4585', '5931'],
-                    giai_nam: ['1181', '2402', '6339', '3964', '9856', '0380'],
-                    giai_sau: ['301', '115', '816'],
-                    giai_bay: ['84', '74', '31', '03'],
-                    dataType: 'rss',
-                    message: 'Dữ liệu thật từ RSS xosodaiphat.com',
-                    lastUpdated: '2025-08-15T18:30:00Z'
-                }
-                // Note: 2025-08-20 and 2025-08-21 data defined above
-            };
-
-            const data = knownData[date];
-            console.log(`[DEBUG getKnownRSSData] Lookup result:`, {
-                requestedDate: date,
-                hasData: !!data,
-                availableKeys: Object.keys(knownData),
-                regionMatch: region === 'bac',
-                dataDate: data?.date
-            });
-            
-            if (data && region === 'bac') {
-                console.log(`[SUCCESS getKnownRSSData] Found data for ${date}:`, data);
-                // Add compatibility format
-                return {
-                    ...data,
-                    prizes: {
-                        special: data.giai_dac_biet,
-                        first: data.giai_nhat,
-                        second: data.giai_nhi,
-                        third: data.giai_ba,
-                        fourth: data.giai_tu,
-                        fifth: data.giai_nam,
-                        sixth: data.giai_sau,
-                        seventh: data.giai_bay
-                    }
-                };
+            // ONLINE MODE: Always return null to force fresh RSS fetch
+            if (this.config.forceOnlineMode) {
+                console.log(`🌐 [ONLINE] getKnownRSSData disabled - use fetchRSSForDate instead`);
+                return null;
             }
-            
+
+            // Legacy: Return cached data if available
+            const cacheKey = `${region}_${date}`;
+            if (this.historicalCache && this.historicalCache[cacheKey]) {
+                return this.historicalCache[cacheKey];
+            }
+
             return null;
+        },
+
+        // Toggle online/offline mode
+        setOnlineMode: function(enabled) {
+            this.config.forceOnlineMode = enabled;
+            console.log(`🌐 Online mode: ${enabled ? 'ENABLED' : 'DISABLED'}`);
+
+            if (enabled) {
+                // Clear old cache when enabling online mode
+                this.historicalCache = {};
+                localStorage.removeItem('lotteryHistoricalCache');
+                console.log('📦 Cleared historical cache for online mode');
+            }
+        },
+
+        // Get service status
+        getStatus: function() {
+            return {
+                onlineMode: this.config.forceOnlineMode,
+                cacheMaxAge: this.config.cacheMaxAge,
+                updateInterval: this.config.updateInterval,
+                cachedDates: Object.keys(this.historicalCache),
+                lastUpdate: this.currentData.lastUpdate,
+                currentDataDate: this.currentData.bac?.date || null
+            };
         }
     };
 

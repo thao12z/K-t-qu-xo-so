@@ -45,51 +45,69 @@
         strictLoValidation: false        // Bắt buộc lô chia hết cho 1 điểm
     };
     
-    // Lottery functions - ENHANCED FLEXIBLE DATA RETRIEVAL
-    window.getLotteryData = (region = 'bac', selectedDate = null) => {
+    // Lottery functions - ASYNC REALTIME DATA RETRIEVAL
+    window.getLotteryData = async (region = 'bac', selectedDate = null) => {
         if (window.LotteryDataService) {
             let data;
-            
+
             if (selectedDate) {
-                // Try specific date first
-                data = window.LotteryDataService.getDataForDate(selectedDate, region);
+                // ASYNC: Fetch data for specific date (now async in online mode)
+                console.log(`[getLotteryData] 🌐 Fetching data for ${selectedDate}...`);
+                data = await window.LotteryDataService.getDataForDate(selectedDate, region);
                 console.log(`[getLotteryData] Requested ${selectedDate}: ${data ? 'Found' : 'Not found'}`);
-                
-                // Enhanced: getDataForDate now handles past dates with simulation data
-                // No need for fallback to current data for past dates
             } else {
                 data = window.LotteryDataService.getCurrentData(region);
                 console.log(`[getLotteryData] Current data: ${data ? 'Found' : 'Not found'}`);
             }
-            
+
             if (data && data.results) {
                 console.log(`[getLotteryData] Returning lottery data for ${data.date || 'unknown'}`);
                 return data.results;
             }
-            
+
             // Legacy support: check for numbers property
             if (data && data.numbers) {
                 console.log(`[getLotteryData] Returning legacy lottery data`);
                 return data.numbers;
             }
-            
+
             // Support for historical/simulation/rss data
             if (data && (data.dataType === 'historical' || data.dataType === 'simulation' || data.dataType === 'rss')) {
                 console.log(`[getLotteryData] Returning ${data.dataType} data for ${data.date}`);
                 return data;
             }
-            
+
             // If data exists but no specific format, return it directly
             if (data) {
                 console.log(`[getLotteryData] Returning raw data for ${data.date || 'unknown'}`);
                 return data;
             }
-            
+
             // No valid data found
             console.log(`[getLotteryData] No valid data format found for ${selectedDate || 'current'}`);
         }
-        
+
         console.log(`[getLotteryData] No data available for ${selectedDate || 'current'}`);
+        return null;
+    };
+
+    // Synchronous version for backwards compatibility
+    window.getLotteryDataSync = (region = 'bac', selectedDate = null) => {
+        if (window.LotteryDataService) {
+            let data;
+
+            if (selectedDate) {
+                // Use sync version
+                data = window.LotteryDataService.getDataForDateSync(selectedDate, region);
+            } else {
+                data = window.LotteryDataService.getCurrentData(region);
+            }
+
+            if (data && data.results) return data.results;
+            if (data && data.numbers) return data.numbers;
+            if (data) return data;
+        }
+
         return null;
     };
     
@@ -1385,10 +1403,13 @@
                 
                 console.log(`🔍 Tìm dữ liệu cho ngày: ${parameters.ngay}`);
                 
-                // Strategy 1: Use requested date with proper info extraction
+                // Strategy 1: Use requested date with proper info extraction - ASYNC ONLINE
                 if (parameters.ngay) {
-                    console.log(`[DEBUG] Requesting lottery data for date: "${parameters.ngay}" (type: ${typeof parameters.ngay})`);
-                    lotteryData = window.getLotteryData(parameters.mien, parameters.ngay);
+                    console.log(`[DEBUG] 🌐 Requesting lottery data ONLINE for date: "${parameters.ngay}"`);
+
+                    // ASYNC: Await the fetch
+                    lotteryData = await window.getLotteryData(parameters.mien, parameters.ngay);
+
                     console.log(`[DEBUG] getLotteryData result:`, {
                         hasData: !!lotteryData,
                         dataType: typeof lotteryData,
@@ -1399,9 +1420,9 @@
                         const lotteryInfo = window.getLotteryInfo(parameters.mien, parameters.ngay);
                         actualDataDate = lotteryInfo?.date || parameters.ngay;
                         console.log(`[DEBUG] getLotteryInfo result:`, lotteryInfo);
-                        
-                        console.log(`Tìm thấy dữ liệu - Requested: ${parameters.ngay}, Actual: ${actualDataDate}`);
-                        console.log(`Data type: ${lotteryInfo?.dataType || 'unknown'}`);
+
+                        console.log(`✅ Tìm thấy dữ liệu ONLINE - Requested: ${parameters.ngay}, Actual: ${actualDataDate}`);
+                        console.log(`Data type: ${lotteryInfo?.dataType || 'rss_online'}`);
                     }
                 }
                 
@@ -1410,50 +1431,19 @@
                 
                 // Final check with enhanced debugging
                 if (!lotteryData) {
-                    console.error(`CRITICAL: No lottery data for ${parameters.ngay}`);
+                    console.error(`❌ CRITICAL: No lottery data for ${parameters.ngay}`);
                     console.error(`Debug info:`, {
                         requestedDate: parameters.ngay,
                         actualDataDate: actualDataDate,
                         lotteryData: lotteryData,
                         dataServiceAvailable: !!window.LotteryDataService,
-                        knownRSSDataTest: window.LotteryDataService?.getKnownRSSData?.(parameters.ngay, parameters.mien)
+                        serviceStatus: window.LotteryDataService?.getStatus?.()
                     });
-                    
-                    // Try one more time with forced fallback
-                    if (parameters.ngay === '2025-08-21') {
-                        console.log('Forcing fallback data for 2025-08-21...');
-                        lotteryData = {
-                            date: '2025-08-21',
-                            giai_dac_biet: ['94127'],
-                            giai_nhat: ['42750'],
-                            giai_nhi: ['74104', '87683'],
-                            giai_ba: ['81958', '18532', '91536', '91701', '68466', '45273'],
-                            giai_tu: ['7891', '3332', '7157', '6617'],
-                            giai_nam: ['2203', '8523', '2365', '6996', '1994', '2910'],
-                            giai_sau: ['883', '219', '396'],
-                            giai_bay: ['83', '85', '09', '38'],
-                            dataType: 'fallback'
-                        };
-                        actualDataDate = '2025-08-21';
-                        console.log('Fallback data loaded for 2025-08-21');
-                    } else {
-                        // Get available dates for better error message
-                        let availableDatesMsg = '';
-                        if (window.LotteryDataService && window.LotteryDataService.getAvailableDates) {
-                            const availableDates = window.LotteryDataService.getAvailableDates(parameters.mien);
-                            if (availableDates.length > 0) {
-                                const topDates = availableDates.slice(0, 5).map(d => {
-                                    const [y, m, day] = d.split('-');
-                                    return `${day}/${m}/${y}`;
-                                }).join(', ');
-                                availableDatesMsg = `\n\nCác ngày có sẵn: ${topDates}`;
-                            }
-                        }
 
-                        alert(`Không tìm thấy dữ liệu xổ số cho ngày ${parameters.ngay}.${availableDatesMsg}\n\nHãy thử:\n1. Chọn một trong các ngày có sẵn trên\n2. Đảm bảo đã qua 18:30 nếu chọn ngày hôm nay\n3. Kiểm tra kết nối internet và thử refresh trang`);
-                        setIsLoading(false);
-                        return;
-                    }
+                    // ONLINE MODE: Show network error message
+                    alert(`❌ Không thể lấy dữ liệu xổ số online cho ngày ${parameters.ngay}.\n\nVui lòng kiểm tra:\n- Kết nối mạng\n- Ngày phải là ngày trong quá khứ hoặc hôm nay sau 18:30\n\nThử lại sau vài giây.`);
+                    setIsLoading(false);
+                    return;
                 }
                 
                 console.log(`Sử dụng dữ liệu ngày: ${actualDataDate}`);
