@@ -1415,7 +1415,7 @@
                     console.error(`Debug info:`, {
                         requestedDate: parameters.ngay,
                         actualDataDate: actualDataDate,
-                        getLotteryDataResult: getLotteryDataResult,
+                        lotteryData: lotteryData,
                         dataServiceAvailable: !!window.LotteryDataService,
                         knownRSSDataTest: window.LotteryDataService?.getKnownRSSData?.(parameters.ngay, parameters.mien)
                     });
