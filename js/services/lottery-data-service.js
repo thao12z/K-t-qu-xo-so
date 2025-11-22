@@ -8,9 +8,9 @@
 
     // Use ProductionLogger if available (loaded from security-utils.js)
     const logger = {
-        log: (...args) => window.Logger ? window.Logger.log(...args) : logger.log(...args),
-        warn: (...args) => window.Logger ? window.Logger.warn(...args) : logger.warn(...args),
-        error: (...args) => window.Logger ? window.Logger.error(...args) : logger.error(...args),
+        log: (...args) => window.Logger ? window.Logger.log(...args) : console.log(...args),
+        warn: (...args) => window.Logger ? window.Logger.warn(...args) : console.warn(...args),
+        error: (...args) => window.Logger ? window.Logger.error(...args) : console.error(...args),
         info: (...args) => window.Logger ? window.Logger.info(...args) : console.info(...args)
     };
 
