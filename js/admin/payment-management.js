@@ -164,32 +164,6 @@
             }
         }, []);
         
-        // Add test payment with order ID
-        const addTestPayment = useCallback(() => {
-            const testPayment = {
-                id: window.GlobalStateManager.getNextPaymentId(),
-                userId: 1, // Use first user
-                packageId: 'package_30_days',
-                amount: 150000,
-                status: 'pending',
-                method: 'bank_transfer',
-                orderId: generateOrderId(),
-                transferContent: 'TEST_PAYMENT_' + Date.now(),
-                imageUrl: 'https://via.placeholder.com/300x200/0066cc/ffffff?text=Payment+Proof',
-                createdAt: new Date().toISOString()
-            };
-            
-            const currentPayments = window.GlobalStateManager.getData('payments');
-            const updatedPayments = [...currentPayments, testPayment];
-            window.GlobalStateManager.updateData('payments', updatedPayments, 'PaymentManagement');
-            
-            console.log('✅ [PaymentManagement] TEST_PAYMENT_ADDED', { 
-                paymentId: testPayment.id, 
-                orderId: testPayment.orderId,
-                imageUrl: testPayment.imageUrl
-            });
-        }, []);
-        
         // Format currency
         const formatCurrency = useCallback((amount) => {
             return new Intl.NumberFormat('vi-VN', {
@@ -284,15 +258,6 @@
                     <h1 className="text-2xl font-bold">💳 Payment Management</h1>
                     
                     <div className="flex items-center space-x-4">
-                        {/* Add Test Payment Button */}
-                        <window.Button
-                            variant="primary"
-                            onClick={addTestPayment}
-                            className="bg-blue-600 hover:bg-blue-700"
-                        >
-                            ➕ Add Test Payment
-                        </window.Button>
-                        
                         {/* Filter */}
                         <window.Select
                             value={filter}
@@ -486,49 +451,8 @@
             </div>
         );
     });
-    
-    // ===== TESTING FUNCTIONS =====
-    const TestPaymentManagement = {
-        testComponentRender: () => {
-            console.assert(window.PaymentManagement, '❌ PaymentManagement not exported');
-            console.log('✅ [TEST] PaymentManagement component exists');
-        },
-        
-        testDataFlow: () => {
-            // Test payment approval flow
-            const testPayment = {
-                id: 999,
-                userId: 1,
-                packageId: 'package_30_days',
-                amount: 150000,
-                status: 'pending',
-                method: 'bank_transfer',
-                createdAt: new Date().toISOString()
-            };
-            
-            const currentPayments = window.GlobalStateManager.getData('payments');
-            const updatedPayments = [...currentPayments, testPayment];
-            window.GlobalStateManager.updateData('payments', updatedPayments, 'Test');
-            
-            const retrieved = window.GlobalStateManager.findPayment(999);
-            console.assert(retrieved && retrieved.status === 'pending', '❌ Payment data flow failed');
-            
-            // Cleanup
-            window.GlobalStateManager.updateData('payments', currentPayments, 'Test');
-            console.log('✅ [TEST] Payment data flow works');
-        }
-    };
-    
+
     // ===== EXPORT TO GLOBAL SCOPE =====
     window.PaymentManagement = PaymentManagement;
-    window.TestPaymentManagement = TestPaymentManagement;
-    
-    // Auto-run tests
-    setTimeout(() => {
-        TestPaymentManagement.testComponentRender();
-        if (window.GlobalStateManager) {
-            TestPaymentManagement.testDataFlow();
-        }
-    }, 150);
-    
+
 })(); 
