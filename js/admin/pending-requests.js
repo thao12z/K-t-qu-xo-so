@@ -194,7 +194,7 @@
             ),
             
             // Tab Navigation
-            React.createElement('div', { className: 'border-b border-gray-200' },
+            React.createElement('div', { className: 'border-b border-[#ECECEC]' },
                 React.createElement('nav', { className: '-mb-px flex space-x-8' },
                     [
                         { id: 'users', label: '👥 Pending Users', count: pendingUsers.length },
@@ -205,8 +205,8 @@
                             onClick: () => setActiveTab(tab.id),
                             className: `py-2 px-1 border-b-2 font-medium text-sm ${
                                 activeTab === tab.id
-                                    ? 'border-blue-500 text-blue-600'
-                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                    ? 'border-[#E36323] text-[#E36323]'
+                                    : 'border-transparent text-[#7B7B7B] hover:text-[#121212] hover:border-gray-300'
                             }`
                         }, `${tab.label} (${tab.count})`)
                     )
@@ -218,38 +218,38 @@
                 // Pending Users Tab
                 activeTab === 'users' && React.createElement(window.Card, { title: 'Pending User Registrations' },
                     pendingUsers.length === 0 ? 
-                        React.createElement('p', { className: 'text-gray-500 text-center py-8' }, 'No pending user registrations') :
+                        React.createElement('p', { className: 'text-[#7B7B7B] text-center py-8' }, 'No pending user registrations') :
                         React.createElement('div', { className: 'overflow-x-auto' },
                             React.createElement('table', { className: 'min-w-full' },
-                                React.createElement('thead', { className: 'bg-gray-50' },
+                                React.createElement('thead', { className: 'bg-[#F8F7F7]' },
                                     React.createElement('tr', {},
                                         ['Full Name', 'Username', 'Email', 'Phone', 'Package', 'Created', 'Actions'].map(header =>
                                             React.createElement('th', {
                                                 key: header,
-                                                className: 'px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'
+                                                className: 'px-6 py-3 text-left text-xs font-medium text-[#7B7B7B] uppercase'
                                             }, header)
                                         )
                                     )
                                 ),
-                                React.createElement('tbody', { className: 'bg-white divide-y divide-gray-200' },
+                                React.createElement('tbody', { className: 'bg-white divide-y divide-[#ECECEC]' },
                                     pendingUsers.map(user =>
                                         React.createElement('tr', { key: user.id },
                                             React.createElement('td', { className: 'px-6 py-4 whitespace-nowrap' },
                                                 React.createElement('div', {},
-                                                    React.createElement('div', { className: 'font-medium text-gray-900' }, user.fullName),
-                                                    React.createElement('div', { className: 'text-sm text-gray-500' }, user.source)
+                                                    React.createElement('div', { className: 'font-medium text-[#121212]' }, user.fullName),
+                                                    React.createElement('div', { className: 'text-sm text-[#7B7B7B]' }, user.source)
                                                 )
                                             ),
-                                            React.createElement('td', { className: 'px-6 py-4 whitespace-nowrap text-sm text-gray-900' }, user.username),
-                                            React.createElement('td', { className: 'px-6 py-4 whitespace-nowrap text-sm text-gray-900' }, user.email),
-                                            React.createElement('td', { className: 'px-6 py-4 whitespace-nowrap text-sm text-gray-900' }, user.phone),
+                                            React.createElement('td', { className: 'px-6 py-4 whitespace-nowrap text-sm text-[#121212]' }, user.username),
+                                            React.createElement('td', { className: 'px-6 py-4 whitespace-nowrap text-sm text-[#121212]' }, user.email),
+                                            React.createElement('td', { className: 'px-6 py-4 whitespace-nowrap text-sm text-[#121212]' }, user.phone),
                                             React.createElement('td', { className: 'px-6 py-4 whitespace-nowrap' },
                                                 React.createElement('div', {},
-                                                    React.createElement('div', { className: 'text-sm font-medium text-gray-900' }, user.packageName),
-                                                    React.createElement('div', { className: 'text-sm text-gray-500' }, formatCurrency(user.packagePrice))
+                                                    React.createElement('div', { className: 'text-sm font-medium text-[#121212]' }, user.packageName),
+                                                    React.createElement('div', { className: 'text-sm text-[#7B7B7B]' }, formatCurrency(user.packagePrice))
                                                 )
                                             ),
-                                            React.createElement('td', { className: 'px-6 py-4 whitespace-nowrap text-sm text-gray-500' },
+                                            React.createElement('td', { className: 'px-6 py-4 whitespace-nowrap text-sm text-[#7B7B7B]' },
                                                 new Date(user.createdAt).toLocaleDateString('vi-VN')
                                             ),
                                             React.createElement('td', { className: 'px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2' },
@@ -274,7 +274,7 @@
                 // Pending Payments Tab
                 activeTab === 'payments' && React.createElement(window.Card, { title: 'Pending Payments' },
                     pendingPayments.length === 0 ? 
-                        React.createElement('p', { className: 'text-gray-500 text-center py-8' }, 'No pending payments') :
+                        React.createElement('p', { className: 'text-[#7B7B7B] text-center py-8' }, 'No pending payments') :
                         React.createElement('div', { className: 'space-y-4' },
                             pendingPayments.map(payment =>
                                 React.createElement('div', {
@@ -283,10 +283,10 @@
                                 },
                                     React.createElement('div', { className: 'flex justify-between items-start' },
                                         React.createElement('div', { className: 'flex-1' },
-                                            React.createElement('h4', { className: 'font-medium text-gray-900 mb-2' }, 
+                                            React.createElement('h4', { className: 'font-medium text-[#121212] mb-2' }, 
                                                 `${payment.userInfo.fullName} - ${payment.packageName}`
                                             ),
-                                            React.createElement('div', { className: 'grid grid-cols-2 gap-4 text-sm text-gray-600' },
+                                            React.createElement('div', { className: 'grid grid-cols-2 gap-4 text-sm text-[#7B7B7B]' },
                                                 React.createElement('div', {},
                                                     React.createElement('p', {}, React.createElement('strong', {}, 'Amount: '), formatCurrency(payment.amount)),
                                                     React.createElement('p', {}, React.createElement('strong', {}, 'Method: '), payment.methodName),
@@ -303,7 +303,7 @@
                                             
                                             // Payment proof
                                             payment.paymentProof && React.createElement('div', { className: 'mt-4' },
-                                                React.createElement('p', { className: 'text-sm font-medium text-gray-700 mb-2' }, 'Payment Proof:'),
+                                                React.createElement('p', { className: 'text-sm font-medium text-[#121212] mb-2' }, 'Payment Proof:'),
                                                 React.createElement('img', {
                                                     src: payment.paymentProof.dataUrl,
                                                     alt: 'Payment Proof',

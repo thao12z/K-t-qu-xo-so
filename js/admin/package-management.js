@@ -343,7 +343,7 @@
                     <h1 className="text-2xl font-bold">📦 Package Management</h1>
                     <div className="flex items-center space-x-3">
                         {hasUnsavedChanges && (
-                            <span className="text-sm text-orange-600 bg-orange-100 px-2 py-1 rounded">
+                            <span className="text-sm text-[#E36323] bg-[#FFF3EE] px-2 py-1 rounded">
                                 ⚠️ Có thay đổi chưa lưu
                             </span>
                         )}
@@ -369,17 +369,17 @@
                         <window.Card key={pkg.id} className="relative">
                             <div className="flex justify-between items-start mb-4">
                                 <div>
-                                    <h3 className="text-lg font-semibold text-gray-900">{pkg.name}</h3>
-                                    <p className="text-2xl font-bold text-green-600">
+                                    <h3 className="text-lg font-semibold text-[#121212]">{pkg.name}</h3>
+                                    <p className="text-2xl font-bold text-[#10B981]">
                                         {formatPrice(pkg.price)}
                                     </p>
-                                    <p className="text-sm text-gray-500">
+                                    <p className="text-sm text-[#7B7B7B]">
                                         {formatDuration(pkg.duration, pkg.durationType)}
                                     </p>
                                 </div>
                                 <div className="flex space-x-2">
                                     {pkg.popular && (
-                                        <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">
+                                        <span className="bg-[#FFF9E6] text-[#F59E0B] text-xs px-2 py-1 rounded-full">
                                             Popular
                                         </span>
                                     )}
@@ -391,11 +391,11 @@
                             
                             {/* Features */}
                             <div className="mb-4">
-                                <h4 className="font-medium text-gray-700 mb-2">Features:</h4>
+                                <h4 className="font-medium text-[#121212] mb-2">Features:</h4>
                                 <ul className="space-y-1">
                                     {pkg.features.map((feature, index) => (
-                                        <li key={index} className="text-sm text-gray-600 flex items-center">
-                                            <span className="text-green-500 mr-2">✓</span>
+                                        <li key={index} className="text-sm text-[#7B7B7B] flex items-center">
+                                            <span className="text-[#10B981] mr-2">✓</span>
                                             {feature}
                                         </li>
                                     ))}
@@ -441,9 +441,9 @@
                 {showAddPackage && (
                     <div className="fixed z-50 bg-black bg-opacity-50 flex items-end" style={{ left: '280px', right: '0', top: '0', bottom: '0' }}>
                         <div className="w-full bg-white rounded-t-3xl shadow-2xl max-h-[90vh] overflow-y-auto">
-                            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4">
+                            <div className="sticky top-0 bg-white border-b border-[#ECECEC] px-6 py-4">
                                 <div className="flex justify-between items-center">
-                                    <h2 className="text-xl font-bold text-gray-900">
+                                    <h2 className="text-xl font-bold text-[#121212]">
                                         {editPackage ? "Edit Package" : "Add New Package"}
                                     </h2>
                                     <button
@@ -460,7 +460,7 @@
                                                 active: true
                                             });
                                         }}
-                                        className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
+                                        className="text-[#7B7B7B] hover:text-[#7B7B7B] text-2xl font-bold"
                                     >
                                         ×
                                     </button>
@@ -513,7 +513,7 @@
                         
                         {/* Features */}
                         <div>
-                            <h4 className="font-medium text-gray-700 mb-3">Features:</h4>
+                            <h4 className="font-medium text-[#121212] mb-3">Features:</h4>
                             <div className="space-y-2">
                                 {newPackage.features.map((feature, index) => (
                                     <div key={index} className="flex space-x-2">
@@ -604,7 +604,7 @@
                 
                 {packages.length === 0 && (
                     <div className="text-center py-8">
-                        <p className="text-gray-500">No packages found</p>
+                        <p className="text-[#7B7B7B]">No packages found</p>
                     </div>
                 )}
             </div>

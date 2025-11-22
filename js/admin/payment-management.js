@@ -212,7 +212,7 @@
             
             return (
                 <div className="flex flex-col space-y-1">
-                    <span className="font-mono text-sm bg-gray-100 px-2 py-1 rounded">
+                    <span className="font-mono text-sm bg-[#F8F7F7] px-2 py-1 rounded">
                         {displayContent}
                     </span>
                     {imageUrl && (
@@ -220,7 +220,7 @@
                             href={imageUrl} 
                             target="_blank" 
                             rel="noopener noreferrer"
-                            className="text-xs text-blue-600 hover:text-blue-800 underline"
+                            className="text-xs text-[#E36323] hover:text-[#DF5A18] underline"
                         >
                             📷 Xem ảnh
                         </a>
@@ -279,8 +279,8 @@
                         <div className="flex items-center">
                             <span className="text-2xl">📊</span>
                             <div className="ml-3">
-                                <p className="text-sm font-medium text-gray-600">Total</p>
-                                <p className="text-xl font-bold text-gray-900">{currentStats.total}</p>
+                                <p className="text-sm font-medium text-[#7B7B7B]">Total</p>
+                                <p className="text-xl font-bold text-[#121212]">{currentStats.total}</p>
                             </div>
                         </div>
                     </window.Card>
@@ -289,8 +289,8 @@
                         <div className="flex items-center">
                             <span className="text-2xl">✅</span>
                             <div className="ml-3">
-                                <p className="text-sm font-medium text-gray-600">Completed</p>
-                                <p className="text-xl font-bold text-green-900">{currentStats.completed}</p>
+                                <p className="text-sm font-medium text-[#7B7B7B]">Completed</p>
+                                <p className="text-xl font-bold text-[#10B981]">{currentStats.completed}</p>
                             </div>
                         </div>
                     </window.Card>
@@ -299,8 +299,8 @@
                         <div className="flex items-center">
                             <span className="text-2xl">⏳</span>
                             <div className="ml-3">
-                                <p className="text-sm font-medium text-gray-600">Pending</p>
-                                <p className="text-xl font-bold text-yellow-900">{currentStats.pending}</p>
+                                <p className="text-sm font-medium text-[#7B7B7B]">Pending</p>
+                                <p className="text-xl font-bold text-[#F59E0B]">{currentStats.pending}</p>
                             </div>
                         </div>
                     </window.Card>
@@ -309,8 +309,8 @@
                         <div className="flex items-center">
                             <span className="text-2xl">❌</span>
                             <div className="ml-3">
-                                <p className="text-sm font-medium text-gray-600">Failed</p>
-                                <p className="text-xl font-bold text-red-900">{currentStats.failed}</p>
+                                <p className="text-sm font-medium text-[#7B7B7B]">Failed</p>
+                                <p className="text-xl font-bold text-[#FE5938]">{currentStats.failed}</p>
                             </div>
                         </div>
                     </window.Card>
@@ -319,8 +319,8 @@
                         <div className="flex items-center">
                             <span className="text-2xl">💰</span>
                             <div className="ml-3">
-                                <p className="text-sm font-medium text-gray-600">Revenue</p>
-                                <p className="text-lg font-bold text-green-900">
+                                <p className="text-sm font-medium text-[#7B7B7B]">Revenue</p>
+                                <p className="text-lg font-bold text-[#10B981]">
                                     {formatCurrency(currentStats.revenue)}
                                 </p>
                             </div>
@@ -332,22 +332,22 @@
                 <window.Card>
                     <div className="overflow-x-auto">
                         <table className="min-w-full">
-                            <thead className="bg-gray-50">
+                            <thead className="bg-[#F8F7F7]">
                                 <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Order ID</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Package</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Method</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Transfer Content</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">User Status</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-[#7B7B7B] uppercase">ID</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-[#7B7B7B] uppercase">Order ID</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-[#7B7B7B] uppercase">User</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-[#7B7B7B] uppercase">Package</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-[#7B7B7B] uppercase">Amount</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-[#7B7B7B] uppercase">Method</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-[#7B7B7B] uppercase">Transfer Content</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-[#7B7B7B] uppercase">Date</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-[#7B7B7B] uppercase">Status</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-[#7B7B7B] uppercase">User Status</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-[#7B7B7B] uppercase">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody className="bg-white divide-y divide-gray-200">
+                            <tbody className="bg-white divide-y divide-[#ECECEC]">
                                 {currentPayments.map((payment) => {
                                     const user = users.find(u => u.id === payment.userId);
                                     const packageInfo = packages.find(p => p.id === payment.packageId);
@@ -364,37 +364,37 @@
                                     
                                     return (
                                         <tr key={payment.id}>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-[#121212]">
                                                 {payment.id}
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                <span className="font-mono text-orange-600 font-medium">
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-[#121212]">
+                                                <span className="font-mono text-[#E36323] font-medium">
                                                     {payment.orderId || 'N/A'}
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div>
-                                                    <div className="font-medium text-gray-900">
+                                                    <div className="font-medium text-[#121212]">
                                                         {user?.fullName || 'Unknown User'}
                                                     </div>
-                                                    <div className="text-sm text-gray-500">
+                                                    <div className="text-sm text-[#7B7B7B]">
                                                         {user?.email}
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-[#121212]">
                                                 {packageInfo?.name || payment.packageType || 'Unknown Package'}
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-[#121212]">
                                                 {formatCurrency(payment.amount)}
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-[#121212]">
                                                 {getMethodIcon(payment.method)} {payment.method}
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-[#121212]">
                                                 {formatTransferContent(payment.transferContent, payment.imageUrl)}
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-[#121212]">
                                                 {new Date(payment.createdAt).toLocaleDateString()}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
@@ -428,11 +428,11 @@
                                                 )}
                                                 
                                                 {payment.status === 'completed' && (
-                                                    <span className="text-green-600 text-sm">✅ Processed</span>
+                                                    <span className="text-[#10B981] text-sm">✅ Processed</span>
                                                 )}
                                                 
                                                 {payment.status === 'failed' && (
-                                                    <span className="text-red-600 text-sm">❌ Failed</span>
+                                                    <span className="text-[#FE5938] text-sm">❌ Failed</span>
                                                 )}
                                             </td>
                                         </tr>
@@ -443,7 +443,7 @@
                         
                         {currentPayments.length === 0 && (
                             <div className="text-center py-8">
-                                <p className="text-gray-500">No payments found</p>
+                                <p className="text-[#7B7B7B]">No payments found</p>
                             </div>
                         )}
                     </div>

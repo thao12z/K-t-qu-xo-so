@@ -88,21 +88,21 @@
 
         // Hiển thị thông báo yêu cầu mua dịch vụ nếu package hết hạn
         if (!isPackageActive) {
-            return React.createElement('div', { className: 'min-h-screen bg-gray-50 flex items-center justify-center p-8' },
+            return React.createElement('div', { className: 'min-h-screen bg-[#F8F7F7] flex items-center justify-center p-8' },
                 React.createElement('div', { className: 'bg-white rounded-lg shadow-lg p-8 max-w-2xl text-center' },
                     React.createElement('div', { className: 'text-6xl mb-4' }, '🔒'),
-                    React.createElement('h2', { className: 'text-2xl font-bold text-gray-800 mb-4' }, 'Tính Năng Bị Khóa'),
-                    React.createElement('p', { className: 'text-gray-600 mb-6' }, 
+                    React.createElement('h2', { className: 'text-2xl font-bold text-[#121212] mb-4' }, 'Tính Năng Bị Khóa'),
+                    React.createElement('p', { className: 'text-[#7B7B7B] mb-6' }, 
                         'Trang Công Thức chỉ dành cho tài khoản có gói dịch vụ đang hoạt động. Vui lòng gia hạn để sử dụng tính năng này.'
                     ),
                     React.createElement('div', { className: 'space-y-3' },
                         React.createElement('button', {
                             onClick: handleGoToPricing,
-                            className: 'w-full py-3 px-6 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium'
+                            className: 'w-full py-3 px-6 bg-[#E36323] text-white rounded-lg hover:bg-[#DF5A18] font-medium'
                         }, '💳 Gia Hạn Ngay'),
                         React.createElement('button', {
                             onClick: () => onNavigate('main'),
-                            className: 'w-full py-2 px-6 text-gray-600 hover:text-gray-800 font-medium'
+                            className: 'w-full py-2 px-6 text-[#7B7B7B] hover:text-[#121212] font-medium'
                         }, '← Quay Lại')
                     )
                 )
@@ -116,19 +116,19 @@
                     React.createElement('div', { className: 'text-3xl' }, 
                         betType === 'lo' ? '🎯' : betType === 'de' ? '🎲' : betType === 'xien' ? '🔗' : '🎰'
                     ),
-                    React.createElement('h3', { className: 'text-2xl font-bold text-gray-800' },
+                    React.createElement('h3', { className: 'text-2xl font-bold text-[#121212]' },
                         betType === 'lo' ? 'LÔ' : betType === 'de' ? 'ĐỀ' : betType === 'xien' ? 'XIÊN' : 'BA CÀNG'
                     )
                 ),
 
                 // Keywords
                 React.createElement('div', { className: 'mb-6' },
-                    React.createElement('h4', { className: 'font-semibold text-gray-700 mb-2' }, 'Từ khóa hỗ trợ:'),
+                    React.createElement('h4', { className: 'font-semibold text-[#7B7B7B] mb-2' }, 'Từ khóa hỗ trợ:'),
                     React.createElement('div', { className: 'flex flex-wrap gap-2' },
                         data.keywords.map((keyword, index) =>
                             React.createElement('span', {
                                 key: index,
-                                className: 'px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-mono'
+                                className: 'px-3 py-1 bg-[#FFEDD5] text-[#E36323] rounded-full text-sm font-mono'
                             }, keyword)
                         )
                     )
@@ -136,15 +136,15 @@
 
                 // Syntax
                 React.createElement('div', { className: 'mb-6' },
-                    React.createElement('h4', { className: 'font-semibold text-gray-700 mb-2' }, 'Cú pháp:'),
-                    React.createElement('div', { className: 'bg-gray-100 p-3 rounded font-mono text-sm' },
+                    React.createElement('h4', { className: 'font-semibold text-[#7B7B7B] mb-2' }, 'Cú pháp:'),
+                    React.createElement('div', { className: 'bg-[#F8F7F7] p-3 rounded font-mono text-sm' },
                         data.syntax
                     )
                 ),
 
                 // Examples
                 React.createElement('div', { className: 'mb-6' },
-                    React.createElement('h4', { className: 'font-semibold text-gray-700 mb-2' }, 'Ví dụ:'),
+                    React.createElement('h4', { className: 'font-semibold text-[#7B7B7B] mb-2' }, 'Ví dụ:'),
                     React.createElement('div', { className: 'space-y-2' },
                         data.examples.map((example, index) =>
                             React.createElement('div', {
@@ -157,7 +157,7 @@
 
                 // Calculation
                 React.createElement('div', { className: 'mb-6' },
-                    React.createElement('h4', { className: 'font-semibold text-gray-700 mb-2' }, 'Cách tính:'),
+                    React.createElement('h4', { className: 'font-semibold text-[#7B7B7B] mb-2' }, 'Cách tính:'),
                     React.createElement('div', { className: 'bg-yellow-50 border border-yellow-200 p-3 rounded text-sm' },
                         data.calculation
                     )
@@ -165,31 +165,31 @@
 
                 // Matching Logic
                 React.createElement('div', {},
-                    React.createElement('h4', { className: 'font-semibold text-gray-700 mb-2' }, 'Logic đối chiếu:'),
-                    React.createElement('div', { className: 'bg-blue-50 border border-blue-200 p-3 rounded text-sm' },
+                    React.createElement('h4', { className: 'font-semibold text-[#7B7B7B] mb-2' }, 'Logic đối chiếu:'),
+                    React.createElement('div', { className: 'bg-[#FFF7ED] border border-[#FFEDD5] p-3 rounded text-sm' },
                         FORMULA_PAGE_CONTENT.matching_logic[betType]
                     )
                 )
             );
         };
 
-        return React.createElement('div', { className: 'min-h-screen bg-gray-50' },
+        return React.createElement('div', { className: 'min-h-screen bg-[#F8F7F7]' },
             // Header
             React.createElement('header', { className: 'bg-white shadow-sm' },
                 React.createElement('div', { className: 'max-w-7xl mx-auto px-4 py-4' },
                     React.createElement('div', { className: 'flex items-center justify-between' },
                         React.createElement('div', { className: 'flex items-center gap-3' },
                             React.createElement('button', {
-                                className: 'text-blue-600 hover:text-blue-800',
+                                className: 'text-[#E36323] hover:text-[#E36323]',
                                 onClick: handleBackToMain
                             }, '← Quay lại'),
                             React.createElement('div', { className: 'flex items-center gap-2' },
                                 React.createElement('div', { className: 'text-2xl' }, '📖'),
-                                React.createElement('h1', { className: 'text-xl font-bold text-gray-800' }, 'Hướng Dẫn Sử Dụng')
+                                React.createElement('h1', { className: 'text-xl font-bold text-[#121212]' }, 'Hướng Dẫn Sử Dụng')
                             )
                         ),
                         React.createElement('button', {
-                            className: 'px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium',
+                            className: 'px-4 py-2 bg-[#E36323] text-white rounded-lg hover:bg-[#DF5A18] font-medium',
                             onClick: handleGoToPricing
                         }, 'Xem Gói Dịch Vụ')
                     )
@@ -200,10 +200,10 @@
             React.createElement('main', { className: 'max-w-7xl mx-auto px-4 py-8' },
                 // Introduction
                 React.createElement('div', { className: 'text-center mb-12' },
-                    React.createElement('h1', { className: 'text-4xl font-bold text-gray-900 mb-4' },
+                    React.createElement('h1', { className: 'text-4xl font-bold text-[#121212] mb-4' },
                         'Hướng Dẫn Công Thức Cược'
                     ),
-                    React.createElement('p', { className: 'text-xl text-gray-600 max-w-3xl mx-auto' },
+                    React.createElement('p', { className: 'text-xl text-[#7B7B7B] max-w-3xl mx-auto' },
                         'Hệ thống hỗ trợ 4 loại cược chính: Lô, Đề, Xiên, Ba Càng. Mỗi loại có cú pháp và cách tính riêng.'
                     )
                 ),
@@ -217,8 +217,8 @@
                                 key: type,
                                 className: `px-6 py-3 rounded-md font-semibold transition-all ${
                                     activeTab === type 
-                                        ? 'bg-blue-600 text-white shadow-md' 
-                                        : 'text-gray-600 hover:text-blue-600'
+                                        ? 'bg-[#E36323] text-white shadow-md' 
+                                        : 'text-[#7B7B7B] hover:text-[#E36323]'
                                 }`,
                                 onClick: () => setActiveTab(type)
                             }, labels[type]);
@@ -233,7 +233,7 @@
 
                 // Money Units Section
                 React.createElement('div', { className: 'bg-white rounded-lg shadow-md p-6 mb-8' },
-                    React.createElement('h3', { className: 'text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3' },
+                    React.createElement('h3', { className: 'text-2xl font-bold text-[#121212] mb-6 flex items-center gap-3' },
                         React.createElement('span', { className: 'text-3xl' }, '💰'),
                         'Đơn Vị Tiền'
                     ),
@@ -252,11 +252,11 @@
 
                 // Default Rates Section
                 React.createElement('div', { className: 'bg-white rounded-lg shadow-md p-6 mb-8' },
-                    React.createElement('h3', { className: 'text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3' },
+                    React.createElement('h3', { className: 'text-2xl font-bold text-[#121212] mb-6 flex items-center gap-3' },
                         React.createElement('span', { className: 'text-3xl' }, '⚙️'),
                         'Hệ Số Mặc Định'
                     ),
-                    React.createElement('div', { className: 'text-sm text-gray-600 mb-4' },
+                    React.createElement('div', { className: 'text-sm text-[#7B7B7B] mb-4' },
                         'Các hệ số này có thể được điều chỉnh trong phần Tham Số Hệ Thống khi sử dụng.'
                     ),
                     React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4' },

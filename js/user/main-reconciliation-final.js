@@ -498,7 +498,7 @@
         const baseClasses = 'w-full p-3 border font-mono text-sm resize-none outline-none';
         
         if (!validationResults) {
-            return baseClasses + ' border-gray-300 bg-white';
+            return baseClasses + ' border-[#ECECEC] bg-white';
         }
         
         const lines = betText.split('\n');
@@ -1848,13 +1848,13 @@
         
         // SECURITY: Block access if package not active
         if (!accessCheck.allowed) {
-            return React.createElement('div', {className: 'min-h-screen bg-gray-50 flex items-center justify-center p-8'},
+            return React.createElement('div', {className: 'min-h-screen bg-[#F8F7F7] flex items-center justify-center p-8'},
                 React.createElement('div', {className: 'bg-white rounded-lg shadow-lg p-8 max-w-2xl text-center'},
                     React.createElement('div', {className: 'text-red-500 text-6xl mb-6'}, '🚫'),
-                    React.createElement('h2', {className: 'text-2xl font-bold text-gray-800 mb-4'}, 'Truy Cập Bị Hạn Chế'),
-                    React.createElement('p', {className: 'text-gray-600 mb-6'}, accessCheck.reason),
+                    React.createElement('h2', {className: 'text-2xl font-bold text-[#121212] mb-4'}, 'Truy Cập Bị Hạn Chế'),
+                    React.createElement('p', {className: 'text-[#7B7B7B] mb-6'}, accessCheck.reason),
                     React.createElement('div', {className: 'space-y-4'},
-                        React.createElement('p', {className: 'text-sm text-gray-500 bg-gray-100 rounded-lg p-3'}, 
+                        React.createElement('p', {className: 'text-sm text-[#7B7B7B] bg-[#F8F7F7] rounded-lg p-3'}, 
                             `Trạng thái tài khoản: ${currentUser?.package_status || 'Không xác định'}`
                         ),
                         accessCheck.redirect === 'pricing' && React.createElement('div', {className: 'space-y-3'},
@@ -1873,7 +1873,7 @@
                                         }, 100);
                                     }
                                 },
-                                className: 'w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold transition-colors'
+                                className: 'w-full px-6 py-3 bg-[#E36323] text-white rounded-lg hover:bg-[#DF5A18] font-semibold transition-colors'
                             }, '💰 Xem Gói Dịch Vụ'),
                             React.createElement('button', {
                                 onClick: () => {
@@ -1882,14 +1882,14 @@
                                         window.location.reload();
                                     }
                                 },
-                                className: 'w-full px-6 py-3 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors'
+                                className: 'w-full px-6 py-3 bg-[#ECECEC] text-[#7B7B7B] rounded-lg hover:bg-[#E2E2E2] transition-colors'
                             }, 'Đăng Xuất')
                         ),
                         accessCheck.redirect === 'login' && React.createElement('button', {
                             onClick: () => {
                                 window.location.href = 'index.html';
                             },
-                            className: 'w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold transition-colors'
+                            className: 'w-full px-6 py-3 bg-[#E36323] text-white rounded-lg hover:bg-[#DF5A18] font-semibold transition-colors'
                         }, '🔑 Đăng Nhập')
                     )
                 )
@@ -1901,13 +1901,13 @@
             React.createElement('div', {className: 'mb-6'},
                 React.createElement('div', {className: 'flex items-center justify-between'},
                     React.createElement('div', {},
-                        React.createElement('h1', {className: 'text-2xl font-bold text-gray-800'}, 'Hệ Thống Đối Soát Lô Đề'),
-                        React.createElement('p', {className: 'text-gray-600 mt-2'}, 'Kiểm tra kết quả dựa trên dữ liệu XSMB chính thức')
+                        React.createElement('h1', {className: 'text-2xl font-bold text-[#121212]'}, 'Hệ Thống Đối Soát Lô Đề'),
+                        React.createElement('p', {className: 'text-[#7B7B7B] mt-2'}, 'Kiểm tra kết quả dựa trên dữ liệu XSMB chính thức')
                     ),
                     React.createElement('div', {className: 'flex gap-3'},
                         React.createElement('button', {
                             onClick: () => setShowConfig(!showConfig),
-                            className: `px-4 py-2 rounded-lg text-sm font-medium ${showConfig ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`
+                            className: `px-4 py-2 rounded-lg text-sm font-medium ${showConfig ? 'bg-[#E36323] text-white' : 'bg-[#ECECEC] text-[#7B7B7B] hover:bg-[#ECECEC]'}`
                         }, showConfig ? 'Cấu Hình' : '⚙️ Cấu Hình'),
 
                         React.createElement('button', {
@@ -1928,22 +1928,22 @@
             // ============ SECTION A: THAM SỐ HỆ THỐNG (16 FIELDS) ============
             // Configuration Panel
             showConfig && React.createElement('div', {className: 'bg-white rounded-lg shadow-md p-4 mb-6'},
-                React.createElement('h2', {className: 'text-lg font-semibold text-gray-800 mb-4'}, '⚙️ Cấu Hình Tham Số'),
+                React.createElement('h2', {className: 'text-lg font-semibold text-[#121212] mb-4'}, '⚙️ Cấu Hình Tham Số'),
                 
                 // Date and Region Selection - SECTION A
                 React.createElement('div', {className: 'mb-6'},
-                    React.createElement('h3', {className: 'text-md font-medium text-gray-700 mb-3'}, 'Cài Đặt Cơ Bản'),
-                    React.createElement('div', {className: 'grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-blue-50 rounded-lg'},
+                    React.createElement('h3', {className: 'text-md font-medium text-[#7B7B7B] mb-3'}, 'Cài Đặt Cơ Bản'),
+                    React.createElement('div', {className: 'grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-[#FFF7ED] rounded-lg'},
                         React.createElement('div', {},
-                            React.createElement('label', {className: 'block text-sm font-medium text-gray-700 mb-1'}, 'Ngày đối chiếu:'),
+                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B] mb-1'}, 'Ngày đối chiếu:'),
                             React.createElement('input', {
                                 type: 'date',
                                 value: parameters.ngay,
                                 onChange: (e) => handleParameterChange('ngay', e.target.value),
-                                className: 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500',
+                                className: 'w-full px-3 py-2 border border-[#ECECEC] rounded-lg focus:ring-2 focus:ring-[#E36323]',
                                 max: new Date().toISOString().split('T')[0]
                             }),
-                            React.createElement('p', {className: 'text-xs text-gray-500 mt-1'}, 
+                            React.createElement('p', {className: 'text-xs text-[#7B7B7B] mt-1'}, 
                                 `Hiện tại: ${parameters.ngay} ${parameters.ngay === new Date().toISOString().split('T')[0] ? '(Hôm nay)' : ''}`
                             ),
                             // DATE STATUS INDICATOR
@@ -1968,15 +1968,15 @@
                                     const today = new Date().toISOString().split('T')[0];
                                     handleParameterChange('ngay', today);
                                 },
-                                className: 'mt-2 px-2 py-1 text-xs bg-blue-100 text-blue-600 rounded hover:bg-blue-200'
+                                className: 'mt-2 px-2 py-1 text-xs bg-[#FFEDD5] text-[#E36323] rounded hover:bg-[#FFEDD5]'
                             }, 'Hôm nay')
                         ),
                         React.createElement('div', {},
-                            React.createElement('label', {className: 'block text-sm font-medium text-gray-700 mb-1'}, 'Miền:'),
+                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B] mb-1'}, 'Miền:'),
                             React.createElement('select', {
                                 value: parameters.mien,
                                 onChange: (e) => handleParameterChange('mien', e.target.value),
-                                className: 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500'
+                                className: 'w-full px-3 py-2 border border-[#ECECEC] rounded-lg focus:ring-2 focus:ring-[#E36323]'
                             },
                                 React.createElement('option', {value: 'bac'}, 'Miền Bắc'),
                                 React.createElement('option', {value: 'trung'}, 'Miền Trung (Coming soon)'),
@@ -1987,13 +1987,13 @@
                 ),
                 
                 // 16 Parameters Section - SECTION B
-                React.createElement('h3', {className: 'text-md font-medium text-gray-700 mb-3'}, '💰 16 Tham Số Tính Toán'),
+                React.createElement('h3', {className: 'text-md font-medium text-[#7B7B7B] mb-3'}, '💰 16 Tham Số Tính Toán'),
                 React.createElement('div', {className: 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4'},
                     // Lô parameters
                     React.createElement('div', {className: 'space-y-3'},
-                        React.createElement('h3', {className: 'font-semibold text-blue-600'}, 'Lô (3 tham số)'),
+                        React.createElement('h3', {className: 'font-semibold text-[#E36323]'}, 'Lô (3 tham số)'),
                         React.createElement('div', {},
-                            React.createElement('label', {className: 'block text-sm font-medium text-gray-700'}, 'Tiền 1 điểm lô'),
+                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Tiền 1 điểm lô'),
                             React.createElement('input', {
                                 type: 'number',
                                 value: parameters.tien1DiemLo,
@@ -2002,7 +2002,7 @@
                             })
                         ),
                         React.createElement('div', {},
-                            React.createElement('label', {className: 'block text-sm font-medium text-gray-700'}, 'Tiền trả 1 điểm lô'),
+                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Tiền trả 1 điểm lô'),
                             React.createElement('input', {
                                 type: 'number',
                                 value: parameters.tienTra1DiemLo,
@@ -2011,7 +2011,7 @@
                             })
                         ),
                         React.createElement('div', {},
-                            React.createElement('label', {className: 'block text-sm font-medium text-gray-700'}, 'Tỷ lệ lô thu (%)'),
+                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Tỷ lệ lô thu (%)'),
                             React.createElement('input', {
                                 type: 'number',
                                 value: parameters.tyLeLoThu,
@@ -2025,7 +2025,7 @@
                     React.createElement('div', {className: 'space-y-3'},
                         React.createElement('h3', {className: 'font-semibold text-green-600'}, 'Đề (2 tham số)'),
                         React.createElement('div', {},
-                            React.createElement('label', {className: 'block text-sm font-medium text-gray-700'}, 'Hệ số đề trả'),
+                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Hệ số đề trả'),
                             React.createElement('input', {
                                 type: 'number',
                                 value: parameters.heSoDeTra,
@@ -2034,7 +2034,7 @@
                             })
                         ),
                         React.createElement('div', {},
-                            React.createElement('label', {className: 'block text-sm font-medium text-gray-700'}, 'Tỷ lệ đề thu (%)'),
+                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Tỷ lệ đề thu (%)'),
                             React.createElement('input', {
                                 type: 'number',
                                 value: parameters.tyLeDeThu,
@@ -2048,7 +2048,7 @@
                     React.createElement('div', {className: 'space-y-3'},
                         React.createElement('h3', {className: 'font-semibold text-purple-600'}, 'Xiên (6 tham số)'),
                         React.createElement('div', {},
-                            React.createElement('label', {className: 'block text-sm font-medium text-gray-700'}, 'Hệ số xiên 2'),
+                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Hệ số xiên 2'),
                             React.createElement('input', {
                                 type: 'number',
                                 value: parameters.heSoXien2Tra,
@@ -2057,7 +2057,7 @@
                             })
                         ),
                         React.createElement('div', {},
-                            React.createElement('label', {className: 'block text-sm font-medium text-gray-700'}, 'Tỷ lệ xiên 2 thu (%)'),
+                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Tỷ lệ xiên 2 thu (%)'),
                             React.createElement('input', {
                                 type: 'number',
                                 value: parameters.tyLeXien2Thu,
@@ -2066,7 +2066,7 @@
                             })
                         ),
                         React.createElement('div', {},
-                            React.createElement('label', {className: 'block text-sm font-medium text-gray-700'}, 'Hệ số xiên 3'),
+                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Hệ số xiên 3'),
                             React.createElement('input', {
                                 type: 'number',
                                 value: parameters.heSoXien3Tra,
@@ -2075,7 +2075,7 @@
                             })
                         ),
                         React.createElement('div', {},
-                            React.createElement('label', {className: 'block text-sm font-medium text-gray-700'}, 'Tỷ lệ xiên 3 thu (%)'),
+                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Tỷ lệ xiên 3 thu (%)'),
                             React.createElement('input', {
                                 type: 'number',
                                 value: parameters.tyLeXien3Thu,
@@ -2084,7 +2084,7 @@
                             })
                         ),
                         React.createElement('div', {},
-                            React.createElement('label', {className: 'block text-sm font-medium text-gray-700'}, 'Hệ số xiên 4'),
+                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Hệ số xiên 4'),
                             React.createElement('input', {
                                 type: 'number',
                                 value: parameters.heSoXien4Tra,
@@ -2093,7 +2093,7 @@
                             })
                         ),
                         React.createElement('div', {},
-                            React.createElement('label', {className: 'block text-sm font-medium text-gray-700'}, 'Tỷ lệ xiên 4 thu (%)'),
+                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Tỷ lệ xiên 4 thu (%)'),
                             React.createElement('input', {
                                 type: 'number',
                                 value: parameters.tyLeXien4Thu,
@@ -2107,7 +2107,7 @@
                     React.createElement('div', {className: 'space-y-3'},
                         React.createElement('h3', {className: 'font-semibold text-red-600'}, 'Ba Càng & Khác (3 tham số)'),
                         React.createElement('div', {},
-                            React.createElement('label', {className: 'block text-sm font-medium text-gray-700'}, 'Hệ số ba càng'),
+                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Hệ số ba càng'),
                             React.createElement('input', {
                                 type: 'number',
                                 value: parameters.heSoBaCangTra,
@@ -2116,7 +2116,7 @@
                             })
                         ),
                         React.createElement('div', {},
-                            React.createElement('label', {className: 'block text-sm font-medium text-gray-700'}, 'Tỷ lệ ba càng thu (%)'),
+                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Tỷ lệ ba càng thu (%)'),
                             React.createElement('input', {
                                 type: 'number',
                                 value: parameters.tyLeBaCangThu,
@@ -2125,7 +2125,7 @@
                             })
                         ),
                         React.createElement('div', {},
-                            React.createElement('label', {className: 'block text-sm font-medium text-gray-700'}, 'Làm tròn tiền'),
+                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Làm tròn tiền'),
                             React.createElement('input', {
                                 type: 'checkbox',
                                 checked: parameters.lamTronTien,
@@ -2155,7 +2155,7 @@
                 // Left panel - Input
                 React.createElement('div', {className: 'bg-white rounded-lg shadow-md p-4'},
                     React.createElement('div', {className: 'flex items-center justify-between mb-4'},
-                        React.createElement('h2', {className: 'text-lg font-semibold text-gray-800'}, 'Nhập Dữ Liệu Cược'),
+                        React.createElement('h2', {className: 'text-lg font-semibold text-[#121212]'}, 'Nhập Dữ Liệu Cược'),
                         React.createElement('button', {
                             onClick: handleValidateBets,
                             disabled: !betText.trim(),
@@ -2168,7 +2168,7 @@
                         React.createElement('div', {className: 'flex'},
                             // Line numbers
                             React.createElement('div', {
-                                className: 'bg-gray-50 border-r border-gray-200 p-3 text-gray-500 text-sm font-mono min-w-[3rem] text-right select-none',
+                                className: 'bg-[#F8F7F7] border-r border-gray-200 p-3 text-[#7B7B7B] text-sm font-mono min-w-[3rem] text-right select-none',
                                 style: { lineHeight: '1.5' }
                             }, 
                                 betText.split('\n').map((_, index) => {
@@ -2306,7 +2306,7 @@
                                     'bg-gray-400 text-white cursor-not-allowed' : 
                                     validationResults.filter(item => item.line.trim() && !item.isValid).length > 0 ?
                                         'bg-red-500 text-white cursor-not-allowed' :
-                                        'bg-blue-600 text-white hover:bg-blue-700'
+                                        'bg-[#E36323] text-white hover:bg-[#DF5A18]'
                             } disabled:opacity-50`
                         }, 
                             isLoading ? 
@@ -2327,7 +2327,7 @@
                                 setValidationResults(null);
                                 setShowValidation(false);
                             },
-                            className: 'px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600'
+                            className: 'px-4 py-2 bg-[#F8F7F7]0 text-white rounded-lg hover:bg-gray-600'
                         }, 'Xóa'),
                         React.createElement('button', {
                             onClick: () => {
@@ -2337,17 +2337,17 @@
                                     handleCheckResults();
                                 }, 100);
                             },
-                            className: 'px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 ml-2'
+                            className: 'px-4 py-2 bg-[#FFF7ED]0 text-white rounded-lg hover:bg-[#E36323] ml-2'
                         }, 'Refresh')
                     )
                 ),
                 
                 // Right panel - Validation Preview
                 React.createElement('div', {className: 'bg-white rounded-lg shadow-md p-4'},
-                    React.createElement('h2', {className: 'text-lg font-semibold text-gray-800 mb-4'}, 'Kiểm Tra Cú Pháp'),
+                    React.createElement('h2', {className: 'text-lg font-semibold text-[#121212] mb-4'}, 'Kiểm Tra Cú Pháp'),
                     
                     !showValidation || !validationResults ? 
-                        React.createElement('div', {className: 'flex items-center justify-center h-64 text-gray-500'},
+                        React.createElement('div', {className: 'flex items-center justify-center h-64 text-[#7B7B7B]'},
                             React.createElement('div', {className: 'text-center'},
                                 React.createElement('div', {className: 'text-4xl mb-2'}, '📋'),
                                 React.createElement('p', {}, 'Nhấn "Kiểm Tra Cú Pháp" để xem kết quả validation')
@@ -2358,7 +2358,7 @@
                                 React.createElement('div', {
                                     key: index,
                                     className: `p-3 rounded border text-sm ${
-                                        !item.line ? 'bg-gray-50 border-gray-200' :
+                                        !item.line ? 'bg-[#F8F7F7] border-gray-200' :
                                         item.isValid ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-400'
                                     }`
                                 },
@@ -2413,8 +2413,8 @@
                                         ),
                                         React.createElement('div', {className: 'text-red-700'}, 'Có lỗi')
                                     ),
-                                    React.createElement('div', {className: 'text-center p-2 bg-blue-100 rounded'},
-                                        React.createElement('div', {className: 'text-2xl font-bold text-blue-600'}, 
+                                    React.createElement('div', {className: 'text-center p-2 bg-[#FFEDD5] rounded'},
+                                        React.createElement('div', {className: 'text-2xl font-bold text-[#E36323]'}, 
                                             validationResults.filter(r => r.line.trim()).length
                                         ),
                                         React.createElement('div', {className: 'text-blue-700'}, 'Tổng dòng')
@@ -2450,7 +2450,7 @@
                     })(),
                     React.createElement('div', {className: 'flex items-center justify-between mb-4'},
                         React.createElement('div', {},
-                            React.createElement('h2', {className: 'text-lg font-semibold text-gray-800'}, 
+                            React.createElement('h2', {className: 'text-lg font-semibold text-[#121212]'}, 
                                 `Kết Quả XSMB ${lotteryResults.actualDate || lotteryResults.date || 'Hôm nay'}`
                             ),
                             !lotteryResults.isRequestedDate && lotteryResults.requestedDate && 
@@ -2458,7 +2458,7 @@
                                 `Đã yêu cầu ${lotteryResults.requestedDate} nhưng đang hiển thị ${lotteryResults.actualDate}`
                             )
                         ),
-                        React.createElement('div', {className: 'text-sm text-gray-600'},
+                        React.createElement('div', {className: 'text-sm text-[#7B7B7B]'},
                             lotteryResults.isSimulation ? 
                                 '🎲 Simulation Data' : 
                                 '📡 RSS xosodaiphat.com'
@@ -2476,9 +2476,9 @@
                                     (lotteryResults?.date === '2025-08-21' ? '94127' : 'N/A')
                                 )
                             ),
-                            React.createElement('div', {className: 'border rounded-lg p-3 mb-3 bg-blue-50'},
+                            React.createElement('div', {className: 'border rounded-lg p-3 mb-3 bg-[#FFF7ED]'},
                                 React.createElement('div', {className: 'text-sm font-medium text-blue-800 mb-2'}, 'Giải Nhất'),
-                                React.createElement('div', {className: 'text-lg font-bold text-blue-600 font-mono'}, 
+                                React.createElement('div', {className: 'text-lg font-bold text-[#E36323] font-mono'}, 
                                     lotteryResults?.giai_nhat?.[0] || 
                                     lotteryResults?.nhat?.[0] ||
                                     (lotteryResults?.date === '2025-08-21' ? '42750' : 'N/A')
@@ -2524,8 +2524,8 @@
                                     }
                                     
                                     return React.createElement('div', {key: prize, className: 'border rounded-lg p-2'},
-                                        React.createElement('div', {className: 'text-xs font-medium text-gray-700 mb-1'}, prizeNames[prize]),
-                                        React.createElement('div', {className: 'text-sm font-mono text-gray-600'}, 
+                                        React.createElement('div', {className: 'text-xs font-medium text-[#7B7B7B] mb-1'}, prizeNames[prize]),
+                                        React.createElement('div', {className: 'text-sm font-mono text-[#7B7B7B]'}, 
                                             numbers?.join(' - ') || 'N/A'
                                         )
                                     );
@@ -2538,7 +2538,7 @@
                 // Bet Details Table - 6 cột theo RULES
                 results && React.createElement('div', {className: 'bg-white rounded-lg shadow-md p-4'},
                     React.createElement('div', {className: 'flex items-center justify-between mb-4'},
-                        React.createElement('h2', {className: 'text-lg font-semibold text-gray-800'}, 'Chi Tiết Đối Chiếu'),
+                        React.createElement('h2', {className: 'text-lg font-semibold text-[#121212]'}, 'Chi Tiết Đối Chiếu'),
                         React.createElement('select', {
                             value: resultsFilter,
                             onChange: (e) => setResultsFilter(e.target.value),
@@ -2555,7 +2555,7 @@
                     React.createElement('div', {className: 'overflow-x-auto'},
                         React.createElement('table', {className: 'w-full text-sm'},
                             React.createElement('thead', {},
-                                React.createElement('tr', {className: 'bg-gray-50'},
+                                React.createElement('tr', {className: 'bg-[#F8F7F7]'},
                                     React.createElement('th', {className: 'text-left p-3 border'}, 'Nội dung gốc'),
                                     React.createElement('th', {className: 'text-left p-3 border'}, 'Loại cược'),
                                     React.createElement('th', {className: 'text-left p-3 border'}, 'Số cược'),
@@ -2582,7 +2582,7 @@
                                         'bg-red-50 border-red-200' :
                                         isWin ? 
                                             'bg-green-50 border-green-200' : 
-                                            'bg-gray-50 border-gray-200';
+                                            'bg-[#F8F7F7] border-gray-200';
                                     
                                     const statusClass = isError ?
                                         'text-red-600 font-semibold' :
@@ -2636,45 +2636,45 @@
                     
                     // Pagination controls
                     getPaginatedResults().totalPages > 1 && React.createElement('div', {className: 'mt-4 flex items-center justify-between'},
-                        React.createElement('div', {className: 'text-sm text-gray-600'},
+                        React.createElement('div', {className: 'text-sm text-[#7B7B7B]'},
                             `Hiển thị ${getPaginatedResults().startIndex}-${getPaginatedResults().endIndex} trong ${getPaginatedResults().total} kết quả`
                         ),
                         React.createElement('div', {className: 'flex gap-2'},
                             React.createElement('button', {
                                 onClick: () => setCurrentPage(Math.max(1, currentPage - 1)),
                                 disabled: currentPage === 1,
-                                className: 'px-3 py-1 bg-gray-200 text-gray-700 rounded disabled:opacity-50'
+                                className: 'px-3 py-1 bg-[#ECECEC] text-[#7B7B7B] rounded disabled:opacity-50'
                             }, '‹ Trước'),
-                            React.createElement('span', {className: 'px-3 py-1 bg-blue-100 text-blue-800 rounded'}, 
+                            React.createElement('span', {className: 'px-3 py-1 bg-[#FFEDD5] text-blue-800 rounded'}, 
                                 `${currentPage}/${getPaginatedResults().totalPages}`
                             ),
                             React.createElement('button', {
                                 onClick: () => setCurrentPage(Math.min(getPaginatedResults().totalPages, currentPage + 1)),
                                 disabled: currentPage === getPaginatedResults().totalPages,
-                                className: 'px-3 py-1 bg-gray-200 text-gray-700 rounded disabled:opacity-50'
+                                className: 'px-3 py-1 bg-[#ECECEC] text-[#7B7B7B] rounded disabled:opacity-50'
                             }, 'Sau ›')
                         )
                     ),
                     
                     // Summary section
-                    React.createElement('div', {className: 'mt-4 pt-4 border-t bg-gray-50 rounded-lg p-3'},
+                    React.createElement('div', {className: 'mt-4 pt-4 border-t bg-[#F8F7F7] rounded-lg p-3'},
                         React.createElement('div', {className: 'grid grid-cols-1 md:grid-cols-4 gap-4 text-sm'},
                             React.createElement('div', {},
-                                React.createElement('span', {className: 'text-gray-600'}, 'Tổng bet: '),
+                                React.createElement('span', {className: 'text-[#7B7B7B]'}, 'Tổng bet: '),
                                 React.createElement('span', {className: 'font-semibold'}, getFilteredResults().length)
                             ),
                             React.createElement('div', {},
-                                React.createElement('span', {className: 'text-gray-600'}, 'Hiển thị: '),
+                                React.createElement('span', {className: 'text-[#7B7B7B]'}, 'Hiển thị: '),
                                 React.createElement('span', {className: 'font-semibold'}, getPaginatedResults().data.length)
                             ),
                             React.createElement('div', {},
-                                React.createElement('span', {className: 'text-gray-600'}, 'Thắng/Thua: '),
+                                React.createElement('span', {className: 'text-[#7B7B7B]'}, 'Thắng/Thua: '),
                                 React.createElement('span', {className: 'text-green-600 font-semibold'}, getFilteredResults().filter(r => (r.result?.won || r.result?.status === 'win')).length),
-                                React.createElement('span', {className: 'text-gray-500'}, ' / '),
+                                React.createElement('span', {className: 'text-[#7B7B7B]'}, ' / '),
                                 React.createElement('span', {className: 'text-red-600 font-semibold'}, getFilteredResults().filter(r => !(r.result?.won || r.result?.status === 'win') && !r.result?.error).length)
                             ),
                             React.createElement('div', {},
-                                React.createElement('span', {className: 'text-gray-600'}, 'Lãi/Lỗ: '),
+                                React.createElement('span', {className: 'text-[#7B7B7B]'}, 'Lãi/Lỗ: '),
                                 React.createElement('span', {
                                     className: `font-bold ${getFilteredResults().reduce((sum, r) => sum + ((r.result?.won || r.result?.status === 'win') ? (r.result?.amount || 0) : -((r.result?.loseAmount || r.bet?.money || 0))), 0) >= 0 ? 'text-green-600' : 'text-red-600'}`
                                 }, 
@@ -2689,10 +2689,10 @@
             
             // Statistics Dashboard
             statistics && React.createElement('div', {className: 'bg-white rounded-lg shadow-md p-4 mt-6'},
-                React.createElement('h2', {className: 'text-lg font-semibold text-gray-800 mb-4'}, 'Thống Kê Chi Tiết'),
+                React.createElement('h2', {className: 'text-lg font-semibold text-[#121212] mb-4'}, 'Thống Kê Chi Tiết'),
                 React.createElement('div', {className: 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4'},
                     // Overall stats
-                    React.createElement('div', {className: 'bg-blue-50 rounded-lg p-4'},
+                    React.createElement('div', {className: 'bg-[#FFF7ED] rounded-lg p-4'},
                         React.createElement('h3', {className: 'font-semibold text-blue-800 mb-2'}, 'Tổng Quan'),
                         React.createElement('div', {className: 'space-y-1 text-sm'},
                             React.createElement('div', {}, `Tổng bet: ${statistics.total}`),

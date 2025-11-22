@@ -123,11 +123,11 @@
             >
                 <div className="space-y-6">
                     {/* Package Info */}
-                    <div className="bg-blue-50 rounded-lg p-4">
-                        <h3 className="font-bold text-blue-900 mb-2">
+                    <div className="bg-[#FFF7ED] rounded-lg p-4">
+                        <h3 className="font-bold text-[#E36323] mb-2">
                             📦 {selectedPackage.name}
                         </h3>
-                        <div className="text-blue-700">
+                        <div className="text-[#E36323]">
                             <p>💰 Giá: {selectedPackage.price}</p>
                             <p>⏱️ Thời hạn: {selectedPackage.duration_days} ngày</p>
                             <p>🎯 Mục tiêu: {selectedPackage.target}</p>
@@ -137,7 +137,7 @@
                     
                     {/* Payment Methods */}
                     <div>
-                        <h4 className="font-bold text-gray-900 mb-3">💳 Chọn phương thức thanh toán:</h4>
+                        <h4 className="font-bold text-[#121212] mb-3">💳 Chọn phương thức thanh toán:</h4>
                         <div className="grid grid-cols-2 gap-3">
                             {[
                                 { id: 'qr_code', name: 'QR Code', icon: '📱', enabled: qrCode?.enabled },
@@ -150,8 +150,8 @@
                                     onClick={() => handleMethodSelect(method.id)}
                                     className={`p-4 border rounded-lg text-center transition-colors ${
                                         selectedMethod === method.id
-                                            ? 'border-blue-500 bg-blue-50 text-blue-700'
-                                            : 'border-gray-200 hover:border-gray-300'
+                                            ? 'border-[#E36323] bg-[#FFF7ED] text-[#E36323]'
+                                            : 'border-[#ECECEC] hover:border-[#E2E2E2]'
                                     }`}
                                 >
                                     <div className="text-2xl mb-2">{method.icon}</div>
@@ -184,7 +184,7 @@
                                 {/* Payment Info */}
                                 <div className="flex-1">
                                     <div className="bg-white rounded-lg p-4 border">
-                                        <h5 className="font-bold text-gray-900 mb-3">
+                                        <h5 className="font-bold text-[#121212] mb-3">
                                             📋 Thông tin thanh toán
                                         </h5>
                                         <div className="space-y-2 text-sm">
@@ -226,26 +226,26 @@
                     
                     {/* Bank Transfer Info */}
                     {selectedMethod === 'bank_transfer' && config?.bankInfo && (
-                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-                            <h4 className="font-bold text-blue-900 mb-4 flex items-center gap-2">
+                        <div className="bg-[#FFF7ED] border border-[#FFEDD5] rounded-lg p-6">
+                            <h4 className="font-bold text-[#E36323] mb-4 flex items-center gap-2">
                                 🏦 Thông tin chuyển khoản
                             </h4>
                             
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label className="text-sm font-medium text-gray-700">Ngân hàng:</label>
+                                    <label className="text-sm font-medium text-[#7B7B7B]">Ngân hàng:</label>
                                     <p className="font-medium">{config.bankInfo.bankName}</p>
                                 </div>
                                 <div>
-                                    <label className="text-sm font-medium text-gray-700">Số tài khoản:</label>
+                                    <label className="text-sm font-medium text-[#7B7B7B]">Số tài khoản:</label>
                                     <p className="font-medium font-mono">{config.bankInfo.accountNumber}</p>
                                 </div>
                                 <div>
-                                    <label className="text-sm font-medium text-gray-700">Tên tài khoản:</label>
+                                    <label className="text-sm font-medium text-[#7B7B7B]">Tên tài khoản:</label>
                                     <p className="font-medium">{config.bankInfo.accountName}</p>
                                 </div>
                                 <div>
-                                    <label className="text-sm font-medium text-gray-700">Chi nhánh:</label>
+                                    <label className="text-sm font-medium text-[#7B7B7B]">Chi nhánh:</label>
                                     <p className="font-medium">{config.bankInfo.branch}</p>
                                 </div>
                             </div>
@@ -276,7 +276,7 @@
                                     <span className="text-2xl">📱</span>
                                     <div>
                                         <p className="font-medium">Zalo/Telegram</p>
-                                        <p className="text-sm text-gray-600">@admin_lode_b2b</p>
+                                        <p className="text-sm text-[#7B7B7B]">@admin_lode_b2b</p>
                                     </div>
                                 </div>
                                 
@@ -284,12 +284,12 @@
                                     <span className="text-2xl">☎️</span>
                                     <div>
                                         <p className="font-medium">Hotline</p>
-                                        <p className="text-sm text-gray-600">1900.1234</p>
+                                        <p className="text-sm text-[#7B7B7B]">1900.1234</p>
                                     </div>
                                 </div>
                                 
-                                <div className="mt-4 p-3 bg-blue-50 rounded border border-blue-200">
-                                    <p className="text-sm text-blue-800">
+                                <div className="mt-4 p-3 bg-[#FFF7ED] rounded border border-[#FFEDD5]">
+                                    <p className="text-sm text-[#E36323]">
                                         💬 Vui lòng nhắn tin với thông tin: Gói {selectedPackage.name} - {selectedPackage.price} - Mã: {orderId}
                                     </p>
                                 </div>
