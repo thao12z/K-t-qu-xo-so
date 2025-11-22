@@ -524,6 +524,7 @@
                                             className="flex-1"
                                         />
                                         <window.Button
+                                            type="button"
                                             size="small"
                                             variant="danger"
                                             onClick={() => removeFeatureField(null, index, true)}
@@ -533,6 +534,7 @@
                                     </div>
                                 ))}
                                 <window.Button
+                                    type="button"
                                     size="small"
                                     variant="secondary"
                                     onClick={() => addFeatureField(null, true)}
