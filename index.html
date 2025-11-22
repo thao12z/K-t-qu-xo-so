@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ Thống Đối Soát Lô Đề</title>
+
+    <!-- CDN IMPORTS - PRODUCTION -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Tailwind Configuration -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    animation: {
+                        'spin': 'spin 1s linear infinite',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body>
+    <!-- Application Root -->
+    <div id="root">
+        <div style="display: flex; justify-content: center; align-items: center; height: 100vh; background: #f3f4f6;">
+            <div style="text-align: center; background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <div style="width: 3rem; height: 3rem; border: 4px solid #e5e7eb; border-top: 4px solid #3b82f6; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 1rem;"></div>
+                <h2 style="color: #1f2937; margin-bottom: 0.5rem; font-size: 1.5rem; font-weight: bold;">Đang tải hệ thống...</h2>
+                <p style="color: #6b7280; font-size: 0.875rem;">Vui lòng đợi trong giây lát</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODULE LOADING - User System -->
+
+    <!-- 1. Core Services -->
+    <script type="text/babel" src="./js/core/shared-data-service.js" onerror="console.error('Failed to load:', this.src)"></script>
+    <script type="text/babel" src="./js/core/auth-system.js" onerror="console.error('Failed to load:', this.src)"></script>
+
+    <!-- 2. External Services -->
+    <script type="text/babel" src="./js/services/lottery-data-service.js" onerror="console.error('Failed to load:', this.src)"></script>
+
+    <!-- 3. User Components -->
+    <script type="text/babel" src="./js/user/bet-parser.js" onerror="console.error('Failed to load:', this.src)"></script>
+    <script type="text/babel" src="./js/user/landing-page.js" onerror="console.error('Failed to load:', this.src)"></script>
+    <script type="text/babel" src="./js/user/formula-page.js" onerror="console.error('Failed to load:', this.src)"></script>
+    <script type="text/babel" src="./js/user/pricing-page.js" onerror="console.error('Failed to load:', this.src)"></script>
+    <script type="text/babel" src="./js/user/main-reconciliation-final.js" onerror="console.error('Failed to load:', this.src)"></script>
+
+    <!-- 4. Main Orchestrator -->
+    <script type="text/babel" src="./js/user/main-agent.js" onerror="console.error('Failed to load:', this.src)"></script>
+
+    <!-- 5. Initialization Script -->
+    <script type="text/babel">
+        console.log('🚀 User System Starting...');
+
+        // Initialize SharedDataService first
+        if (window.SharedDataService && window.SharedDataService.init) {
+            window.SharedDataService.init();
+            console.log('✅ SharedDataService initialized');
+        }
+
+        // Wait for all modules to load
+        setTimeout(() => {
+            try {
+                // Check required modules
+                const requiredModules = [
+                    'SharedDataService',
+                    'LandingPage',
+                    'LoginPage',
+                    'MainAgentSystem'
+                ];
+
+                const missingModules = requiredModules.filter(m => !window[m]);
+
+                if (missingModules.length > 0) {
+                    throw new Error(`Missing modules: ${missingModules.join(', ')}`);
+                }
+
+                // Initialize the main agent system
+                if (window.MainAgentSystem && window.MainAgentSystem.initialize) {
+                    window.MainAgentSystem.initialize();
+                    console.log('✅ User System initialized successfully');
+                } else {
+                    throw new Error('MainAgentSystem not found or missing initialize method');
+                }
+
+            } catch (error) {
+                console.error('❌ Module loading failed:', error);
+                document.getElementById('root').innerHTML = `
+                    <div style="display: flex; justify-content: center; align-items: center; height: 100vh; background: #f3f4f6;">
+                        <div style="text-align: center; background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-width: 500px;">
+                            <h2 style="color: #dc2626; margin-bottom: 1rem; font-size: 1.5rem; font-weight: bold;">❌ Lỗi tải hệ thống</h2>
+                            <p style="color: #6b7280; font-size: 0.875rem; margin-bottom: 1rem;">${error.message}</p>
+                            <button onclick="location.reload()" style="background: #3b82f6; color: white; padding: 0.5rem 1rem; border: none; border-radius: 4px; cursor: pointer;">
+                                🔄 Thử lại
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+        }, 2000);
+    </script>
+</body>
+</html>

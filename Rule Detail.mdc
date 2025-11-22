@@ -1,0 +1,779 @@
+📋 RULES CHI TIẾT - MUA GÓI & ĐỐI SOÁT
+🛒 I. MUA GÓI DỊCH VỤ - ADMIN CONTROL
+1.1 Cấu trúc gói do Admin setup
+javascriptADMIN_PACKAGE_CONFIG = {
+  // Admin có thể thay đổi mọi thứ
+  packages: [
+    {
+      id: "basic",
+      name: "Tên gói do Admin đặt",           // VD: "Gói Starter"
+      price: "Giá do Admin đặt",              // VD: "199k/tháng" 
+      duration_days: "Số ngày Admin quy định", // VD: 30
+      features: ["Feature 1", "Feature 2"],   // Do Admin liệt kê
+      max_transactions_per_day: 1000,        // Admin giới hạn
+      enabled_regions: ["bac"],               // Admin chọn miền
+      priority: 1                             // Admin sắp xếp
+    },
+    {
+      id: "pro", 
+      name: "Admin tự đặt tên",
+      price: "Admin tự đặt giá",
+      duration_days: "Admin quy định",
+      features: ["Admin tự liệt kê"],
+      max_transactions_per_day: -1,          // -1 = unlimited
+      enabled_regions: ["bac", "trung", "nam"],
+      priority: 2,
+      popular: true                           // Admin đánh dấu hot
+    }
+    // Admin có thể thêm/bớt gói tùy ý
+  ],
+  
+  contact_info: {
+    methods: ["Zalo", "Telegram", "Hotline"], // Admin cấu hình
+    zalo_number: "Admin nhập số",
+    telegram_username: "Admin nhập username", 
+    hotline: "Admin nhập số hotline",
+    working_hours: "Admin quy định giờ làm việc"
+  },
+  
+  payment_methods: ["Chuyển khoản", "Tiền mặt"], // Admin setup
+  
+  notes: [
+    "Lưu ý 1 do Admin viết",
+    "Lưu ý 2 do Admin viết", 
+    "Admin có thể thêm/sửa/xóa lưu ý"
+  ]
+}
+1.2 UI Pricing page structure
+javascriptPRICING_PAGE_LAYOUT = {
+  header: {
+    title: "Chọn Gói Phù Hợp",
+    subtitle: "Tất cả gói đều được Admin hỗ trợ trực tiếp"
+  },
+  
+  packages_grid: {
+    layout: "responsive_cards",
+    card_structure: {
+      package_name: "Từ admin config",
+      price: "Từ admin config", 
+      duration: "Hiển thị thời hạn",
+      features_list: "Từ admin config",
+      popular_badge: "Nếu admin đánh dấu",
+      cta_button: "Liên Hệ Mua Gói"
+    },
+    sorting: "Theo priority từ admin"
+  },
+  
+  contact_section: {
+    title: "Liên Hệ Mua Gói",
+    methods: "Từ admin config",
+    working_hours: "Từ admin config", 
+    payment_info: "Từ admin config"
+  },
+  
+  notes_section: {
+    title: "Lưu Ý Quan Trọng",
+    content: "Từ admin config notes[]"
+  }
+}
+1.3 Admin management functions
+javascriptADMIN_FUNCTIONS = {
+  package_management: {
+    create_package: "Admin tạo gói mới với mọi tham số",
+    edit_package: "Admin sửa bất kỳ thông tin gói nào", 
+    delete_package: "Admin xóa gói không dùng",
+    reorder_packages: "Admin sắp xếp thứ tự hiển thị"
+  },
+  
+  user_management: {
+    create_user: "Admin tạo username/password",
+    assign_package: "Admin gán gói cho user",
+    extend_package: "Admin gia hạn cho user",
+    suspend_user: "Admin tạm khóa user",
+    view_usage: "Admin xem thống kê sử dụng"
+  },
+  
+  contact_management: {
+    update_contact_info: "Admin cập nhật thông tin liên hệ",
+    set_working_hours: "Admin đặt giờ làm việc",
+    manage_payment_methods: "Admin thêm/bớt phương thức thanh toán"
+  }
+}
+🧮 II. TRANG ĐỐI SOÁT - 6 THÀNH PHẦN CHI TIẾT
+2.1 Bảng tham số (16 fields editable)
+javascriptPARAMETERS_TABLE_STRUCTURE = {
+  layout: "2_columns_responsive",
+  
+  groups: [
+    {
+      title: "Cấu hình cơ bản",
+      fields: [
+        {
+          name: "mien",
+          label: "Miền",
+          type: "dropdown",
+          options: [
+            { value: "bac", label: "Miền Bắc", enabled: true },
+            { value: "trung", label: "Miền Trung (Sắp có)", enabled: false },
+            { value: "nam", label: "Miền Nam (Sắp có)", enabled: false }
+          ],
+          default: "bac"
+        },
+        {
+          name: "ngay", 
+          label: "Ngày đối soát",
+          type: "date",
+          default: "today",
+          max: "today",
+          validation: "Không được chọn ngày tương lai"
+        }
+      ]
+    },
+    
+    {
+      title: "Lô (Tính theo điểm)",
+      description: "VD: 1 điểm 23k, thắng được 80k",
+      fields: [
+        {
+          name: "tien1DiemLo",
+          label: "Tiền 1 điểm (đ)",
+          type: "number",
+          default: 23000,
+          min: 1000,
+          max: 1000000,
+          step: 1000
+        },
+        {
+          name: "tienTra1DiemLo", 
+          label: "Tiền trả 1 điểm (đ)",
+          type: "number",
+          default: 80000,
+          min: 1000,
+          max: 10000000,
+          step: 1000
+        },
+        {
+          name: "tyLeLoThu",
+          label: "Tỷ lệ thu (%)",
+          type: "number", 
+          default: 100,
+          min: 0,
+          max: 100,
+          step: 1
+        }
+      ]
+    },
+    
+    {
+      title: "Đề (Hệ số nhân)",
+      description: "VD: Cược 10k × 70 = 700k",
+      fields: [
+        {
+          name: "heSoDeTra",
+          label: "Hệ số trả (lần)",
+          type: "number",
+          default: 70,
+          min: 1,
+          max: 1000,
+          step: 1
+        },
+        {
+          name: "tyLeDeThu",
+          label: "Tỷ lệ thu (%)", 
+          type: "number",
+          default: 100,
+          min: 0,
+          max: 100,
+          step: 1
+        }
+      ]
+    },
+    
+    {
+      title: "Lô Xiên 2 (Hệ số nhân)",
+      description: "VD: Cược 50k × 10 = 500k",
+      fields: [
+        {
+          name: "heSoXien2Tra",
+          label: "Hệ số trả (lần)",
+          type: "number",
+          default: 10,
+          min: 1,
+          max: 1000,
+          step: 1
+        },
+        {
+          name: "tyLeXien2Thu",
+          label: "Tỷ lệ thu (%)",
+          type: "number",
+          default: 100, 
+          min: 0,
+          max: 100,
+          step: 1
+        }
+      ]
+    },
+    
+    {
+      title: "Lô Xiên 3 (Hệ số nhân)",
+      description: "VD: Cược 25k × 40 = 1,000k", 
+      fields: [
+        {
+          name: "heSoXien3Tra",
+          label: "Hệ số trả (lần)",
+          type: "number",
+          default: 40,
+          min: 1,
+          max: 1000,
+          step: 1
+        },
+        {
+          name: "tyLeXien3Thu",
+          label: "Tỷ lệ thu (%)",
+          type: "number",
+          default: 100,
+          min: 0,
+          max: 100,
+          step: 1
+        }
+      ]
+    },
+    
+    {
+      title: "Lô Xiên 4 (Hệ số nhân)",
+      description: "VD: Cược 10k × 100 = 1,000k",
+      fields: [
+        {
+          name: "heSoXien4Tra", 
+          label: "Hệ số trả (lần)",
+          type: "number",
+          default: 100,
+          min: 1,
+          max: 1000,
+          step: 1
+        },
+        {
+          name: "tyLeXien4Thu",
+          label: "Tỷ lệ thu (%)",
+          type: "number",
+          default: 100,
+          min: 0,
+          max: 100,
+          step: 1
+        }
+      ]
+    },
+    
+    {
+      title: "Ba Càng (Hệ số nhân)",
+      description: "VD: Cược 5k × 400 = 2,000k",
+      fields: [
+        {
+          name: "heSoBaCangTra",
+          label: "Hệ số trả (lần)",
+          type: "number",
+          default: 400,
+          min: 1,
+          max: 10000,
+          step: 1
+        },
+        {
+          name: "tyLeBaCangThu",
+          label: "Tỷ lệ thu (%)",
+          type: "number",
+          default: 100,
+          min: 0,
+          max: 100,
+          step: 1
+        }
+      ]
+    },
+    
+    {
+      title: "Tùy chọn",
+      fields: [
+        {
+          name: "lamTronTien",
+          label: "Làm tròn tiền (hàng nghìn)",
+          type: "checkbox",
+          default: false,
+          description: "Làm tròn kết quả về hàng nghìn gần nhất"
+        }
+      ]
+    }
+  ]
+}
+
+TOTAL_FIELDS = 2 + 3 + 2 + 2 + 2 + 2 + 2 + 1 = 16 fields
+2.2 Box nhập liệu & Box đối soát
+javascriptINPUT_OUTPUT_BOXES = {
+  input_box: {
+    title: "Nhập dữ liệu tin nhắn",
+    component: "textarea",
+    props: {
+      value: "betText",
+      onChange: "handleBetTextChange (useCallback)",
+      rows: 12,
+      placeholder: `Nhập hoặc paste dữ liệu cược từ tin nhắn khách...
+
+Ví dụ:
+L 23 50k
+D 88 100k  
+Lx 12 34 200k
+BC 123 75k
+lo 01,02,03 150k`,
+      className: "font-mono text-sm border-2 border-gray-300 rounded-lg p-4 resize-none focus:border-blue-500 focus:outline-none",
+      spellCheck: false
+    },
+    
+    validation_realtime: {
+      show_line_count: true,
+      show_character_count: true,
+      highlight_errors: false  // Chỉ highlight sau khi bấm Check
+    }
+  },
+  
+  output_box: {
+    title: "Kết quả đối soát",
+    state: "Sẽ hiển thị sau khi bấm 'Check Kết Quả'",
+    
+    before_check: {
+      content: "Chưa có kết quả đối soát",
+      style: "text-gray-500 italic text-center py-8"
+    },
+    
+    after_check: {
+      content: ["lottery_results", "summary_stats"], 
+      layout: "stacked_vertical"
+    },
+    
+    loading_state: {
+      content: "Đang xử lý...",
+      spinner: true,
+      style: "text-blue-500 text-center py-8"
+    },
+    
+    error_state: {
+      content: "Có lỗi xảy ra. Vui lòng thử lại.",
+      style: "text-red-500 text-center py-8",
+      retry_button: true
+    }
+  }
+}
+2.3 Nút đối soát & Check kết quả
+javascriptCHECK_BUTTON_LOGIC = {
+  button: {
+    text: "Check Kết Quả XSMB",
+    style: "bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-semibold text-lg",
+    position: "center_between_boxes",
+    
+    states: {
+      normal: { enabled: true, text: "Check Kết Quả XSMB" },
+      loading: { enabled: false, text: "Đang xử lý...", spinner: true },
+      disabled: { enabled: false, text: "Vui lòng nhập dữ liệu", style: "bg-gray-400" }
+    }
+  },
+  
+  validation_before_check: [
+    {
+      check: "betText.trim().length > 0",
+      error: "Vui lòng nhập dữ liệu cược"
+    },
+    {
+      check: "selectedDate <= today", 
+      error: "Không thể chọn ngày tương lai"
+    },
+    {
+      check: "mien === 'bac'",
+      error: "Hiện tại chỉ hỗ trợ miền Bắc"
+    },
+    {
+      check: "isResultAvailable(selectedDate, selectedMien)",
+      error: "Kết quả chưa có. XSMB cập nhật lúc 18h15 hàng ngày"
+    }
+  ],
+  
+  processing_steps: [
+    {
+      step: 1,
+      action: "Parse từng dòng betText",
+      output: "parsed_bets[]"
+    },
+    {
+      step: 2, 
+      action: "Validate 4 loại cược (lo/de/xien/bacang)",
+      output: "valid_bets[], error_bets[]"
+    },
+    {
+      step: 3,
+      action: "Fetch XSMB results từ RSS",
+      output: "lottery_data"  
+    },
+    {
+      step: 4,
+      action: "Đối chiếu logic cho từng bet",
+      output: "match_results[]"
+    },
+    {
+      step: 5,
+      action: "Tính tiền thắng/thua theo parameters",
+      output: "money_results[]"
+    },
+    {
+      step: 6,
+      action: "Tổng hợp và hiển thị kết quả",
+      output: "final_summary"
+    }
+  ]
+}
+2.4 Kết quả và tổng kết số tiền thắng thua
+javascriptSUMMARY_RESULTS = {
+  summary_cards: {
+    layout: "grid_4_columns_responsive",
+    
+    cards: [
+      {
+        title: "Tổng số cược",
+        value: "valid_bets.length",
+        icon: "📊",
+        color: "bg-blue-100 text-blue-800"
+      },
+      {
+        title: "Số cược thắng", 
+        value: "win_bets.length",
+        icon: "✅",
+        color: "bg-green-100 text-green-800"
+      },
+      {
+        title: "Số cược thua",
+        value: "lose_bets.length", 
+        icon: "❌",
+        color: "bg-red-100 text-red-800"
+      },
+      {
+        title: "Số lỗi",
+        value: "error_bets.length",
+        icon: "⚠️", 
+        color: "bg-yellow-100 text-yellow-800"
+      }
+    ]
+  },
+  
+  money_summary: {
+    layout: "large_cards_2_columns",
+    
+    cards: [
+      {
+        title: "Tổng tiền thắng",
+        value: "formatMoney(total_win_amount)",
+        calculation: "Sum of all win amounts",
+        icon: "💰",
+        color: "bg-green-50 border-green-200 text-green-700",
+        details: "Chi tiết: X cược thắng"
+      },
+      {
+        title: "Tổng tiền thua", 
+        value: "formatMoney(total_lose_amount)",
+        calculation: "Sum of all lose amounts",
+        icon: "💸",
+        color: "bg-red-50 border-red-200 text-red-700",
+        details: "Chi tiết: Y cược thua"
+      }
+    ]
+  },
+  
+  net_result: {
+    layout: "full_width_prominent",
+    
+    calculation: "total_win_amount - total_lose_amount",
+    
+    display: {
+      positive: {
+        title: "Kết quả cuối cùng: THẮNG",
+        value: "formatMoney(net_positive)",
+        style: "bg-green-500 text-white text-2xl font-bold p-6 rounded-lg text-center",
+        icon: "🎉"
+      },
+      negative: {
+        title: "Kết quả cuối cùng: THUA", 
+        value: "formatMoney(net_negative)",
+        style: "bg-red-500 text-white text-2xl font-bold p-6 rounded-lg text-center",
+        icon: "😞"
+      },
+      zero: {
+        title: "Kết quả cuối cùng: HÒA",
+        value: "0đ",
+        style: "bg-gray-500 text-white text-2xl font-bold p-6 rounded-lg text-center", 
+        icon: "🤝"
+      }
+    }
+  }
+}
+2.5 Kết quả xổ số hôm đối chiếu (Hiển thị 2 số cuối)
+javascriptLOTTERY_RESULTS_DISPLAY = {
+  title: "Kết Quả XSMB - [Ngày đối chiếu]",
+  subtitle: "Nguồn: RSS xosodaiphat.com - Cập nhật lúc 18h15",
+  
+  table_structure: {
+    layout: "responsive_table",  
+    
+    columns: [
+      {
+        header: "Giải",
+        width: "w-24",
+        align: "center"
+      },
+      {
+        header: "Số trúng thưởng",
+        width: "flex-1", 
+        align: "left"
+      },
+      {
+        header: "2 số cuối", 
+        width: "w-32",
+        align: "center",
+        highlight: true
+      }
+    ],
+    
+    rows: [
+      {
+        giai: "Đặc Biệt",
+        numbers: ["12345"],
+        last2: ["45"],
+        style: "bg-red-500 text-white font-bold",
+        note: "Dùng cho đối chiếu ĐỀ"
+      },
+      {
+        giai: "Nhất", 
+        numbers: ["67890"],
+        last2: ["90"],
+        style: "bg-yellow-500 text-white font-semibold"
+      },
+      {
+        giai: "Nhì",
+        numbers: ["11111", "22222"],
+        last2: ["11", "22"], 
+        style: "bg-blue-500 text-white"
+      },
+      {
+        giai: "Ba",
+        numbers: ["33333", "44444", "55555", "66666", "77777", "88888"],
+        last2: ["33", "44", "55", "66", "77", "88"],
+        style: "bg-green-500 text-white"
+      },
+      {
+        giai: "Tư",
+        numbers: ["1234", "5678", "9012", "3456"], 
+        last2: ["34", "78", "12", "56"],
+        style: "bg-purple-500 text-white"
+      },
+      {
+        giai: "Năm",
+        numbers: ["7890", "1122", "3344", "5566", "7788", "9900"],
+        last2: ["90", "22", "44", "66", "88", "00"],
+        style: "bg-indigo-500 text-white"
+      },
+      {
+        giai: "Sáu", 
+        numbers: ["123", "456", "789"],
+        last2: ["23", "56", "89"],
+        style: "bg-pink-500 text-white"
+      },
+      {
+        giai: "Bảy",
+        numbers: ["12", "34", "56", "78"],
+        last2: ["12", "34", "56", "78"], 
+        style: "bg-gray-500 text-white",
+        note: "Giải bảy = 2 số cuối"
+      }
+    ]
+  },
+  
+  summary_info: {
+    total_numbers: 27,
+    all_last2: "Extract tất cả 2 số cuối để đối chiếu LÔ và XIÊN",
+    special_last2: "45 (từ giải ĐB) để đối chiếu ĐỀ",
+    last3_for_bacang: "Extract 3 số cuối từ các số ≥3 chữ số"
+  }
+}
+2.6 Bảng kết quả chi tiết cả kèo thắng thua (Có bộ lọc)
+javascriptDETAILED_RESULTS_TABLE = {
+  header: {
+    title: "Chi Tiết Từng Cược", 
+    filter: {
+      component: "dropdown",
+      options: [
+        { value: "all", label: "Tất cả", count: "all_bets.length" },
+        { value: "win", label: "Chỉ thắng", count: "win_bets.length", color: "text-green-600" },
+        { value: "lose", label: "Chỉ thua", count: "lose_bets.length", color: "text-red-600" },
+        { value: "error", label: "Chỉ lỗi", count: "error_bets.length", color: "text-yellow-600" }
+      ],
+      default: "all",
+      position: "top_right"
+    }
+  },
+  
+  table_columns: [
+    {
+      header: "STT",
+      field: "index", 
+      width: "w-12",
+      align: "center"
+    },
+    {
+      header: "Nội dung gốc",
+      field: "originalLine",
+      width: "w-48",
+      align: "left",
+      style: "font-mono text-sm",
+      note: "Y hệt như trong textarea"
+    },
+    {
+      header: "Loại cược", 
+      field: "betType",
+      width: "w-24",
+      align: "center",
+      format: "badge_style"
+    },
+    {
+      header: "Số cược",
+      field: "numbers",
+      width: "w-32", 
+      align: "center",
+      format: "comma_separated"
+    },
+    {
+      header: "Tiền cược",
+      field: "amount",
+      width: "w-32",
+      align: "right",
+      format: "formatMoney"
+    },
+    {
+      header: "Trạng thái",
+      field: "status", 
+      width: "w-24",
+      align: "center",
+      format: "status_badge"
+    },
+    {
+      header: "Tiền thắng/thua",
+      field: "result",
+      width: "w-36",
+      align: "right", 
+      format: "money_with_color"
+    },
+    {
+      header: "Ghi chú",
+      field: "note",
+      width: "flex-1",
+      align: "left",
+      format: "text_small"
+    }
+  ],
+  
+  row_styling: {
+    win_row: {
+      background: "bg-green-50",
+      border: "border-l-4 border-green-500",
+      text: "text-green-800"
+    },
+    lose_row: {
+      background: "bg-red-50", 
+      border: "border-l-4 border-red-500",
+      text: "text-red-800"
+    },
+    error_row: {
+      background: "bg-yellow-50",
+      border: "border-l-4 border-yellow-500", 
+      text: "text-yellow-800",
+      highlight: "Gạch chân đỏ phần sai"
+    }
+  },
+  
+  status_badges: {
+    win: {
+      text: "THẮNG",
+      style: "bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-semibold"
+    },
+    lose: {
+      text: "THUA",
+      style: "bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-semibold" 
+    },
+    error: {
+      text: "LỖI",
+      style: "bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-semibold"
+    }
+  },
+  
+  bet_type_badges: {
+    lo: { text: "LÔ", style: "bg-blue-100 text-blue-800" },
+    de: { text: "ĐỀ", style: "bg-purple-100 text-purple-800" },
+    xien2: { text: "XIÊN 2", style: "bg-indigo-100 text-indigo-800" },
+    xien3: { text: "XIÊN 3", style: "bg-pink-100 text-pink-800" },
+    xien4: { text: "XIÊN 4", style: "bg-orange-100 text-orange-800" },
+    bacang: { text: "BA CÀNG", style: "bg-teal-100 text-teal-800" }
+  },
+  
+  detailed_notes: {
+    win_examples: [
+      "Lô 23 trúng tại Giải Ba-2",
+      "Đề 45 trúng (Giải ĐB: 12345)",
+      "Xiên 2 [12,34] - cả 2 số đều có",
+      "Ba càng 345 trúng tại Giải ĐB"
+    ],
+    lose_examples: [
+      "Lô 99 - không xuất hiện",
+      "Đề 88 - ĐB về 45", 
+      "Xiên 2 [12,99] - thiếu số 99",
+      "Ba càng 999 - không có"
+    ],
+    error_examples: [
+      "Cú pháp sai: 'L 23' (thiếu tiền)",
+      "Loại cược không hỗ trợ: 'tài 100k'",
+      "Số không hợp lệ: 'L abc 50k'",
+      "Tiền âm: 'L 23 -50k'"
+    ]
+  },
+  
+  pagination: {
+    enabled: true,
+    items_per_page: 50,
+    show_total: true,
+    position: "bottom_center"
+  }
+}
+🔧 III. TECHNICAL IMPLEMENTATION RULES
+3.1 State management
+javascriptMAIN_PAGE_STATE = {
+  // Parameters (16 fields)
+  parameters: "useState với default values",
+  
+  // Input/Output
+  betText: "useState('') - controlled textarea",
+  results: "useState(null) - sau khi check",
+  lotteryData: "useState(null) - XSMB results",
+  
+  // UI states
+  isLoading: "useState(false) - khi đang xử lý",
+  filter: "useState('all') - bộ lọc kết quả",
+  error: "useState(null) - error messages"
+}
+3.2 Event handlers với useCallback
+javascriptREQUIRED_CALLBACKS = {
+  handleParameterChange: "useCallback((field, value) => {...}, [])",
+  handleBetTextChange: "useCallback((e) => {...}, [])", 
+  handleCheckResults: "useCallback(async () => {...}, [parameters, betText])",
+  handleFilterChange: "useCallback((filterValue) => {...}, [])"
+}
+3.3 Validation & Error handling
+javascriptERROR_HANDLING_RULES = {
+  input_validation: "Real-time cho parameters, on-submit cho betText",
+  api_errors: "Graceful fallback với user-friendly messages",
+  rss_errors: "Fallback simulation data với warning",
+  parsing_errors: "Highlight từng dòng lỗi với lý do cụ thể"
+}
+
+CÁC RULES TRÊN LÀ BẮT BUỘC - KHÔNG THÊM BỚT TÍNH NĂNG
+Hệ thống chỉ được chấp nhận khi implement đúng 100% các rules này

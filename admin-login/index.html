@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin System</title>
+
+    <!-- CDN IMPORTS - PRODUCTION -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Tailwind Configuration -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    animation: {
+                        'spin': 'spin 1s linear infinite',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body>
+    <!-- Application Root -->
+    <div id="root">
+        <div style="display: flex; justify-content: center; align-items: center; height: 100vh; background: #f3f4f6;">
+            <div style="text-align: center; background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <div style="width: 3rem; height: 3rem; border: 4px solid #e5e7eb; border-top: 4px solid #3b82f6; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 1rem;"></div>
+                <h2 style="color: #1f2937; margin-bottom: 0.5rem; font-size: 1.5rem; font-weight: bold;">Loading Admin System</h2>
+                <p style="color: #6b7280; font-size: 0.875rem;">Please wait while modules are being loaded...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODULE LOADING - Paths trỏ về thư mục gốc -->
+    <!-- 1. Core: Foundation modules -->
+    <script type="text/babel" src="../js/core/global-state-manager.js" onerror="console.error('Failed to load:', this.src)"></script>
+    <script type="text/babel" src="../js/core/shared-data-service.js" onerror="console.error('Failed to load:', this.src)"></script>
+
+    <!-- 2. UI Components: Reusable Components -->
+    <script type="text/babel" src="../js/user/ui-components.js" onerror="console.error('Failed to load:', this.src)"></script>
+    <script type="text/babel" src="../js/user/payment-config.js" onerror="console.error('Failed to load:', this.src)"></script>
+
+    <!-- 3. Admin Modules -->
+    <script type="text/babel" src="../js/admin/notification-system.js" onerror="console.error('Failed to load:', this.src)"></script>
+    <script type="text/babel" src="../js/admin/user-management.js" onerror="console.error('Failed to load:', this.src)"></script>
+    <script type="text/babel" src="../js/admin/payment-management.js" onerror="console.error('Failed to load:', this.src)"></script>
+    <script type="text/babel" src="../js/admin/package-management.js" onerror="console.error('Failed to load:', this.src)"></script>
+    <script type="text/babel" src="../js/admin/pending-requests.js" onerror="console.error('Failed to load:', this.src)"></script>
+
+    <!-- 4. Main Orchestrator (Auto-mounts application) -->
+    <script type="text/babel" src="../js/admin/main-admin.js" onerror="console.error('Failed to load:', this.src)"></script>
+
+    <!-- 7. Initialization Script -->
+    <script type="text/babel">
+        console.log('🚀 Admin System Starting...');
+
+        // Wait for all modules to load
+        setTimeout(() => {
+            try {
+                if (!window.GlobalStateManager) {
+                    throw new Error('GlobalStateManager not loaded');
+                }
+                if (!window.MainAdminSystem) {
+                    throw new Error('MainAdminSystem not loaded');
+                }
+
+                console.log('✅ All modules loaded, starting app...');
+                // App should auto-start via main-admin.js
+
+            } catch (error) {
+                console.error('❌ Module loading failed:', error);
+                document.getElementById('root').innerHTML = `
+                    <div style="display: flex; justify-content: center; align-items: center; height: 100vh; background: #f3f4f6;">
+                        <div style="text-align: center; background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-width: 500px;">
+                            <h2 style="color: #dc2626; margin-bottom: 1rem; font-size: 1.5rem; font-weight: bold;">❌ Lỗi Loading Modules</h2>
+                            <p style="color: #6b7280; font-size: 0.875rem; margin-bottom: 1rem;">Không thể load JavaScript modules.</p>
+                            <button onclick="location.reload()" style="background: #3b82f6; color: white; padding: 0.5rem 1rem; border: none; border-radius: 4px; cursor: pointer;">
+                                🔄 Thử lại
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+        }, 2000);
+    </script>
+</body>
+</html>

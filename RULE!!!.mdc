@@ -1,0 +1,462 @@
+🎯 I. TỔNG QUAN HỆ THỐNG - 5 TÍNH NĂNG CỐT LÕI
+1.1 Cấu trúc hệ thống BẮT BUỘC
+1. TRANG CHỦ (Landing Page) - Giới thiệu & mua gói
+2. ĐĂNG NHẬP (Login) - Xác thực & kiểm tra gói
+3. CÔNG THỨC (Formula) - Hướng dẫn sử dụng  
+4. ĐỐI SOÁT (Main) - Tính năng chính
+5. MUA GÓI (Pricing) - Gia hạn dịch vụ
+
+LOGIC PHÂN QUYỀN:
+- Không có gói → Chỉ xem Landing + Login + Pricing
+- Có gói còn hạn → Mở tất cả tính năng
+- Hết hạn → Redirect về Pricing
+1.2 Quy trình người dùng
+Khách mới: Landing Page → Pricing → Liên hệ Admin → Nhận account → Login → Sử dụng
+Khách cũ: Login → Kiểm tra hạn → Sử dụng hoặc Gia hạn
+🏠 II. TRANG CHỦ (LANDING PAGE)
+2.1 Nội dung bắt buộc
+javascriptLANDING_PAGE_SECTIONS = {
+  hero: {
+    title: "Hệ Thống Đối Soát Lô Đề Đại Lý",
+    subtitle: "Tự động hóa việc kiểm tra và tính toán thắng thua",
+    cta: "Xem Gói Dịch Vụ"
+  },
+  
+  features: [
+    "Đối soát tự động 4 loại cược: Lô, Đề, Xiên, Ba Càng",
+    "Kết nối trực tiếp RSS xổ số miền Bắc", 
+    "Tính toán chính xác tiền thắng/thua",
+    "Giao diện đơn giản, dễ sử dụng"
+  ],
+  
+  pricing_preview: "3 gói dịch vụ phù hợp mọi quy mô",
+  
+  cta_section: {
+    title: "Sẵn sàng bắt đầu?",
+    buttons: ["Xem Gói Dịch Vụ", "Đăng Nhập"]
+  }
+}
+
+KHÔNG CÓ:
+❌ Form đăng ký tự động
+❌ Thanh toán online  
+❌ Tính năng trial
+❌ Demo không cần đăng nhập
+🔐 III. HỆ THỐNG ĐĂNG NHẬP & PHÂN QUYỀN
+3.1 Login flow CHÍNH XÁC
+javascriptLOGIN_PROCESS = {
+  step1: "Nhập username + password",
+  step2: "Xác thực với database",
+  step3: "Kiểm tra package_status",
+  step4_a: "Nếu active → Cho vào hệ thống",
+  step4_b: "Nếu expired → Redirect pricing",
+  step4_c: "Nếu no_package → Redirect pricing"
+}
+
+PACKAGE_STATUS = {
+  'active': {
+    description: "Gói còn hạn sử dụng",
+    access: ["formula", "main", "pricing"],
+    expiry_check: true
+  },
+  'expired': {
+    description: "Gói hết hạn", 
+    access: ["pricing"],
+    message: "Gói dịch vụ đã hết hạn. Vui lòng gia hạn."
+  },
+  'no_package': {
+    description: "Chưa có gói",
+    access: ["pricing"], 
+    message: "Tài khoản chưa có gói dịch vụ. Vui lòng mua gói."
+  }
+}
+3.2 User data structure
+javascriptUSER_SCHEMA = {
+  username: "string",           // Tên đăng nhập
+  password_hash: "string",      // Mật khẩu đã hash
+  package_type: "basic|pro|enterprise|null",
+  package_start: "YYYY-MM-DD", // Ngày bắt đầu gói
+  package_end: "YYYY-MM-DD",   // Ngày hết hạn
+  status: "active|expired|no_package",
+  created_by_admin: true        // Chỉ admin tạo account
+}
+
+DEMO_ACCOUNTS = {
+  admin: { username: "admin", password: "123456", package: "enterprise", status: "active" },
+  user1: { username: "user1", password: "123456", package: "basic", status: "active" },
+  demo: { username: "demo", password: "demo", package: null, status: "no_package" }
+}
+📖 IV. TRANG CÔNG THỨC & HƯỚNG DẪN
+4.1 Nội dung bắt buộc
+javascriptFORMULA_PAGE_CONTENT = {
+  // 4 loại cược được hỗ trợ
+  supported_bets: {
+    lo: {
+      keywords: ["L", "l", "lo", "Lo", "LO", "Lô", "LÔ"],
+      syntax: "keywords [số] [tiền] ",
+      examples: ["L 23 50k"],
+      calculation: "1 điểm = tiền định sẵn, thắng = tiền trả cố định"
+    },
+    
+    de: {
+      keywords: ["D", "Đ", "Đe", "Đê", "Đề", "d", "đ", "đe", "đê", "đề", "de", "De", "DE"],
+      syntax: "keywords [số] [tiền]", 
+      examples: ["D 88 200k", "đề 99 150k"],
+      calculation: "Thắng = tiền cược × hệ số (mặc định 70)"
+    },
+    
+    xien: {
+      keywords: ["Lx", "LX", "lx", "lX"],
+      syntax: "keywords [số1] [số2] [số3] [số4] [tiền]",
+      examples: ["Lx 12 34 100k", "LX 12 34 56 50k", "lx 12 34 56 78 25k"],
+      calculation: "Thắng = tiền cược × hệ số (2 số: ×10, 3 số: ×40, 4 số: ×100)"
+    },
+    
+    bacang: {
+      keywords: ["BC", "Bc", "bC", "bc"],
+      syntax: "keywords [số] [tiền]",
+      examples: ["BC 123 75k", "bc 456 100k"], 
+      calculation: "Thắng = tiền cược × hệ số (mặc định 400)"
+    }
+  },
+  
+  // Đơn vị tiền
+  money_units: {
+    "k|K": "× 1,000 (50k = 50,000đ)",
+    "m|M": "× 1,000,000 (2m = 2,000,000đ)",
+    "số": "Giá trị gốc (50000 = 50,000đ)"
+  },
+  
+  // Logic đối chiếu
+  matching_logic: {
+    lo: "2 số cuối cược so với 2 số cuối TẤT CẢ giải XSMB",
+    de: "2 số cuối cược so với 2 số cuối GIẢI ĐẶC BIỆT",
+    xien: "TẤT CẢ số xiên phải xuất hiện trong kết quả XSMB",
+    bacang: "3 số cuối cược so với 3 số cuối BẤT KỲ giải nào"
+  },
+  
+  // Hệ số mặc định (có thể thay đổi)
+  default_rates: {
+    lo: "1 điểm 23k thắng 80k, thua mất 100%",
+    de: "1 ăn 70, thua mất 100%", 
+    xien2: "1 ăn 10, thua mất 100%",
+    xien3: "1 ăn 40, thua mất 100%",
+    xien4: "1 ăn 100, thua mất 100%",
+    bacang: "1 ăn 400, thua mất 100%"
+  }
+}
+
+KHÔNG CÓ:
+❌ Các loại cược khác (tài/xỉu, chẵn/lẻ, etc.)
+❌ Hướng dẫn sử dụng chi tiết UI
+❌ Video tutorial
+❌ FAQ phức tạp
+🧮 V. TRANG ĐỐI SOÁT CHÍNH (MAIN FEATURE)
+5.1 Cấu trúc 4 sections bắt buộc
+javascriptMAIN_PAGE_STRUCTURE = {
+  sectionA_parameters: {
+    title: "Tham số hệ thống",
+    fields: 16,  // Đúng 16 fields, không thêm bớt
+    editable: true,
+    required: true
+  },
+  
+  sectionB_input: {
+    title: "Nhập dữ liệu tin nhắn", 
+    component: "textarea",
+    placeholder: "Paste tin nhắn cược từ khách...",
+    required: true
+  },
+  
+  sectionC_process: {
+    title: "Xử lý đối soát",
+    button: "Check Kết Quả XSMB", 
+    validation: true,
+    rss_integration: true
+  },
+  
+  sectionD_results: {
+    title: "Hiển thị kết quả",
+    components: ["lottery_table", "bet_details", "summary"],
+    filter: ["all", "win", "lose"]
+  }
+}
+5.2 Section A - 16 tham số CHÍNH XÁC
+javascriptPARAMETERS_16_FIELDS = {
+  // Cơ bản (2 fields)
+  mien: "dropdown[bac|trung|nam]",  // Chỉ 'bac' active
+  ngay: "date_picker",              // Default hôm nay
+  
+  // Lô (3 fields) - Tính theo điểm
+  tien1DiemLo: "number",           // VD: 23000 (23k cho 1 điểm)
+  tienTra1DiemLo: "number",        // VD: 80000 (trả 80k cho 1 điểm thắng)
+  tyLeLoThu: "number",             // VD: 100 (thu 100% khi thua)
+  
+  // Đề (2 fields) - Hệ số nhân
+  heSoDeTra: "number",             // VD: 70 (1 ăn 70)
+  tyLeDeThu: "number",             // VD: 100 (thu 100% khi thua)
+  
+  // Xiên 2 (2 fields) - Hệ số nhân  
+  heSoXien2Tra: "number",          // VD: 10 (nhân 10 lần)
+  tyLeXien2Thu: "number",          // VD: 100 (thu 100% khi thua)
+  
+  // Xiên 3 (2 fields) - Hệ số nhân
+  heSoXien3Tra: "number",          // VD: 40 (nhân 40 lần)  
+  tyLeXien3Thu: "number",          // VD: 100 (thu 100% khi thua)
+  
+  // Xiên 4 (2 fields) - Hệ số nhân
+  heSoXien4Tra: "number",          // VD: 100 (nhân 100 lần)
+  tyLeXien4Thu: "number",          // VD: 100 (thu 100% khi thua)
+  
+  // Ba càng (2 fields) - Hệ số nhân
+  heSoBaCangTra: "number",         // VD: 400 (nhân 400 lần)
+  tyLeBaCangThu: "number",         // VD: 100 (thu 100% khi thua)
+  
+  // Tùy chọn (1 field)
+  lamTronTien: "checkbox"          // Làm tròn hàng nghìn
+}
+
+TOTAL = 2 + 3 + 2 + 2 + 2 + 2 + 2 + 1 = 16 fields
+5.3 Section B - Textarea (Siêu quan trọng)
+javascriptTEXTAREA_REQUIREMENTS = {
+  // Technical
+  controlled_component: true,
+  value_prop: "betText",
+  onChange_useCallback: true,
+  no_rerender_on_typing: true,
+  no_focus_loss: true,
+  
+  // UI  
+  rows: 10,
+  placeholder: "Nhập dữ liệu cược...\n\nVí dụ:\nL 23 50k\nD 88 100k\nLx 12 34 200k",
+  font_family: "monospace",
+  resize: "none",
+  
+  // Validation
+  trim_empty_lines: true,
+  parse_on_submit: true
+}
+
+CRITICAL_IMPLEMENTATION:
+```javascript
+const [betText, setBetText] = useState('');
+const handleBetTextChange = useCallback((e) => {
+  setBetText(e.target.value);
+}, []);
+
+<textarea 
+  value={betText}
+  onChange={handleBetTextChange}
+  // ...other props
+/>
+
+### 5.4 Section C - Process button
+```javascript
+PROCESS_LOGIC = {
+  button_text: "Check Kết Quả XSMB",
+  
+  validation_steps: [
+    "1. Kiểm tra thời gian RSS (18h15 cho XSMB)",
+    "2. Parse từng dòng betText", 
+    "3. Validate 4 loại cược",
+    "4. Lấy kết quả XSMB từ RSS",
+    "5. Đối chiếu logic",
+    "6. Tính tiền thắng/thua"
+  ],
+  
+  error_handling: [
+    "Dòng sai cú pháp → Highlight đỏ + message",
+    "RSS không khả dụng → Fallback simulation", 
+    "Chưa đến giờ kết quả → Warning message"
+  ]
+}
+5.5 Section D - Results display
+javascriptRESULTS_DISPLAY = {
+  lottery_table: {
+    title: "Kết Quả XSMB [Ngày]",
+    structure: "8 giải, 27 số",
+    color_coding: true,
+    source: "RSS xosodaiphat.com"
+  },
+  
+  bet_details_table: {
+    columns: [
+      "Nội dung gốc",     // Y hệt từ textarea
+      "Loại cược",        // lo/de/xien2/xien3/xien4/bacang  
+      "Số cược",          // Parsed numbers
+      "Tiền cược",        // Parsed amount
+      "Trạng thái",       // THẮNG/THUA/LỖI với màu
+      "Tiền thắng/thua"   // Calculated result
+    ],
+    
+    filter_dropdown: ["Tất cả", "Chỉ thắng", "Chỉ thua"],
+    
+    error_rows: {
+      background: "bg-red-50",
+      border: "border-red-200", 
+      text: "text-red-600",
+      underline: "Gạch chân đỏ phần sai"
+    }
+  },
+  
+  summary: {
+    total_bets: "number",
+    total_win_amount: "number", 
+    total_lose_amount: "number",
+    net_result: "win_amount - lose_amount",
+    color_coding: "Green nếu dương, Red nếu âm"
+  }
+}
+🛒 VI. TRANG MUA GÓI DỊCH VỤ
+6.1 Cấu trúc 3 gói chuẩn
+javascriptPRICING_PACKAGES = {
+  basic: {
+    name: "Gói Cơ Bản",
+    price: "199k/tháng",
+    features: [
+      "Đối soát miền Bắc",
+      "1,000 giao dịch/ngày", 
+      "Báo cáo cơ bản"
+    ],
+    target: "Đại lý nhỏ"
+  },
+  
+  pro: {
+    name: "Gói Chuyên Nghiệp", 
+    price: "499k/tháng",
+    features: [
+      "Đối soát 3 miền (sắp có)",
+      "Không giới hạn giao dịch",
+      "Báo cáo chi tiết", 
+      "API tích hợp"
+    ],
+    target: "Đại lý vừa",
+    popular: true
+  },
+  
+  enterprise: {
+    name: "Gói Doanh Nghiệp",
+    price: "999k/tháng", 
+    features: [
+      "Tất cả tính năng",
+      "Multi-user",
+      "Hỗ trợ 24/7",
+      "Tùy chỉnh theo yêu cầu"
+    ],
+    target: "Chuỗi đại lý"
+  }
+}
+
+CONTACT_INFO = {
+  method: "Liên hệ Admin",
+  channels: ["Zalo", "Telegram", "Phone"],
+  note: "Tất cả giao dịch mua/gia hạn qua Admin",
+  no_auto_payment: true
+}
+6.2 Quy trình mua gói
+javascriptPURCHASE_FLOW = {
+  step1: "Khách chọn gói → Bấm 'Liên hệ'",
+  step2: "Chuyển sang Zalo/Telegram Admin", 
+  step3: "Admin xác nhận → Tạo/gia hạn account",
+  step4: "Khách nhận thông tin đăng nhập",
+  step5: "Login và sử dụng"
+}
+
+ADMIN_RESPONSIBILITIES = {
+  account_creation: "Tạo username/password mới",
+  package_activation: "Set package_type và expiry_date",
+  payment_processing: "Xử lý thanh toán offline",
+  customer_support: "Hỗ trợ kỹ thuật"
+}
+🎲 VII. DỮ LIỆU XỔ SỐ & RSS
+7.1 XSMB structure (27 số)
+javascriptXSMB_DRAWS = {
+  dacbiet: { count: 1, digits: 5 },    // 12345
+  nhat: { count: 1, digits: 5 },       // 67890  
+  nhi: { count: 2, digits: 5 },        // 11111, 22222
+  ba: { count: 6, digits: 5 },         // 33333, 44444, 55555, 66666, 77777, 88888
+  tu: { count: 4, digits: 4 },         // 1234, 5678, 9012, 3456
+  nam: { count: 6, digits: 4 },        // 7890, 1122, 3344, 5566, 7788, 9900
+  sau: { count: 3, digits: 3 },        // 123, 456, 789
+  bay: { count: 4, digits: 2 }         // 12, 34, 56, 78
+}
+
+TOTAL = 1+1+2+6+4+6+3+4 = 27 draws
+7.2 RSS integration
+javascriptRSS_CONFIG = {
+  url: "https://xosodaiphat.com/ket-qua-xo-so-mien-bac-xsmb.rss",
+  update_time: "18:15 daily",
+  method: "Backend proxy (CORS)",
+  fallback: "Simulation data",
+  
+  validation: "isResultAvailable(date, mien)"
+}
+🧮 VIII. LOGIC ĐỐI CHIẾU & TÍNH TIỀN
+8.1 Matching logic
+javascriptMATCHING_RULES = {
+  lo: "bet_last2 match any_result_last2",      // 23 vs 12323, 45623, etc.
+  de: "bet_last2 match dacbiet_last2",         // 88 vs 12388
+  xien: "all_bet_numbers in result_last2s",    // [12,34] both in results  
+  bacang: "bet_last3 match any_result_last3"   // 123 vs 45123, 67123, etc.
+}
+8.2 Money calculation
+javascriptCALCULATION_FORMULAS = {
+  // Lô - Theo điểm
+  lo_win: "(bet_amount / tien1DiemLo) × tienTra1DiemLo",
+  lo_lose: "bet_amount × (tyLeLoThu / 100)",
+  
+  // Các loại khác - Hệ số nhân
+  other_win: "bet_amount × heSoTra",
+  other_lose: "bet_amount × (tyLeThu / 100)"
+}
+
+EXAMPLES = {
+  lo: "Cược 50k = 50k/23k = 2.17 điểm → Thắng 2.17×80k = 173,913đ",
+  de: "Cược 100k → Thắng 100k×70 = 7,000,000đ", 
+  xien2: "Cược 50k → Thắng 50k×10 = 500k",
+  bacang: "Cược 10k → Thắng 10k×400 = 4,000k"
+}
+🔧 IX. TECHNICAL REQUIREMENTS
+9.1 Performance critical
+javascriptCRITICAL_FIXES = {
+  textarea_focus: "useCallback + controlled component",
+  no_rerender: "Component definition outside render", 
+  validation: "Strict parsing 4 bet types only",
+  error_handling: "Graceful fallbacks + user messages"
+}
+9.2 UI/UX requirements
+javascriptUI_RULES = {
+  clean_interface: "Chỉ tính năng cần thiết",
+  responsive: "Mobile-first design",
+  color_coding: "Green=win, Red=lose, Gray=neutral",
+  typography: "Clear hierarchy, readable fonts"
+}
+
+FORBIDDEN_UI = [
+  "Statistics counters không cần thiết",
+  "Debug info displays", 
+  "Excessive test buttons",
+  "Copy/export features không yêu cầu"
+]
+✅ X. ACCEPTANCE CRITERIA
+10.1 Tính năng hoạt động
+□ Landing page thu hút khách hàng
+□ Login với package validation  
+□ Formula page đầy đủ hướng dẫn
+□ Main page 4 sections hoạt động
+□ Pricing page với contact info
+□ RSS integration hoặc fallback
+□ 16 tham số editable
+□ Parse chính xác 4 loại cược
+□ Đối chiếu logic 100% đúng
+□ Tính tiền theo công thức chuẩn
+□ Filter results thắng/thua
+□ Error handling toàn diện
+□ Responsive trên mobile
+10.2 Business logic
+□ Chỉ user có gói mới dùng được
+□ Hết hạn → redirect pricing  
+□ Admin control tất cả account
+□ Không tự đăng ký/thanh toán
+□ RSS cập nhật đúng giờ
+□ Simulation khi RSS lỗi
