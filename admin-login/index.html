@@ -37,27 +37,23 @@
     </div>
 
     <!-- MODULE LOADING - Paths trỏ về thư mục gốc -->
-    <!-- 1. Foundation: Global State Manager -->
-    <script type="text/babel" src="../global-state-manager.js" onerror="console.error('Failed to load:', this.src)"></script>
+    <!-- 1. Core: Foundation modules -->
+    <script type="text/babel" src="../js/core/global-state-manager.js" onerror="console.error('Failed to load:', this.src)"></script>
+    <script type="text/babel" src="../js/core/shared-data-service.js" onerror="console.error('Failed to load:', this.src)"></script>
 
-    <!-- 2. Data Sync Service: Admin ↔ User synchronization -->
-    <script type="text/babel" src="../shared-data-service.js" onerror="console.error('Failed to load:', this.src)"></script>
+    <!-- 2. UI Components: Reusable Components -->
+    <script type="text/babel" src="../js/user/ui-components.js" onerror="console.error('Failed to load:', this.src)"></script>
+    <script type="text/babel" src="../js/user/payment-config.js" onerror="console.error('Failed to load:', this.src)"></script>
 
-    <!-- 3. UI Components: Reusable Components -->
-    <script type="text/babel" src="../ui-components.js" onerror="console.error('Failed to load:', this.src)"></script>
+    <!-- 3. Admin Modules -->
+    <script type="text/babel" src="../js/admin/notification-system.js" onerror="console.error('Failed to load:', this.src)"></script>
+    <script type="text/babel" src="../js/admin/user-management.js" onerror="console.error('Failed to load:', this.src)"></script>
+    <script type="text/babel" src="../js/admin/payment-management.js" onerror="console.error('Failed to load:', this.src)"></script>
+    <script type="text/babel" src="../js/admin/package-management.js" onerror="console.error('Failed to load:', this.src)"></script>
+    <script type="text/babel" src="../js/admin/pending-requests.js" onerror="console.error('Failed to load:', this.src)"></script>
 
-    <!-- 4. System Components: Notifications -->
-    <script type="text/babel" src="../notification-system.js" onerror="console.error('Failed to load:', this.src)"></script>
-
-    <!-- 5. Business Logic Modules -->
-    <script type="text/babel" src="../user-management.js" onerror="console.error('Failed to load:', this.src)"></script>
-    <script type="text/babel" src="../payment-config.js" onerror="console.error('Failed to load:', this.src)"></script>
-    <script type="text/babel" src="../payment-management.js" onerror="console.error('Failed to load:', this.src)"></script>
-    <script type="text/babel" src="../package-management.js" onerror="console.error('Failed to load:', this.src)"></script>
-    <script type="text/babel" src="../pending-requests.js" onerror="console.error('Failed to load:', this.src)"></script>
-
-    <!-- 6. Main Orchestrator (Auto-mounts application) -->
-    <script type="text/babel" src="../main-admin.js" onerror="console.error('Failed to load:', this.src)"></script>
+    <!-- 4. Main Orchestrator (Auto-mounts application) -->
+    <script type="text/babel" src="../js/admin/main-admin.js" onerror="console.error('Failed to load:', this.src)"></script>
 
     <!-- 7. Initialization Script -->
     <script type="text/babel">
