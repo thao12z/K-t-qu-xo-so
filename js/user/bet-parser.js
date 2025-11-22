@@ -619,7 +619,7 @@
 
         return React.createElement('div', { className: 'border rounded-lg mb-4' },
             React.createElement('button', {
-                className: 'w-full p-3 text-left flex items-center justify-between bg-gray-50 hover:bg-gray-100',
+                className: 'w-full p-3 text-left flex items-center justify-between bg-[#F8F7F7] hover:bg-[#ECECEC]',
                 onClick: () => setIsExpanded(!isExpanded)
             },
                 React.createElement('span', { className: 'font-medium' }, '⚙️ Tham Số Hệ Thống (16 fields)'),
@@ -630,7 +630,7 @@
                 parameterGroups.map((group, groupIndex) =>
                     React.createElement('div', { key: groupIndex },
                         React.createElement('h4', { className: 'font-medium mb-2' }, group.title),
-                        group.description && React.createElement('p', { className: 'text-sm text-gray-600 mb-3' }, group.description),
+                        group.description && React.createElement('p', { className: 'text-sm text-[#7B7B7B] mb-3' }, group.description),
                         React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-3 gap-4' },
                             group.fields.map((field) =>
                                 React.createElement('div', { key: field.name },
@@ -684,7 +684,7 @@
                     'Nhập dữ liệu tin nhắn'
                 ),
                 React.createElement('textarea', {
-                    className: 'w-full h-40 p-3 border-2 border-gray-300 rounded-lg font-mono text-sm resize-none focus:border-blue-500 focus:outline-none',
+                    className: 'w-full h-40 p-3 border-2 border-[#E2E2E2] rounded-lg font-mono text-sm resize-none focus:border-[#E36323] focus:outline-none',
                     placeholder: `Nhập hoặc paste dữ liệu cược từ tin nhắn khách...
 
 Ví dụ:
@@ -703,14 +703,14 @@ L 01,02,03 150k`,
                 React.createElement('button', {
                     className: `px-8 py-3 rounded-lg font-semibold text-lg ${
                         isLoading || !value.trim() ? 
-                        'bg-gray-400 text-white cursor-not-allowed' : 
-                        'bg-blue-600 hover:bg-blue-700 text-white'
+                        'bg-[#E2E2E2] text-[#7B7B7B] cursor-not-allowed' :
+                        'bg-[#E36323] hover:bg-[#DF5A18] text-white'
                     }`,
                     onClick: onCheck,
                     disabled: isLoading || !value.trim()
                 }, isLoading ? 'Đang xử lý...' : 'Check Kết Quả XSMB'),
                 React.createElement('button', {
-                    className: 'px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600',
+                    className: 'px-4 py-2 bg-[#7B7B7B] text-white rounded hover:bg-[#121212]',
                     onClick: onClear
                 }, '🗑️ Xóa')
             )
@@ -724,19 +724,19 @@ L 01,02,03 150k`,
         const prizeInfo = [
             { name: 'Đặc Biệt', numbers: [lotteryData.prizes.special], color: 'bg-red-500 text-white', note: 'Dùng cho đối chiếu ĐỀ' },
             { name: 'Nhất', numbers: lotteryData.prizes.first, color: 'bg-yellow-500 text-white' },
-            { name: 'Nhì', numbers: lotteryData.prizes.second, color: 'bg-blue-500 text-white' },
+            { name: 'Nhì', numbers: lotteryData.prizes.second, color: 'bg-[#E36323] text-white' },
             { name: 'Ba', numbers: lotteryData.prizes.third, color: 'bg-green-500 text-white' },
             { name: 'Tư', numbers: lotteryData.prizes.fourth, color: 'bg-purple-500 text-white' },
             { name: 'Năm', numbers: lotteryData.prizes.fifth, color: 'bg-indigo-500 text-white' },
             { name: 'Sáu', numbers: lotteryData.prizes.sixth, color: 'bg-pink-500 text-white' },
-            { name: 'Bảy', numbers: lotteryData.prizes.seventh, color: 'bg-gray-500 text-white' }
+            { name: 'Bảy', numbers: lotteryData.prizes.seventh, color: 'bg-[#7B7B7B] text-white' }
         ];
 
-        return React.createElement('div', { className: 'border rounded-lg p-4 bg-blue-50 mb-6' },
+        return React.createElement('div', { className: 'border rounded-lg p-4 bg-[#FFF7ED] mb-6' },
             React.createElement('h3', { className: 'font-bold mb-3' }, 
                 `🎲 Kết Quả XSMB - ${lotteryData.date}`
             ),
-            React.createElement('p', { className: 'text-sm text-gray-600 mb-4' },
+            React.createElement('p', { className: 'text-sm text-[#7B7B7B] mb-4' },
                 'Nguồn: RSS xosodaiphat.com - Cập nhật lúc 18h15'
             ),
             React.createElement('div', { className: 'overflow-x-auto' },
@@ -767,7 +767,7 @@ L 01,02,03 150k`,
                     )
                 )
             ),
-            React.createElement('div', { className: 'mt-4 text-sm text-gray-600' },
+            React.createElement('div', { className: 'mt-4 text-sm text-[#7B7B7B]' },
                 React.createElement('p', {}, `Tổng: ${lotteryData.allNumbers.length} số`),
                 React.createElement('p', {}, `2 số cuối để đối chiếu LÔ và XIÊN: ${lotteryData.allNumbers.map(n => n.slice(-2)).join(', ')}`),
                 React.createElement('p', {}, `Giải ĐB (${lotteryData.prizes.special?.slice(-2)}) để đối chiếu ĐỀ`)
@@ -794,12 +794,12 @@ L 01,02,03 150k`,
 
         const getBetTypeBadge = (betType) => {
             const badges = {
-                lô: { text: 'LÔ', color: 'bg-blue-100 text-blue-800' },
+                lô: { text: 'LÔ', color: 'bg-[#FFEDD5] text-[#E36323]' },
                 đề: { text: 'ĐỀ', color: 'bg-purple-100 text-purple-800' },
                 xiên: { text: 'XIÊN', color: 'bg-indigo-100 text-indigo-800' },
                 'ba càng': { text: 'BA CÀNG', color: 'bg-teal-100 text-teal-800' }
             };
-            const badge = badges[betType] || { text: '?', color: 'bg-gray-100 text-gray-800' };
+            const badge = badges[betType] || { text: '?', color: 'bg-[#F8F7F7] text-[#121212]' };
             return React.createElement('span', { 
                 className: `px-2 py-1 rounded-full text-xs font-semibold ${badge.color}` 
             }, badge.text);
@@ -822,14 +822,14 @@ L 01,02,03 150k`,
                 }, 'THUA');
             }
             return React.createElement('span', { 
-                className: 'px-2 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-800' 
+                className: 'px-2 py-1 rounded-full text-xs font-semibold bg-[#F8F7F7] text-[#121212]' 
             }, 'CHỜ');
         };
 
         return React.createElement('div', { className: 'overflow-x-auto' },
             React.createElement('table', { className: 'w-full border-collapse border' },
                 React.createElement('thead', {},
-                    React.createElement('tr', { className: 'bg-gray-100' },
+                    React.createElement('tr', { className: 'bg-[#F8F7F7]' },
                         React.createElement('th', { className: 'border p-2 w-12 text-center' }, 'STT'),
                         React.createElement('th', { className: 'border p-2 w-48 text-left' }, 'Nội dung gốc'),
                         React.createElement('th', { className: 'border p-2 w-24 text-center' }, 'Loại cược'),
@@ -901,7 +901,7 @@ L 01,02,03 150k`,
         return React.createElement('div', { className: 'space-y-6' },
             // Summary Cards
             React.createElement('div', { className: 'grid grid-cols-2 md:grid-cols-4 gap-4' },
-                React.createElement('div', { className: 'p-4 bg-blue-100 text-blue-800 rounded-lg text-center' },
+                React.createElement('div', { className: 'p-4 bg-[#FFEDD5] text-[#E36323] rounded-lg text-center' },
                     React.createElement('div', { className: 'text-2xl mb-1' }, '📊'),
                     React.createElement('div', { className: 'text-lg font-bold' }, summary.totalBets),
                     React.createElement('div', { className: 'text-sm' }, 'Tổng số cược')
@@ -958,9 +958,9 @@ L 01,02,03 150k`,
             // Net Result
             React.createElement('div', { 
                 className: `p-6 rounded-lg text-center text-2xl font-bold ${
-                    summary.netResult > 0 ? 'bg-green-500 text-white' :
-                    summary.netResult < 0 ? 'bg-red-500 text-white' :
-                    'bg-gray-500 text-white'
+                    summary.netResult > 0 ? 'bg-[#10B981] text-white' :
+                    summary.netResult < 0 ? 'bg-[#FE5938] text-white' :
+                    'bg-[#7B7B7B] text-white'
                 }`
             },
                 React.createElement('div', { className: 'text-4xl mb-2' }, 

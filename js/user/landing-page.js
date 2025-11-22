@@ -377,11 +377,11 @@
                                     currentStep === 2 ? 'Thanh toán' : 'Xác nhận'
                                 ),
                                 React.createElement('div', { className: 'flex items-center mt-2 space-x-2' },
-                                    React.createElement('div', { className: `w-3 h-3 rounded-full ${currentStep >= 1 ? 'bg-[#E36323]' : 'bg-gray-300'}` }),
-                                    React.createElement('div', { className: 'w-8 h-0.5 bg-gray-300' }),
-                                    React.createElement('div', { className: `w-3 h-3 rounded-full ${currentStep >= 2 ? 'bg-[#E36323]' : 'bg-gray-300'}` }),
-                                    React.createElement('div', { className: 'w-8 h-0.5 bg-gray-300' }),
-                                    React.createElement('div', { className: `w-3 h-3 rounded-full ${currentStep >= 3 ? 'bg-[#E36323]' : 'bg-gray-300'}` })
+                                    React.createElement('div', { className: `w-3 h-3 rounded-full ${currentStep >= 1 ? 'bg-[#E36323]' : 'bg-[#E2E2E2]'}` }),
+                                    React.createElement('div', { className: 'w-8 h-0.5 bg-[#E2E2E2]' }),
+                                    React.createElement('div', { className: `w-3 h-3 rounded-full ${currentStep >= 2 ? 'bg-[#E36323]' : 'bg-[#E2E2E2]'}` }),
+                                    React.createElement('div', { className: 'w-8 h-0.5 bg-[#E2E2E2]' }),
+                                    React.createElement('div', { className: `w-3 h-3 rounded-full ${currentStep >= 3 ? 'bg-[#E36323]' : 'bg-[#E2E2E2]'}` })
                                 )
                             ),
                             React.createElement('button', {
@@ -502,7 +502,7 @@
                                             key: method.id,
                                             className: `border rounded-lg p-4 cursor-pointer transition-colors ${
                                                 selectedPaymentMethod?.id === method.id 
-                                                    ? 'border-blue-500 bg-[#FFF3EE]' 
+                                                    ? 'border-[#E36323] bg-[#FFF3EE]' 
                                                     : 'border-[#E2E2E2] hover:border-[#ECECEC]'
                                             }`,
                                             onClick: () => handlePaymentMethodSelect(method)
@@ -567,7 +567,7 @@
                                     type: 'file',
                                     accept: 'image/*',
                                     onChange: handlePaymentProofUpload,
-                                    className: 'block w-full text-sm text-[#7B7B7B] file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#FFF3EE] file:text-blue-700 hover:file:bg-blue-100'
+                                    className: 'block w-full text-sm text-[#7B7B7B] file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#FFF3EE] file:text-[#E36323] hover:file:bg-[#FFEDD5]'
                                 }),
                                 paymentProof && React.createElement('div', { className: 'mt-2' },
                                     React.createElement('img', {

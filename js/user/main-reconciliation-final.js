@@ -2168,7 +2168,7 @@
                         React.createElement('div', {className: 'flex'},
                             // Line numbers
                             React.createElement('div', {
-                                className: 'bg-[#F8F7F7] border-r border-gray-200 p-3 text-[#7B7B7B] text-sm font-mono min-w-[3rem] text-right select-none',
+                                className: 'bg-[#F8F7F7] border-r border-[#ECECEC] p-3 text-[#7B7B7B] text-sm font-mono min-w-[3rem] text-right select-none',
                                 style: { lineHeight: '1.5' }
                             }, 
                                 betText.split('\n').map((_, index) => {
@@ -2327,7 +2327,7 @@
                                 setValidationResults(null);
                                 setShowValidation(false);
                             },
-                            className: 'px-4 py-2 bg-[#F8F7F7]0 text-white rounded-lg hover:bg-gray-600'
+                            className: 'px-4 py-2 bg-[#7B7B7B] text-white rounded-lg hover:bg-[#121212]'
                         }, 'Xóa'),
                         React.createElement('button', {
                             onClick: () => {
@@ -2337,7 +2337,7 @@
                                     handleCheckResults();
                                 }, 100);
                             },
-                            className: 'px-4 py-2 bg-[#FFF7ED]0 text-white rounded-lg hover:bg-[#E36323] ml-2'
+                            className: 'px-4 py-2 bg-[#E36323] text-white rounded-lg hover:bg-[#DF5A18] ml-2'
                         }, 'Refresh')
                     )
                 ),
@@ -2358,7 +2358,7 @@
                                 React.createElement('div', {
                                     key: index,
                                     className: `p-3 rounded border text-sm ${
-                                        !item.line ? 'bg-[#F8F7F7] border-gray-200' :
+                                        !item.line ? 'bg-[#F8F7F7] border-[#ECECEC]' :
                                         item.isValid ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-400'
                                     }`
                                 },
@@ -2417,7 +2417,7 @@
                                         React.createElement('div', {className: 'text-2xl font-bold text-[#E36323]'}, 
                                             validationResults.filter(r => r.line.trim()).length
                                         ),
-                                        React.createElement('div', {className: 'text-blue-700'}, 'Tổng dòng')
+                                        React.createElement('div', {className: 'text-[#E36323]'}, 'Tổng dòng')
                                     )
                                 )
                             )
@@ -2477,7 +2477,7 @@
                                 )
                             ),
                             React.createElement('div', {className: 'border rounded-lg p-3 mb-3 bg-[#FFF7ED]'},
-                                React.createElement('div', {className: 'text-sm font-medium text-blue-800 mb-2'}, 'Giải Nhất'),
+                                React.createElement('div', {className: 'text-sm font-medium text-[#E36323] mb-2'}, 'Giải Nhất'),
                                 React.createElement('div', {className: 'text-lg font-bold text-[#E36323] font-mono'}, 
                                     lotteryResults?.giai_nhat?.[0] || 
                                     lotteryResults?.nhat?.[0] ||
@@ -2582,7 +2582,7 @@
                                         'bg-red-50 border-red-200' :
                                         isWin ? 
                                             'bg-green-50 border-green-200' : 
-                                            'bg-[#F8F7F7] border-gray-200';
+                                            'bg-[#F8F7F7] border-[#ECECEC]';
                                     
                                     const statusClass = isError ?
                                         'text-red-600 font-semibold' :
@@ -2645,7 +2645,7 @@
                                 disabled: currentPage === 1,
                                 className: 'px-3 py-1 bg-[#ECECEC] text-[#7B7B7B] rounded disabled:opacity-50'
                             }, '‹ Trước'),
-                            React.createElement('span', {className: 'px-3 py-1 bg-[#FFEDD5] text-blue-800 rounded'}, 
+                            React.createElement('span', {className: 'px-3 py-1 bg-[#FFEDD5] text-[#E36323] rounded'}, 
                                 `${currentPage}/${getPaginatedResults().totalPages}`
                             ),
                             React.createElement('button', {
@@ -2693,7 +2693,7 @@
                 React.createElement('div', {className: 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4'},
                     // Overall stats
                     React.createElement('div', {className: 'bg-[#FFF7ED] rounded-lg p-4'},
-                        React.createElement('h3', {className: 'font-semibold text-blue-800 mb-2'}, 'Tổng Quan'),
+                        React.createElement('h3', {className: 'font-semibold text-[#E36323] mb-2'}, 'Tổng Quan'),
                         React.createElement('div', {className: 'space-y-1 text-sm'},
                             React.createElement('div', {}, `Tổng bet: ${statistics.total}`),
                             React.createElement('div', {className: 'text-green-600'}, `Thắng: ${statistics.won}`),

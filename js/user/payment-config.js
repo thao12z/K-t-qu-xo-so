@@ -224,7 +224,7 @@
                 </div>
                 
                 {/* Tab Navigation */}
-                <div className="border-b border-gray-200">
+                <div className="border-b border-[#ECECEC]">
                     <nav className="-mb-px flex space-x-8">
                         {[
                             { id: 'bank', label: '🏦 Bank Info', icon: '🏦' },
@@ -237,8 +237,8 @@
                                 onClick={() => setActiveTab(tab.id)}
                                 className={`py-2 px-1 border-b-2 font-medium text-sm ${
                                     activeTab === tab.id
-                                        ? 'border-blue-500 text-blue-600'
-                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                        ? 'border-[#E36323] text-[#E36323]'
+                                        : 'border-transparent text-[#7B7B7B] hover:text-[#121212] hover:border-[#E2E2E2]'
                                 }`}
                             >
                                 {tab.icon} {tab.label}
@@ -313,9 +313,9 @@
                         <window.Card title="QR Code Configuration">
                             <div className="space-y-6">
                                 {/* ✅ THÔNG TIN ĐƠN GIẢN */}
-                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                                    <h4 className="font-medium text-blue-900 mb-2">🎯 QR Code Duy Nhất</h4>
-                                    <p className="text-sm text-blue-700">
+                                <div className="bg-[#FFF7ED] border border-[#FFEDD5] rounded-lg p-4">
+                                    <h4 className="font-medium text-[#E36323] mb-2">🎯 QR Code Duy Nhất</h4>
+                                    <p className="text-sm text-[#E36323]">
                                         Chỉ cần upload 1 QR Code duy nhất. Hệ thống sẽ tự động hiển thị QR này cho tất cả gói khi người dùng thanh toán.
                                     </p>
                                 </div>
@@ -323,10 +323,10 @@
                                 {/* QR Code Upload - ĐƠN GIẢN */}
                                 <div className="border rounded-lg p-6">
                                     <div className="text-center mb-6">
-                                        <h4 className="text-lg font-medium text-gray-900 mb-2">
+                                        <h4 className="text-lg font-medium text-[#121212] mb-2">
                                             📱 QR Code Thanh Toán
                                         </h4>
-                                        <p className="text-sm text-gray-600">
+                                        <p className="text-sm text-[#7B7B7B]">
                                             Upload QR Code của bạn để người dùng có thể thanh toán
                                         </p>
                                     </div>
@@ -334,7 +334,7 @@
                                     <div className="space-y-6">
                                         {/* Upload Section */}
                                         <div className="text-center">
-                                            <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 hover:border-blue-400 transition-colors">
+                                            <div className="border-2 border-dashed border-[#E2E2E2] rounded-lg p-8 hover:border-[#E36323] transition-colors">
                                                 <div className="space-y-4">
                                                     <div className="text-4xl">📱</div>
                                                     <div>
@@ -345,12 +345,12 @@
                                                                 onChange={handleQrCodeUpload}
                                                                 className="hidden"
                                                             />
-                                                            <span className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors">
+                                                            <span className="bg-[#E36323] text-white px-4 py-2 rounded-lg hover:bg-[#DF5A18] transition-colors">
                                                                 Chọn File QR Code
                                                             </span>
                                                         </label>
                                                     </div>
-                                                    <p className="text-xs text-gray-500">
+                                                    <p className="text-xs text-[#7B7B7B]">
                                                         Hỗ trợ: PNG, JPG, JPEG
                                                     </p>
                                                 </div>
@@ -360,12 +360,12 @@
                                         {/* Preview Section */}
                                         {config.qrCodes.main.url && (
                                             <div className="text-center">
-                                                <h5 className="font-medium text-gray-900 mb-4">QR Code Preview</h5>
+                                                <h5 className="font-medium text-[#121212] mb-4">QR Code Preview</h5>
                                                 <div className="inline-block">
                                                     <img
                                                         src={config.qrCodes.main.url}
                                                         alt="QR Code"
-                                                        className="w-40 h-40 border-2 border-gray-200 rounded-lg shadow-lg"
+                                                        className="w-40 h-40 border-2 border-[#ECECEC] rounded-lg shadow-lg"
                                                     />
                                                     <div className="mt-3 text-sm text-green-600">
                                                         ✅ QR Code đã sẵn sàng sử dụng
@@ -426,8 +426,8 @@
                                         <div className="flex items-center space-x-3">
                                             <span className="text-2xl">{methodConfig.icon}</span>
                                             <div>
-                                                <h4 className="font-medium text-gray-900">{methodConfig.name}</h4>
-                                                <p className="text-sm text-gray-500">Method ID: {method}</p>
+                                                <h4 className="font-medium text-[#121212]">{methodConfig.name}</h4>
+                                                <p className="text-sm text-[#7B7B7B]">Method ID: {method}</p>
                                             </div>
                                         </div>
                                         

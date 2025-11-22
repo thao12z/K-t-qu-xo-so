@@ -259,7 +259,7 @@
                     className: `w-full py-3 px-4 rounded-lg font-semibold transition-all ${
                         isPopular 
                             ? 'bg-[#E36323] text-white hover:bg-[#DF5A18]' 
-                            : 'bg-gray-100 text-[#121212] hover:bg-gray-200'
+                            : 'bg-[#F8F7F7] text-[#121212] hover:bg-[#ECECEC]'
                     }`,
                     onClick: () => handleContactForPackage(pkg.id)
                 }, 'Liên Hệ Mua Gói')
