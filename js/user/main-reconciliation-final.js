@@ -3,11 +3,10 @@
     
     console.log('🧮 FINAL VERSION: Starting with working foundation...');
     
-    // Helper function - DEFAULT TO YESTERDAY for immediate testability
+    // Helper function - DEFAULT TO TODAY for current data
     const getLatestAvailableDate = () => {
-        const yesterday = new Date();
-            yesterday.setDate(yesterday.getDate() - 1);
-            return yesterday.toISOString().split('T')[0];
+        const today = new Date();
+        return today.toISOString().split('T')[0];
     };
     
     // DEFAULT_PARAMETERS - 16 THAM SỐ CHÍNH XÁC THEO RULES
