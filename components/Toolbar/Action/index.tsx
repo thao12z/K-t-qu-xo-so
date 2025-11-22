@@ -19,7 +19,7 @@ const Action = ({
 }: Props) => {
     return (
         <button
-            className={`relative group flex items-center justify-center size-10 border rounded-xl transition-all cursor-pointer hover:bg-[#f1f1f1] ${
+            className={`relative group/button flex items-center justify-center size-10 border rounded-xl transition-all cursor-pointer hover:bg-[#f1f1f1] ${
                 active
                     ? "bg-[#f1f1f1] border-[#e2e2e2] shadow-[0_-1px_3px_0px_rgba(18,18,18,0.15)_inset,_0px_1.25px_1px_0px_#FFF_inset]"
                     : "border-transparent"
@@ -34,7 +34,7 @@ const Action = ({
             >
                 <path d={iconPath} />
             </svg>
-            <Tooltip className="absolute bottom-full left-1/2 -translate-x-1/2 flex items-center gap-2 mb-4.5 !p-0.5 !pl-2 text-nowrap [&_span]:flex [&_span]:justify-center [&_span]:items-center [&_span]:size-5 [&_span]:rounded-sm [&_span]:bg-[#303030] [&_span]:border [&_span]:border-[#fcfcfc]/5 invisible opacity-0 transition-all group-hover:visible group-hover:opacity-100 pointer-events-none">
+            <Tooltip className="absolute bottom-full left-1/2 -translate-x-1/2 flex items-center gap-2 mb-4.5 !p-0.5 !pl-2 text-nowrap [&_span]:flex [&_span]:justify-center [&_span]:items-center [&_span]:size-5 [&_span]:rounded-sm [&_span]:bg-[#303030] [&_span]:border [&_span]:border-[#fcfcfc]/5 invisible opacity-0 transition-all group-hover/button:visible group-hover/button:opacity-100 pointer-events-none">
                 {tooltip}
             </Tooltip>
         </button>

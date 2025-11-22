@@ -1,5 +1,4 @@
 import { useState } from "react";
-import ReactSlider from "react-slider";
 
 const Isometric = () => {
     const [range, setRange] = useState(0.283);
@@ -8,28 +7,18 @@ const Isometric = () => {
         <div className="px-1">
             <div className="mb-2 text-[0.75rem] font-medium">Distortion</div>
             <div className="flex gap-1">
-                <ReactSlider
-                    className="grow"
-                    thumbClassName="h-9 w-6 bg-[#f8f7f7] rounded-md shadow-[0_-1px_4px_-2px_rgba(0,0,0,0.20)_inset,0px_0px_2.6px_-1px_rgba(0,0,0,0.17),0px_1px_4px_0px_rgba(0,0,0,0.14)]"
-                    trackClassName="h-9 bg-[#7b7b7b]/30 rounded-lg"
+                <input
+                    type="range"
                     min={0}
                     max={1}
                     step={0.001}
                     value={range}
-                    onChange={setRange}
-                    renderTrack={(props, state) => {
-                        const { key, ...restProps } = props;
-                        return (
-                            <div
-                                key={key}
-                                {...restProps}
-                                className={`${props.className} ${
-                                    state.index === 1
-                                        ? "bg-[#f1f1f1]"
-                                        : "bg-[#7b7b7b]/30"
-                                }`}
-                            />
-                        );
+                    onChange={(e) => setRange(parseFloat(e.target.value))}
+                    className="w-full h-9 appearance-none bg-[#f1f1f1] rounded-lg cursor-pointer range-slider"
+                    style={{
+                        background: `linear-gradient(to right, rgba(123, 123, 123, 0.3) 0%, rgba(123, 123, 123, 0.3) ${
+                            (range / 1) * 100
+                        }%, #f1f1f1 ${(range / 1) * 100}%, #f1f1f1 100%)`,
                     }}
                 />
                 <div className="flex justify-center items-center gap-1.5 shrink-0 w-19.5 h-9 pr-1 bg-[#f1f1f1] rounded-[0.625rem] text-[0.75rem] font-medium">

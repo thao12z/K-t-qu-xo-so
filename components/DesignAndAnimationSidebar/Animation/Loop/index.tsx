@@ -1,8 +1,9 @@
 import { useState } from "react";
-import ReactSlider from "react-slider";
+import Slider from "rc-slider";
 import Image from "next/image";
 import Tabs from "@/components/Tabs";
 import Group from "../../Group";
+import "rc-slider/assets/index.css";
 
 const tabs = [
     { id: 0, name: "Short" },
@@ -37,28 +38,36 @@ const Loop = () => {
                     height={60}
                     alt="Loop"
                 />
-                <ReactSlider
+                <Slider
+                    className="range-loop !absolute top-0 left-0 !w-full !h-full !p-0 z-2 cursor-pointer"
+                    range
                     value={values}
-                    onChange={setValues}
+                    onChange={(value) => setValues(value as number[])}
                     min={0}
                     max={20}
                     step={1}
-                    className="loop-slider !absolute inset-0 z-2"
-                    trackClassName="h-full"
-                    thumbClassName="loop-slider--thumb w-0.5 h-full bg-[#fcfcfc] cursor-pointer outline-none"
-                    renderTrack={(props, state) => {
-                        const { key, ...restProps } = props;
-                        return (
-                            <div
-                                key={key}
-                                {...restProps}
-                                className={`${props.className} ${
-                                    state.index === 1
-                                        ? "bg-transparent"
-                                        : "bg-shade-09/35"
-                                }`}
-                            />
-                        );
+                    styles={{
+                        handle: {
+                            width: "2px",
+                            height: "100%",
+                            backgroundColor: "#fcfcfc",
+                            border: "none",
+                            borderRadius: "0",
+                            outline: "none",
+                            cursor: "pointer",
+                            marginTop: "0",
+                            boxShadow: "none",
+                        },
+                        track: {
+                            height: "100%",
+                            backgroundColor: "rgba(18, 18, 18, 0.35)",
+                            borderRadius: "0",
+                        },
+                        rail: {
+                            height: "100%",
+                            backgroundColor: "transparent",
+                            borderRadius: "0",
+                        },
                     }}
                 />
             </div>
