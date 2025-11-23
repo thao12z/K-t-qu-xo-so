@@ -589,22 +589,38 @@
 
                 {/* Instructions */}
                 <window.Card title="📋 Hướng Dẫn Sử Dụng">
-                    <div className="space-y-3 text-sm text-gray-600">
-                        <div className="flex items-start gap-2">
-                            <span className="font-bold text-[#E36323]">1.</span>
-                            <p><strong>Máy A (có dữ liệu):</strong> Vào trang này → Click "Download Backup File" → Lưu file JSON</p>
+                    <div className="space-y-4 text-sm text-gray-600">
+                        <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                            <p className="font-semibold text-green-800 mb-2">🌐 Cách 1: Publish lên Server (Khuyến nghị)</p>
+                            <p className="text-green-700 mb-2">User ở máy khác sẽ tự động nhận data khi truy cập hệ thống</p>
+                            <ol className="list-decimal list-inside space-y-1 text-green-700">
+                                <li>Click "Download Backup File" để tải file JSON</li>
+                                <li>Đổi tên file thành <code className="bg-green-100 px-1 rounded">admin-data.json</code></li>
+                                <li>Copy file vào thư mục <code className="bg-green-100 px-1 rounded">/data/</code> trên server</li>
+                                <li>Users ở các thiết bị khác sẽ tự động sync khi mở trang</li>
+                            </ol>
                         </div>
-                        <div className="flex items-start gap-2">
-                            <span className="font-bold text-[#E36323]">2.</span>
-                            <p><strong>Chuyển file:</strong> Copy file JSON sang máy B (qua USB, email, cloud...)</p>
+
+                        <div className="border-t pt-3">
+                            <p className="font-semibold text-gray-800 mb-2">📁 Cách 2: Import thủ công</p>
+                            <div className="space-y-1">
+                                <div className="flex items-start gap-2">
+                                    <span className="font-bold text-[#E36323]">1.</span>
+                                    <p>Download file JSON từ máy có dữ liệu</p>
+                                </div>
+                                <div className="flex items-start gap-2">
+                                    <span className="font-bold text-[#E36323]">2.</span>
+                                    <p>Copy file sang máy khác (USB, email, cloud...)</p>
+                                </div>
+                                <div className="flex items-start gap-2">
+                                    <span className="font-bold text-[#E36323]">3.</span>
+                                    <p>Vào trang này trên máy đó → Import file JSON</p>
+                                </div>
+                            </div>
                         </div>
-                        <div className="flex items-start gap-2">
-                            <span className="font-bold text-[#E36323]">3.</span>
-                            <p><strong>Máy B:</strong> Vào trang này → Chọn file JSON → Dữ liệu sẽ được import</p>
-                        </div>
-                        <div className="flex items-start gap-2">
-                            <span className="font-bold text-[#E36323]">4.</span>
-                            <p><strong>Lưu ý:</strong> Users đã tồn tại (trùng username) sẽ không bị ghi đè. Packages và Payments cũng vậy.</p>
+
+                        <div className="text-xs text-gray-500 border-t pt-2">
+                            <strong>Lưu ý:</strong> Users trùng username sẽ không bị ghi đè. Server sync URL: <code>/data/admin-data.json</code>
                         </div>
                     </div>
                 </window.Card>

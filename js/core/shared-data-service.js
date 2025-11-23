@@ -19,7 +19,10 @@
             apiBaseUrl: window.API_BASE_URL || null, // Set for server mode
             wsUrl: window.WS_URL || null, // WebSocket URL for realtime
             cacheMaxAge: 60000, // 1 minute cache max
-            debugMode: window.DEBUG_MODE || false
+            debugMode: window.DEBUG_MODE || false,
+            // Server data file URL - admin exports to this file
+            serverDataUrl: window.SERVER_DATA_URL || '/data/admin-data.json',
+            enableServerSync: true // Enable fetching from server
         },
 
         // State tracking
@@ -41,15 +44,135 @@
             return this.state.isOnline;
         },
 
+        // Fetch data from server and merge with localStorage
+        fetchFromServer: async function() {
+            if (!this.config.enableServerSync) {
+                console.log('📡 Server sync disabled');
+                return false;
+            }
+
+            try {
+                console.log('📡 Fetching data from server:', this.config.serverDataUrl);
+
+                const response = await fetch(this.config.serverDataUrl, {
+                    method: 'GET',
+                    cache: 'no-cache',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    if (response.status === 404) {
+                        console.log('📡 No server data file found (404) - using localStorage only');
+                        return false;
+                    }
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const serverData = await response.json();
+
+                // Validate server data
+                if (!serverData.version || !serverData.exportedAt) {
+                    console.warn('⚠️ Invalid server data format');
+                    return false;
+                }
+
+                console.log('✅ Server data fetched successfully:', {
+                    exportedAt: serverData.exportedAt,
+                    users: serverData.admin_users?.length || serverData.users?.length || 0,
+                    packages: serverData.adminPackages?.length || serverData.packages?.length || 0
+                });
+
+                // Merge users from server with localStorage
+                if (serverData.admin_users?.length > 0 || serverData.users?.length > 0) {
+                    const serverUsers = serverData.admin_users?.length > 0 ? serverData.admin_users : serverData.users;
+                    const existingUsers = JSON.parse(localStorage.getItem('admin_users') || '[]');
+
+                    // Merge: server data takes priority for new users, keep local for existing
+                    const existingUsernames = new Set(existingUsers.map(u => u.username));
+                    const newUsers = serverUsers.filter(u => !existingUsernames.has(u.username));
+                    const mergedUsers = [...existingUsers, ...newUsers];
+
+                    // Also update existing users with server data if newer
+                    serverUsers.forEach(serverUser => {
+                        const localIndex = mergedUsers.findIndex(u => u.username === serverUser.username);
+                        if (localIndex !== -1) {
+                            // Check if server data is newer
+                            const serverTime = new Date(serverUser.updatedAt || serverUser.createdAt || 0).getTime();
+                            const localTime = new Date(mergedUsers[localIndex].updatedAt || mergedUsers[localIndex].createdAt || 0).getTime();
+                            if (serverTime > localTime) {
+                                mergedUsers[localIndex] = serverUser;
+                            }
+                        }
+                    });
+
+                    localStorage.setItem('admin_users', JSON.stringify(mergedUsers));
+                    localStorage.setItem('adminUsers', JSON.stringify(mergedUsers));
+                    localStorage.setItem('registeredUsers', JSON.stringify(mergedUsers));
+
+                    console.log(`📡 Merged ${newUsers.length} new users from server (total: ${mergedUsers.length})`);
+                }
+
+                // Merge packages from server
+                if (serverData.adminPackages?.length > 0 || serverData.packages?.length > 0) {
+                    const serverPackages = serverData.adminPackages?.length > 0 ? serverData.adminPackages : serverData.packages;
+                    const existingPackages = JSON.parse(localStorage.getItem('adminPackages') || '[]');
+
+                    const existingPackageIds = new Set(existingPackages.map(p => p.id));
+                    const newPackages = serverPackages.filter(p => !existingPackageIds.has(p.id));
+                    const mergedPackages = [...existingPackages, ...newPackages];
+
+                    localStorage.setItem('adminPackages', JSON.stringify(mergedPackages));
+
+                    console.log(`📡 Merged ${newPackages.length} new packages from server`);
+                }
+
+                // Merge payments from server
+                if (serverData.adminPayments?.length > 0 || serverData.payments?.length > 0) {
+                    const serverPayments = serverData.adminPayments?.length > 0 ? serverData.adminPayments : serverData.payments;
+                    const existingPayments = JSON.parse(localStorage.getItem('adminPayments') || '[]');
+
+                    const existingPaymentIds = new Set(existingPayments.map(p => p.id));
+                    const newPayments = serverPayments.filter(p => !existingPaymentIds.has(p.id));
+                    const mergedPayments = [...existingPayments, ...newPayments];
+
+                    localStorage.setItem('adminPayments', JSON.stringify(mergedPayments));
+                }
+
+                // Import configs if present (overwrite)
+                if (serverData.adminContactInfo) {
+                    localStorage.setItem('adminContactInfo', JSON.stringify(serverData.adminContactInfo));
+                }
+
+                if (serverData.admin_paymentConfig) {
+                    localStorage.setItem('admin_paymentConfig', JSON.stringify(serverData.admin_paymentConfig));
+                }
+
+                // Save last server sync time
+                localStorage.setItem('lastServerSync', new Date().toISOString());
+                localStorage.setItem('serverDataVersion', serverData.exportedAt);
+
+                // Trigger local sync to update transformed data
+                this.syncAll();
+
+                return true;
+
+            } catch (error) {
+                console.warn('📡 Server fetch failed:', error.message);
+                return false;
+            }
+        },
+
         // Initialize service
-        init: function() {
+        init: async function() {
             console.log('📡 Initializing SharedDataService v3.0 ONLINE MODE...');
 
             // Setup online/offline event listeners
             window.addEventListener('online', () => {
                 this.state.isOnline = true;
                 console.log('🌐 Network online - syncing data...');
-                this.syncAll();
+                this.fetchFromServer(); // Fetch from server when online
             });
 
             window.addEventListener('offline', () => {
@@ -59,6 +182,11 @@
 
             // Initial online check
             this.checkOnlineStatus();
+
+            // Fetch from server first (to get latest user accounts)
+            if (this.state.isOnline) {
+                await this.fetchFromServer();
+            }
 
             // Start background sync (faster in online mode)
             this.startBackgroundSync();
