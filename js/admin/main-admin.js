@@ -210,6 +210,408 @@
         );
     });
 
+    // ===== DATA EXPORT/IMPORT COMPONENT =====
+    const DataExportImport = memo(() => {
+        const [isExporting, setIsExporting] = useState(false);
+        const [isImporting, setIsImporting] = useState(false);
+        const [importResult, setImportResult] = useState(null);
+        const [lastExport, setLastExport] = useState(null);
+
+        // Load last export info
+        useEffect(() => {
+            const lastExportInfo = localStorage.getItem('lastDataExport');
+            if (lastExportInfo) {
+                setLastExport(JSON.parse(lastExportInfo));
+            }
+        }, []);
+
+        // Export all admin data to JSON file
+        const handleExport = useCallback(() => {
+            setIsExporting(true);
+            try {
+                // Collect all admin data from localStorage
+                const exportData = {
+                    version: '1.0',
+                    exportedAt: new Date().toISOString(),
+                    exportedFrom: window.location.hostname,
+
+                    // Core data
+                    users: window.GlobalStateManager?.getData('users') || [],
+                    packages: window.GlobalStateManager?.getData('packages') || [],
+                    payments: window.GlobalStateManager?.getData('payments') || [],
+                    notifications: window.GlobalStateManager?.getData('notifications') || [],
+
+                    // localStorage data
+                    admin_users: JSON.parse(localStorage.getItem('admin_users') || '[]'),
+                    adminUsers: JSON.parse(localStorage.getItem('adminUsers') || '[]'),
+                    adminPackages: JSON.parse(localStorage.getItem('adminPackages') || '[]'),
+                    adminPayments: JSON.parse(localStorage.getItem('adminPayments') || '[]'),
+                    adminNotifications: JSON.parse(localStorage.getItem('adminNotifications') || '[]'),
+                    registeredUsers: JSON.parse(localStorage.getItem('registeredUsers') || '[]'),
+                    syncedDemoAccounts: JSON.parse(localStorage.getItem('syncedDemoAccounts') || '[]'),
+                    userPackages: JSON.parse(localStorage.getItem('userPackages') || '[]'),
+
+                    // Config data
+                    adminContactInfo: JSON.parse(localStorage.getItem('adminContactInfo') || 'null'),
+                    admin_paymentConfig: JSON.parse(localStorage.getItem('admin_paymentConfig') || 'null'),
+                    admin_credentials: JSON.parse(localStorage.getItem('admin_credentials') || 'null'),
+
+                    // Auto payment verifier data
+                    autoPaymentVerifier_history: JSON.parse(localStorage.getItem('autoPaymentVerifier_history') || '[]'),
+                    autoPaymentVerifier_lastCheck: localStorage.getItem('autoPaymentVerifier_lastCheck') || null
+                };
+
+                // Create and download JSON file
+                const jsonString = JSON.stringify(exportData, null, 2);
+                const blob = new Blob([jsonString], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `lode-admin-backup-${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+
+                // Save export info
+                const exportInfo = {
+                    date: new Date().toISOString(),
+                    userCount: exportData.users.length || exportData.admin_users.length,
+                    packageCount: exportData.packages.length || exportData.adminPackages.length,
+                    paymentCount: exportData.payments.length || exportData.adminPayments.length
+                };
+                localStorage.setItem('lastDataExport', JSON.stringify(exportInfo));
+                setLastExport(exportInfo);
+
+                window.GlobalStateManager?.addNotification(
+                    `✅ Xuất dữ liệu thành công: ${exportInfo.userCount} users, ${exportInfo.packageCount} packages, ${exportInfo.paymentCount} payments`,
+                    'success',
+                    'DataExport'
+                );
+
+                console.log('📦 [DataExport] Export completed:', exportInfo);
+
+            } catch (error) {
+                console.error('❌ [DataExport] Export failed:', error);
+                window.GlobalStateManager?.addNotification(
+                    `❌ Xuất dữ liệu thất bại: ${error.message}`,
+                    'error',
+                    'DataExport'
+                );
+            } finally {
+                setIsExporting(false);
+            }
+        }, []);
+
+        // Import data from JSON file
+        const handleImport = useCallback((event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            setIsImporting(true);
+            setImportResult(null);
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const importData = JSON.parse(e.target.result);
+
+                    // Validate import data
+                    if (!importData.version || !importData.exportedAt) {
+                        throw new Error('File không hợp lệ - không phải file export từ hệ thống');
+                    }
+
+                    const result = {
+                        success: true,
+                        imported: {
+                            users: 0,
+                            packages: 0,
+                            payments: 0,
+                            configs: 0
+                        },
+                        warnings: []
+                    };
+
+                    // Import users - merge with existing
+                    if (importData.admin_users?.length > 0 || importData.users?.length > 0) {
+                        const importUsers = importData.admin_users?.length > 0 ? importData.admin_users : importData.users;
+                        const existingUsers = JSON.parse(localStorage.getItem('admin_users') || '[]');
+
+                        // Merge: add new users, skip existing by username
+                        const existingUsernames = new Set(existingUsers.map(u => u.username));
+                        const newUsers = importUsers.filter(u => !existingUsernames.has(u.username));
+                        const mergedUsers = [...existingUsers, ...newUsers];
+
+                        localStorage.setItem('admin_users', JSON.stringify(mergedUsers));
+                        localStorage.setItem('adminUsers', JSON.stringify(mergedUsers));
+                        localStorage.setItem('registeredUsers', JSON.stringify(mergedUsers));
+
+                        // Update GlobalStateManager
+                        if (window.GlobalStateManager) {
+                            window.GlobalStateManager.updateData('users', mergedUsers, 'DataImport');
+                        }
+
+                        result.imported.users = newUsers.length;
+                        if (importUsers.length - newUsers.length > 0) {
+                            result.warnings.push(`${importUsers.length - newUsers.length} users đã tồn tại, bỏ qua`);
+                        }
+                    }
+
+                    // Import packages
+                    if (importData.adminPackages?.length > 0 || importData.packages?.length > 0) {
+                        const importPackages = importData.adminPackages?.length > 0 ? importData.adminPackages : importData.packages;
+                        const existingPackages = JSON.parse(localStorage.getItem('adminPackages') || '[]');
+
+                        const existingPackageIds = new Set(existingPackages.map(p => p.id));
+                        const newPackages = importPackages.filter(p => !existingPackageIds.has(p.id));
+                        const mergedPackages = [...existingPackages, ...newPackages];
+
+                        localStorage.setItem('adminPackages', JSON.stringify(mergedPackages));
+
+                        if (window.GlobalStateManager) {
+                            window.GlobalStateManager.updateData('packages', mergedPackages, 'DataImport');
+                        }
+
+                        result.imported.packages = newPackages.length;
+                    }
+
+                    // Import payments
+                    if (importData.adminPayments?.length > 0 || importData.payments?.length > 0) {
+                        const importPayments = importData.adminPayments?.length > 0 ? importData.adminPayments : importData.payments;
+                        const existingPayments = JSON.parse(localStorage.getItem('adminPayments') || '[]');
+
+                        const existingPaymentIds = new Set(existingPayments.map(p => p.id));
+                        const newPayments = importPayments.filter(p => !existingPaymentIds.has(p.id));
+                        const mergedPayments = [...existingPayments, ...newPayments];
+
+                        localStorage.setItem('adminPayments', JSON.stringify(mergedPayments));
+
+                        if (window.GlobalStateManager) {
+                            window.GlobalStateManager.updateData('payments', mergedPayments, 'DataImport');
+                        }
+
+                        result.imported.payments = newPayments.length;
+                    }
+
+                    // Import configs (overwrite)
+                    if (importData.adminContactInfo) {
+                        localStorage.setItem('adminContactInfo', JSON.stringify(importData.adminContactInfo));
+                        result.imported.configs++;
+                    }
+
+                    if (importData.admin_paymentConfig) {
+                        localStorage.setItem('admin_paymentConfig', JSON.stringify(importData.admin_paymentConfig));
+                        result.imported.configs++;
+                    }
+
+                    setImportResult(result);
+
+                    window.GlobalStateManager?.addNotification(
+                        `✅ Import thành công: ${result.imported.users} users, ${result.imported.packages} packages, ${result.imported.payments} payments`,
+                        'success',
+                        'DataImport'
+                    );
+
+                    console.log('📥 [DataImport] Import completed:', result);
+
+                } catch (error) {
+                    console.error('❌ [DataImport] Import failed:', error);
+                    setImportResult({
+                        success: false,
+                        error: error.message
+                    });
+
+                    window.GlobalStateManager?.addNotification(
+                        `❌ Import thất bại: ${error.message}`,
+                        'error',
+                        'DataImport'
+                    );
+                } finally {
+                    setIsImporting(false);
+                    // Reset file input
+                    event.target.value = '';
+                }
+            };
+
+            reader.onerror = () => {
+                setIsImporting(false);
+                setImportResult({
+                    success: false,
+                    error: 'Không thể đọc file'
+                });
+            };
+
+            reader.readAsText(file);
+        }, []);
+
+        // Get current data stats
+        const currentStats = React.useMemo(() => {
+            return {
+                users: window.GlobalStateManager?.getData('users')?.length ||
+                       JSON.parse(localStorage.getItem('admin_users') || '[]').length,
+                packages: window.GlobalStateManager?.getData('packages')?.length ||
+                         JSON.parse(localStorage.getItem('adminPackages') || '[]').length,
+                payments: window.GlobalStateManager?.getData('payments')?.length ||
+                         JSON.parse(localStorage.getItem('adminPayments') || '[]').length
+            };
+        }, []);
+
+        return (
+            <div className="space-y-6 p-6">
+                <div className="flex justify-between items-center">
+                    <h1 className="text-2xl font-bold">📦 Export / Import Data</h1>
+                </div>
+
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                    <p className="text-yellow-800 text-sm">
+                        <strong>Lưu ý:</strong> Tính năng này cho phép bạn xuất toàn bộ dữ liệu (users, packages, payments)
+                        ra file JSON và import vào máy khác. Sử dụng để đồng bộ dữ liệu giữa các máy tính.
+                    </p>
+                </div>
+
+                {/* Current Data Stats */}
+                <window.Card title="📊 Dữ Liệu Hiện Tại">
+                    <div className="grid grid-cols-3 gap-4 text-center">
+                        <div className="bg-blue-50 p-4 rounded-lg">
+                            <p className="text-2xl font-bold text-blue-600">{currentStats.users}</p>
+                            <p className="text-sm text-gray-600">Users</p>
+                        </div>
+                        <div className="bg-green-50 p-4 rounded-lg">
+                            <p className="text-2xl font-bold text-green-600">{currentStats.packages}</p>
+                            <p className="text-sm text-gray-600">Packages</p>
+                        </div>
+                        <div className="bg-purple-50 p-4 rounded-lg">
+                            <p className="text-2xl font-bold text-purple-600">{currentStats.payments}</p>
+                            <p className="text-sm text-gray-600">Payments</p>
+                        </div>
+                    </div>
+                </window.Card>
+
+                {/* Export Section */}
+                <window.Card title="📤 Export Data">
+                    <div className="space-y-4">
+                        <p className="text-gray-600">
+                            Xuất toàn bộ dữ liệu admin ra file JSON. File này có thể được import vào máy khác.
+                        </p>
+
+                        {lastExport && (
+                            <div className="bg-gray-50 p-3 rounded text-sm">
+                                <p className="text-gray-600">
+                                    <strong>Lần export cuối:</strong> {new Date(lastExport.date).toLocaleString('vi-VN')}
+                                </p>
+                                <p className="text-gray-500">
+                                    {lastExport.userCount} users, {lastExport.packageCount} packages, {lastExport.paymentCount} payments
+                                </p>
+                            </div>
+                        )}
+
+                        <window.Button
+                            variant="primary"
+                            onClick={handleExport}
+                            disabled={isExporting}
+                            className="w-full sm:w-auto"
+                        >
+                            {isExporting ? '⏳ Đang xuất...' : '📥 Download Backup File'}
+                        </window.Button>
+                    </div>
+                </window.Card>
+
+                {/* Import Section */}
+                <window.Card title="📥 Import Data">
+                    <div className="space-y-4">
+                        <p className="text-gray-600">
+                            Import dữ liệu từ file JSON backup. Dữ liệu mới sẽ được merge với dữ liệu hiện tại
+                            (users trùng username sẽ bị bỏ qua).
+                        </p>
+
+                        <div className="flex items-center justify-center w-full">
+                            <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                                <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                    <svg className="w-8 h-8 mb-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                    </svg>
+                                    <p className="mb-2 text-sm text-gray-500">
+                                        <span className="font-semibold">Click để chọn file</span> hoặc kéo thả vào đây
+                                    </p>
+                                    <p className="text-xs text-gray-500">JSON file (lode-admin-backup-*.json)</p>
+                                </div>
+                                <input
+                                    type="file"
+                                    className="hidden"
+                                    accept=".json"
+                                    onChange={handleImport}
+                                    disabled={isImporting}
+                                />
+                            </label>
+                        </div>
+
+                        {isImporting && (
+                            <div className="text-center py-4">
+                                <window.LoadingSpinner size="medium" message="Đang import dữ liệu..." />
+                            </div>
+                        )}
+
+                        {importResult && (
+                            <div className={`p-4 rounded-lg ${importResult.success ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
+                                {importResult.success ? (
+                                    <div>
+                                        <p className="font-semibold text-green-800 mb-2">✅ Import thành công!</p>
+                                        <ul className="text-sm text-green-700 space-y-1">
+                                            <li>• {importResult.imported.users} users mới</li>
+                                            <li>• {importResult.imported.packages} packages mới</li>
+                                            <li>• {importResult.imported.payments} payments mới</li>
+                                            {importResult.imported.configs > 0 && (
+                                                <li>• {importResult.imported.configs} configs cập nhật</li>
+                                            )}
+                                        </ul>
+                                        {importResult.warnings?.length > 0 && (
+                                            <div className="mt-2 text-yellow-700">
+                                                <p className="font-medium">Cảnh báo:</p>
+                                                <ul className="text-sm">
+                                                    {importResult.warnings.map((w, i) => (
+                                                        <li key={i}>• {w}</li>
+                                                    ))}
+                                                </ul>
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div>
+                                        <p className="font-semibold text-red-800">❌ Import thất bại</p>
+                                        <p className="text-sm text-red-700">{importResult.error}</p>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                </window.Card>
+
+                {/* Instructions */}
+                <window.Card title="📋 Hướng Dẫn Sử Dụng">
+                    <div className="space-y-3 text-sm text-gray-600">
+                        <div className="flex items-start gap-2">
+                            <span className="font-bold text-[#E36323]">1.</span>
+                            <p><strong>Máy A (có dữ liệu):</strong> Vào trang này → Click "Download Backup File" → Lưu file JSON</p>
+                        </div>
+                        <div className="flex items-start gap-2">
+                            <span className="font-bold text-[#E36323]">2.</span>
+                            <p><strong>Chuyển file:</strong> Copy file JSON sang máy B (qua USB, email, cloud...)</p>
+                        </div>
+                        <div className="flex items-start gap-2">
+                            <span className="font-bold text-[#E36323]">3.</span>
+                            <p><strong>Máy B:</strong> Vào trang này → Chọn file JSON → Dữ liệu sẽ được import</p>
+                        </div>
+                        <div className="flex items-start gap-2">
+                            <span className="font-bold text-[#E36323]">4.</span>
+                            <p><strong>Lưu ý:</strong> Users đã tồn tại (trùng username) sẽ không bị ghi đè. Packages và Payments cũng vậy.</p>
+                        </div>
+                    </div>
+                </window.Card>
+            </div>
+        );
+    });
+
     // ===== CONTACT SETTINGS COMPONENT =====
     const ContactSettings = memo(() => {
         const [contactInfo, setContactInfo] = useState({
@@ -700,6 +1102,8 @@
                         <div className="p-6">Notification System module not loaded</div>;
                 case 'contact-settings':
                     return <ContactSettings />;
+                case 'data-export':
+                    return <DataExportImport />;
                 default:
                     return <Dashboard />;
             }
@@ -715,6 +1119,7 @@
             'auto-verify': <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>,
             packages: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>,
             'contact-settings': <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>,
+            'data-export': <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>,
             notifications: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
         };
 
@@ -728,6 +1133,7 @@
             { id: 'payment-config', label: 'Payment Settings' },
             { id: 'packages', label: 'Package Management' },
             { id: 'contact-settings', label: 'Contact Settings' },
+            { id: 'data-export', label: 'Export/Import Data' },
             { id: 'notifications', label: 'Notifications' }
         ];
         
