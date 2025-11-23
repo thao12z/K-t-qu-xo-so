@@ -407,9 +407,16 @@
             // RELAXED validation - warn but don't block (for real-world data)
             let warning = '';
             if (mappedType === 'lô' && money % 23000 !== 0) {
-                warning = ` (Khuyến nghị: Lô nên là bội số của 23k)`;
+                const diem = Math.floor(money / 23000);
+                const validAmount = diem * 23000;
+                const wasted = money - validAmount;
+                if (diem === 0) {
+                    warning = `⚠️ Tiền đặt ${(money/1000)}k < 23k nên không đủ 1 điểm!`;
+                } else {
+                    warning = `⚠️ Chỉ tính ${diem} điểm (${(validAmount/1000)}k), thừa ${(wasted/1000)}k`;
+                }
             } else if (mappedType === 'đề' && money % 100000 !== 0) {
-                warning = ` (Khuyến nghị: Đề nên là bội số của 100k)`;
+                warning = `(Khuyến nghị: Đề nên là bội số của 100k)`;
             }
             
             return {
@@ -908,10 +915,11 @@
     const calculateWinAmount = (bet, config) => {
         const { type, money, numbers } = bet;
         let amount = 0;
-        
+
         if (type === 'lô') {
-            // Lô - Theo điểm: (bet_amount / tien1DiemLo) × tienTra1DiemLo
-            const diem = money / config.tien1DiemLo;
+            // Lô - Theo điểm: chỉ tính điểm nguyên (làm tròn xuống)
+            // VD: 50k / 23k = 2.17 → chỉ tính 2 điểm
+            const diem = Math.floor(money / config.tien1DiemLo);
             amount = diem * config.tienTra1DiemLo;
         } else if (type === 'đề') {
             // Đề - Hệ số nhân: bet_amount × heSoTra
@@ -924,25 +932,34 @@
         } else if (type === 'ba càng') {
             amount = money * config.heSoBaCangTra;
         }
-        
+
         return config.lamTronTien ? Math.round(amount / 1000) * 1000 : amount;
     };
 
-    // Calculate lose amount using BetParser rules  
+    // Calculate lose amount using BetParser rules
     const calculateLoseAmount = (bet, config) => {
         const { type, money, numbers } = bet;
-        let rate = 0;
-        
-        if (type === 'lô') rate = config.tyLeLoThu;
-        else if (type === 'đề') rate = config.tyLeDeThu;
-        else if (type === 'xiên') {
+        let amount = 0;
+
+        if (type === 'lô') {
+            // Lô - Theo điểm: chỉ tính điểm nguyên (làm tròn xuống)
+            // VD: 50k / 23k = 2.17 → chỉ tính 2 điểm → thua 2 × 23k = 46k
+            const diem = Math.floor(money / config.tien1DiemLo);
+            const validBetAmount = diem * config.tien1DiemLo;
+            amount = validBetAmount * (config.tyLeLoThu / 100);
+        } else if (type === 'đề') {
+            amount = money * (config.tyLeDeThu / 100);
+        } else if (type === 'xiên') {
             const count = numbers.length;
+            let rate = 0;
             if (count === 2) rate = config.tyLeXien2Thu;
             else if (count === 3) rate = config.tyLeXien3Thu;
             else if (count === 4) rate = config.tyLeXien4Thu;
-        } else if (type === 'ba càng') rate = config.tyLeBaCangThu;
-        
-        const amount = money * (rate / 100);
+            amount = money * (rate / 100);
+        } else if (type === 'ba càng') {
+            amount = money * (config.tyLeBaCangThu / 100);
+        }
+
         return config.lamTronTien ? Math.round(amount / 1000) * 1000 : amount;
     };
 
