@@ -942,11 +942,10 @@
         let amount = 0;
 
         if (type === 'lô') {
-            // Lô - Theo điểm: chỉ tính điểm nguyên (làm tròn xuống)
-            // VD: 50k / 23k = 2.17 → chỉ tính 2 điểm → thua 2 × 23k = 46k
-            const diem = Math.floor(money / config.tien1DiemLo);
-            const validBetAmount = diem * config.tien1DiemLo;
-            amount = validBetAmount * (config.tyLeLoThu / 100);
+            // Lô - Thua theo số tiền gốc × tỷ lệ thu
+            // VD: 50k × 100% = 50k (không theo điểm)
+            // "Lô Thu" cho phép nhà cái thu ít hơn 100%
+            amount = money * (config.tyLeLoThu / 100);
         } else if (type === 'đề') {
             amount = money * (config.tyLeDeThu / 100);
         } else if (type === 'xiên') {
