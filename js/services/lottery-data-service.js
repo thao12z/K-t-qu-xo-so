@@ -958,15 +958,22 @@
                     throw new Error(`Cannot fetch RSS feed`);
                 }
 
-                // Parse RSS và tìm ngày cụ thể
-                const lotteryData = this.parseRSSFeedForDate(content, region, date);
+                // Parse và cache TẤT CẢ các ngày trong RSS (7 ngày)
+                this.cacheAllRSSItems(content, region);
 
+                // Lấy data cho ngày cụ thể từ cache
+                const cacheKey = `${region}_${date}`;
+                if (this.historicalCache[cacheKey]) {
+                    const lotteryData = this.historicalCache[cacheKey];
+                    logger.log(`✅ Got data for ${date} from cache:`, lotteryData.results.giai_dac_biet);
+                    return lotteryData;
+                }
+
+                // Nếu không có trong cache, parse trực tiếp
+                const lotteryData = this.parseRSSFeedForDate(content, region, date);
                 if (lotteryData && lotteryData.results) {
-                    // Cache the result
-                    const cacheKey = `${region}_${date}`;
                     this.historicalCache[cacheKey] = lotteryData;
                     this.saveData();
-
                     logger.log(`✅ Fetched data for ${date}:`, lotteryData.results.giai_dac_biet);
                     return lotteryData;
                 }
@@ -1015,6 +1022,69 @@
             } catch (error) {
                 logger.error(`❌ Failed to fetch data for ${date}:`, error);
                 return null;
+            }
+        },
+
+        // Cache tất cả các ngày trong RSS feed
+        cacheAllRSSItems: function(xmlContent, region) {
+            try {
+                const parser = new DOMParser();
+                const xml = parser.parseFromString(xmlContent, 'text/xml');
+                const items = xml.getElementsByTagName('item');
+
+                logger.log(`📦 Caching all ${items.length} RSS items for ${region}...`);
+
+                let cachedCount = 0;
+
+                for (let i = 0; i < items.length; i++) {
+                    const item = items[i];
+                    const pubDateNode = item.getElementsByTagName('pubDate')[0];
+                    const descriptionNode = item.getElementsByTagName('description')[0];
+
+                    if (!descriptionNode || !descriptionNode.textContent) continue;
+
+                    const textContent = descriptionNode.textContent;
+                    const normalized = textContent.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+
+                    // Extract date
+                    let itemDate = null;
+
+                    if (pubDateNode && pubDateNode.textContent) {
+                        const pubMatch = pubDateNode.textContent.trim().match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+                        if (pubMatch) {
+                            const [_, d, m, y] = pubMatch;
+                            itemDate = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+                        }
+                    }
+
+                    if (!itemDate) {
+                        const descMatch = normalized.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+                        if (descMatch) {
+                            const [_, d, m, y] = descMatch;
+                            itemDate = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+                        }
+                    }
+
+                    if (itemDate) {
+                        const cacheKey = `${region}_${itemDate}`;
+
+                        // Parse và cache item này
+                        const lotteryData = this.parseRSSItemContent(normalized, region, itemDate);
+
+                        if (lotteryData && lotteryData.results) {
+                            this.historicalCache[cacheKey] = lotteryData;
+                            cachedCount++;
+                            logger.log(`📅 Cached ${itemDate}: DB=${lotteryData.results.giai_dac_biet[0]}`);
+                        }
+                    }
+                }
+
+                // Save all cached data
+                this.saveData();
+                logger.log(`✅ Cached ${cachedCount} days of lottery data`);
+
+            } catch (error) {
+                logger.error('Error caching RSS items:', error);
             }
         },
 
@@ -1175,7 +1245,7 @@
             }
         },
 
-        // Parse single RSS item content
+        // Parse single RSS item content - FULL RESULTS
         parseRSSItemContent: function(normalized, region, targetDate) {
             // Extract date if not provided
             if (!targetDate) {
@@ -1188,7 +1258,7 @@
                 }
             }
 
-            // Parse lottery numbers
+            // Parse lottery numbers - Pattern cho format RSS
             const exactMatch = normalized.match(/DB:\s*(\d+)\s+G\.1:\s*(\d+)\s+G\.2:\s*(\d+)\s*-\s*(\d+)\s+G\.3:\s*([\d\s\-]+?)\s+G\.4:\s*([\d\s\-]+?)\s+G\.5:\s*([\d\s\-]+?)\s+G\.6:\s*([\d\s\-]+?)\s+G\.7:\s*([\d\s\-]+)/i);
 
             let results;
@@ -1196,28 +1266,63 @@
             if (exactMatch) {
                 const [, db, g1, g2_1, g2_2, g3_raw, g4_raw, g5_raw, g6_raw, g7_raw] = exactMatch;
 
-                const parseNumbers = (raw) => {
+                const parseNumbers = (raw, expectedCount, minDigits = 2) => {
                     if (!raw) return [];
-                    return raw.split(/[\s\-]+/).map(s => s.trim()).filter(s => /^\d{2,5}$/.test(s));
+                    const numbers = raw.split(/[\s\-]+/)
+                        .map(s => s.trim())
+                        .filter(s => {
+                            const regex = new RegExp(`^\\d{${minDigits},5}$`);
+                            return regex.test(s);
+                        });
+
+                    // Log nếu số lượng không đúng
+                    if (expectedCount && numbers.length !== expectedCount) {
+                        logger.warn(`⚠️ Expected ${expectedCount} numbers but got ${numbers.length}: ${numbers.join(', ')}`);
+                    }
+
+                    return numbers;
                 };
 
                 results = {
-                    giai_dac_biet: [db],
-                    giai_nhat: [g1],
-                    giai_nhi: [g2_1, g2_2],
-                    giai_ba: parseNumbers(g3_raw),
-                    giai_tu: parseNumbers(g4_raw),
-                    giai_nam: parseNumbers(g5_raw),
-                    giai_sau: parseNumbers(g6_raw),
-                    giai_bay: parseNumbers(g7_raw)
+                    giai_dac_biet: [db],           // 1 số, 5 chữ số
+                    giai_nhat: [g1],               // 1 số, 5 chữ số
+                    giai_nhi: [g2_1, g2_2],        // 2 số, 5 chữ số
+                    giai_ba: parseNumbers(g3_raw, 6, 5),   // 6 số, 5 chữ số
+                    giai_tu: parseNumbers(g4_raw, 4, 4),   // 4 số, 4 chữ số
+                    giai_nam: parseNumbers(g5_raw, 6, 4),  // 6 số, 4 chữ số
+                    giai_sau: parseNumbers(g6_raw, 3, 3),  // 3 số, 3 chữ số
+                    giai_bay: parseNumbers(g7_raw, 4, 2)   // 4 số, 2 chữ số
                 };
+
+                // Log full results để debug
+                const totalNumbers = Object.values(results).reduce((sum, arr) => sum + arr.length, 0);
+                logger.log(`📊 Parsed ${targetDate}: ${totalNumbers} numbers total`);
+                logger.log(`   DB: ${results.giai_dac_biet[0]}, G1: ${results.giai_nhat[0]}`);
+                logger.log(`   G2: ${results.giai_nhi.join(', ')}`);
+                logger.log(`   G3: ${results.giai_ba.join(', ')}`);
+                logger.log(`   G4: ${results.giai_tu.join(', ')}`);
+                logger.log(`   G5: ${results.giai_nam.join(', ')}`);
+                logger.log(`   G6: ${results.giai_sau.join(', ')}`);
+                logger.log(`   G7: ${results.giai_bay.join(', ')}`);
+
             } else {
                 logger.warn('Cannot parse RSS content format');
+                logger.log('Raw content:', normalized.substring(0, 500));
                 return null;
             }
 
+            // Validate kết quả
             if (!results.giai_dac_biet || !results.giai_dac_biet.length) {
+                logger.warn('Missing giai_dac_biet');
                 return null;
+            }
+
+            // Đảm bảo có đủ các giải
+            const expectedPrizes = ['giai_dac_biet', 'giai_nhat', 'giai_nhi', 'giai_ba', 'giai_tu', 'giai_nam', 'giai_sau', 'giai_bay'];
+            for (const prize of expectedPrizes) {
+                if (!results[prize] || results[prize].length === 0) {
+                    logger.warn(`⚠️ Missing or empty ${prize}`);
+                }
             }
 
             return {
