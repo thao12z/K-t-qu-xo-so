@@ -908,22 +908,8 @@
             logger.log(`🌐 [ONLINE] Fetching data for date: ${date}, region: ${region}`);
 
             try {
-                // Format date for URL: 2024-11-21 -> 21-11-2024
-                const [year, month, day] = date.split('-');
-                const dateForUrl = `${day}-${month}-${year}`;
-
-                // URLs cho ngày cụ thể (thử nhiều pattern)
-                const dateSpecificUrls = [
-                    `https://xosodaiphat.com/xsmb-${dateForUrl}.html`,
-                    `https://xosodaiphat.com/ket-qua-xsmb-ngay-${dateForUrl}.html`,
-                    `https://xosodaiphat.com/ket-qua-xo-so-mien-bac-ngay-${dateForUrl}.html`
-                ];
-
-                // Fallback to RSS for today
-                const today = new Date().toISOString().split('T')[0];
-                if (date === today) {
-                    dateSpecificUrls.unshift('https://xosodaiphat.com/ket-qua-xo-so-mien-bac-xsmb.rss');
-                }
+                // RSS feed chứa 7 ngày gần nhất - luôn dùng RSS trước
+                const rssUrl = 'https://xosodaiphat.com/ket-qua-xo-so-mien-bac-xsmb.rss';
 
                 const proxies = [
                     (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
@@ -931,63 +917,49 @@
                     (url) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`
                 ];
 
-                let response = null;
                 let content = null;
-                let successUrl = null;
 
-                // Try each date-specific URL
-                for (const targetUrl of dateSpecificUrls) {
-                    logger.log(`🔗 Trying URL: ${targetUrl}`);
+                // Fetch RSS feed
+                for (const getProxyUrl of proxies) {
+                    const proxyUrl = getProxyUrl(rssUrl);
+                    try {
+                        logger.log(`🔗 Trying RSS proxy: ${proxyUrl}`);
 
-                    for (const getProxyUrl of proxies) {
-                        const proxyUrl = getProxyUrl(targetUrl);
+                        const controller = new AbortController();
+                        const timeoutId = setTimeout(() => controller.abort(), 15000);
+
                         try {
-                            const controller = new AbortController();
-                            const timeoutId = setTimeout(() => controller.abort(), 15000);
-
-                            try {
-                                response = await fetch(proxyUrl, {
-                                    method: 'GET',
-                                    headers: {
-                                        'Accept': 'text/html, application/rss+xml, application/xml, text/xml',
-                                        'Cache-Control': 'no-cache'
-                                    },
-                                    signal: controller.signal
-                                });
-                            } finally {
-                                clearTimeout(timeoutId);
-                            }
+                            const response = await fetch(proxyUrl, {
+                                method: 'GET',
+                                headers: {
+                                    'Accept': 'application/rss+xml, application/xml, text/xml',
+                                    'Cache-Control': 'no-cache'
+                                },
+                                signal: controller.signal
+                            });
 
                             if (response.ok) {
                                 content = await response.text();
-
-                                // Check if content has lottery data
-                                if (content && (content.includes('DB:') || content.includes('Giải ĐB') || content.includes('đặc biệt'))) {
-                                    successUrl = targetUrl;
-                                    logger.log(`✅ Found lottery data at: ${targetUrl}`);
+                                if (content && content.includes('DB:')) {
+                                    logger.log(`✅ RSS fetched successfully`);
                                     break;
                                 }
                             }
-                        } catch (proxyError) {
-                            logger.warn(`Proxy failed: ${proxyUrl}`, proxyError.message);
-                            continue;
+                        } finally {
+                            clearTimeout(timeoutId);
                         }
+                    } catch (proxyError) {
+                        logger.warn(`Proxy failed: ${proxyUrl}`, proxyError.message);
+                        continue;
                     }
-
-                    if (successUrl) break;
                 }
 
-                if (!content || !successUrl) {
-                    throw new Error(`Cannot find lottery data for ${date}`);
+                if (!content) {
+                    throw new Error(`Cannot fetch RSS feed`);
                 }
 
-                // Parse based on content type
-                let lotteryData = null;
-                if (successUrl.includes('.rss')) {
-                    lotteryData = this.parseRSSFeedForDate(content, region, date);
-                } else {
-                    lotteryData = this.parseHTMLForDate(content, region, date);
-                }
+                // Parse RSS và tìm ngày cụ thể
+                const lotteryData = this.parseRSSFeedForDate(content, region, date);
 
                 if (lotteryData && lotteryData.results) {
                     // Cache the result
@@ -997,6 +969,46 @@
 
                     logger.log(`✅ Fetched data for ${date}:`, lotteryData.results.giai_dac_biet);
                     return lotteryData;
+                }
+
+                // Nếu không tìm thấy trong RSS (ngày quá cũ), thử URL cụ thể
+                logger.log(`⚠️ Date ${date} not in RSS, trying specific URL...`);
+
+                const [year, month, day] = date.split('-');
+                const dateForUrl = `${day}-${month}-${year}`;
+                const specificUrl = `https://xosodaiphat.com/xsmb-${dateForUrl}.html`;
+
+                for (const getProxyUrl of proxies) {
+                    const proxyUrl = getProxyUrl(specificUrl);
+                    try {
+                        const controller = new AbortController();
+                        const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+                        try {
+                            const response = await fetch(proxyUrl, {
+                                method: 'GET',
+                                headers: { 'Accept': 'text/html', 'Cache-Control': 'no-cache' },
+                                signal: controller.signal
+                            });
+
+                            if (response.ok) {
+                                const htmlContent = await response.text();
+                                if (htmlContent && htmlContent.includes('đặc biệt')) {
+                                    const htmlData = this.parseHTMLForDate(htmlContent, region, date);
+                                    if (htmlData && htmlData.results) {
+                                        const cacheKey = `${region}_${date}`;
+                                        this.historicalCache[cacheKey] = htmlData;
+                                        this.saveData();
+                                        return htmlData;
+                                    }
+                                }
+                            }
+                        } finally {
+                            clearTimeout(timeoutId);
+                        }
+                    } catch (e) {
+                        continue;
+                    }
                 }
 
                 return null;
@@ -1107,8 +1119,16 @@
 
                 logger.log(`📡 Found ${items.length} RSS items, looking for date: ${targetDate}`);
 
+                // Convert targetDate (YYYY-MM-DD) to DD/MM/YYYY for comparison
+                const [year, month, day] = targetDate.split('-');
+                const targetDateVN = `${day}/${month}/${year}`;
+                logger.log(`🔍 Looking for date: ${targetDateVN}`);
+
                 for (let i = 0; i < items.length; i++) {
                     const item = items[i];
+
+                    // Try pubDate first
+                    const pubDateNode = item.getElementsByTagName('pubDate')[0];
                     const descriptionNode = item.getElementsByTagName('description')[0];
 
                     if (!descriptionNode || !descriptionNode.textContent) continue;
@@ -1116,15 +1136,29 @@
                     const textContent = descriptionNode.textContent;
                     const normalized = textContent.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
 
-                    // Extract date from this item
-                    const dateMatch = normalized.match(/(\d{2})\/(\d{2})\/(\d{4})/);
-                    if (dateMatch) {
-                        const [_, d, m, y] = dateMatch;
-                        const itemDate = `${y}-${m}-${d}`;
+                    // Extract date from pubDate or description
+                    let itemDateVN = null;
 
-                        logger.log(`📅 RSS item ${i} date: ${itemDate}`);
+                    if (pubDateNode && pubDateNode.textContent) {
+                        // pubDate format: "22/11/2025"
+                        const pubMatch = pubDateNode.textContent.trim().match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+                        if (pubMatch) {
+                            itemDateVN = `${pubMatch[1].padStart(2, '0')}/${pubMatch[2].padStart(2, '0')}/${pubMatch[3]}`;
+                        }
+                    }
 
-                        if (itemDate === targetDate) {
+                    if (!itemDateVN) {
+                        // Fallback: extract from description
+                        const descMatch = normalized.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+                        if (descMatch) {
+                            itemDateVN = `${descMatch[1].padStart(2, '0')}/${descMatch[2].padStart(2, '0')}/${descMatch[3]}`;
+                        }
+                    }
+
+                    if (itemDateVN) {
+                        logger.log(`📅 RSS item ${i} date: ${itemDateVN}`);
+
+                        if (itemDateVN === targetDateVN) {
                             logger.log(`✅ Found matching date: ${targetDate}`);
                             // Parse this item's data
                             return this.parseRSSItemContent(normalized, region, targetDate);
@@ -1132,16 +1166,8 @@
                     }
                 }
 
-                // If target date not found in RSS, return first item (latest)
-                if (items.length > 0) {
-                    const firstDesc = items[0].getElementsByTagName('description')[0];
-                    if (firstDesc && firstDesc.textContent) {
-                        const normalized = firstDesc.textContent.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-                        logger.log(`⚠️ Date ${targetDate} not in RSS, using latest data`);
-                        return this.parseRSSItemContent(normalized, region, null);
-                    }
-                }
-
+                // Date not found in RSS
+                logger.log(`⚠️ Date ${targetDate} not found in RSS feed (${items.length} items checked)`);
                 return null;
             } catch (error) {
                 logger.error('Error parsing RSS for date:', error);
