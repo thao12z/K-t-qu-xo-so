@@ -1772,50 +1772,72 @@
             else {
                 console.log('📝 Detected newline format');
                 lines = inputText.split('\n').map(line => line.trim()).filter(line => line);
-                
+
                 // If only one line but contains multiple bet patterns, split them
                 if (lines.length === 1) {
                     const singleLine = lines[0];
                     // Pattern: "de 54 100k de 34 166k" -> split on bet type keywords
-                    const betKeywords = ['lo', 'de', 'đề', 'lô', 'xien', 'xiên', 'ba cang', 'ba càng'];
-                    let hasMultipleBets = false;
-                    
-                    // Count bet keywords
-                    let keywordCount = 0;
-                    betKeywords.forEach(keyword => {
-                        const regex = new RegExp(`\\b${keyword}\\b`, 'gi');
-                        const matches = singleLine.match(regex);
-                        if (matches) keywordCount += matches.length;
-                    });
-                    
-                    if (keywordCount > 1) {
-                        console.log(`🔍 Single line contains ${keywordCount} bet keywords, attempting to split`);
-                        
-                        // Split on bet keywords while preserving the keyword
-                        let splitLines = [];
-                        let currentBet = '';
-                        const words = singleLine.split(/\s+/);
-                        
-                        for (let i = 0; i < words.length; i++) {
-                            const word = words[i].toLowerCase();
-                            
-                            // If this is a bet keyword and we have content, save previous bet
-                            if (betKeywords.includes(word) && currentBet.trim()) {
-                                splitLines.push(currentBet.trim());
-                                currentBet = words[i]; // Start new bet with keyword
-                            } else {
-                                currentBet += ' ' + words[i];
+                    const betKeywords = ['lo', 'de', 'đề', 'lô', 'xien', 'xiên', 'ba cang', 'ba càng', 'bc', 'lx', 'd', 'l'];
+
+                    // First try: Split by money unit followed by bet keyword
+                    // Pattern: "de 15 10m lo 24 23k" -> split at "10m lo" into ["de 15 10m", "lo 24 23k"]
+                    const betKeywordPattern = betKeywords.map(k => k.replace(/\s/g, '\\s*')).join('|');
+                    const moneyUnitSplitRegex = new RegExp(`(\\d+[km])\\s+(?=${betKeywordPattern})`, 'gi');
+
+                    // Check if we have this pattern
+                    if (moneyUnitSplitRegex.test(singleLine)) {
+                        console.log('📝 Detected money-unit-separated format (de 15 10m lo 24 23k)');
+                        // Split by inserting separator after money unit before bet keyword
+                        const splitByMoney = singleLine.replace(
+                            new RegExp(`(\\d+[km])\\s+(?=(${betKeywordPattern}))`, 'gi'),
+                            '$1|||'
+                        ).split('|||').map(s => s.trim()).filter(s => s);
+
+                        if (splitByMoney.length > 1) {
+                            lines = splitByMoney;
+                            console.log(`✅ Split by money unit into ${lines.length} bets:`, lines);
+                        }
+                    }
+
+                    // If still one line, try splitting by bet keywords with space
+                    if (lines.length === 1) {
+                        // Count bet keywords
+                        let keywordCount = 0;
+                        betKeywords.forEach(keyword => {
+                            const regex = new RegExp(`\\b${keyword}\\b`, 'gi');
+                            const matches = singleLine.match(regex);
+                            if (matches) keywordCount += matches.length;
+                        });
+
+                        if (keywordCount > 1) {
+                            console.log(`🔍 Single line contains ${keywordCount} bet keywords, attempting to split`);
+
+                            // Split on bet keywords while preserving the keyword
+                            let splitLines = [];
+                            let currentBet = '';
+                            const words = singleLine.split(/\s+/);
+
+                            for (let i = 0; i < words.length; i++) {
+                                const word = words[i].toLowerCase();
+
+                                // If this is a bet keyword and we have content, save previous bet
+                                if (betKeywords.includes(word) && currentBet.trim()) {
+                                    splitLines.push(currentBet.trim());
+                                    currentBet = words[i]; // Start new bet with keyword
+                                } else {
+                                    currentBet += ' ' + words[i];
+                                }
                             }
-                        }
-                        
-                        // Add the last bet
-                        if (currentBet.trim()) {
-                            splitLines.push(currentBet.trim());
-                        }
-                        
-                        if (splitLines.length > 1) {
-                            lines = splitLines;
-                            console.log(`✅ Successfully split into ${lines.length} bets:`, lines);
+
+                            // Add the last bet
+                            if (currentBet.trim()) {
+                                splitLines.push(currentBet.trim());
+                            }
+
+                            if (splitLines.length > 1) {
+                                lines = splitLines;
+                                console.log(`✅ Successfully split into ${lines.length} bets:`, lines);
+                            }
                         }
                     }
                 }
@@ -2404,88 +2426,6 @@
                             className: 'px-4 py-2 bg-[#E36323] text-white rounded-lg hover:bg-[#DF5A18] ml-2'
                         }, 'Refresh')
                     )
-                ),
-                
-                // Right panel - Validation Preview
-                React.createElement('div', {className: 'bg-white rounded-lg shadow-md p-4'},
-                    React.createElement('h2', {className: 'text-lg font-semibold text-[#121212] mb-4'}, 'Kiểm Tra Cú Pháp'),
-                    
-                    !showValidation || !validationResults ? 
-                        React.createElement('div', {className: 'flex items-center justify-center h-64 text-[#7B7B7B]'},
-                            React.createElement('div', {className: 'text-center'},
-                                React.createElement('div', {className: 'text-4xl mb-2'}, '📋'),
-                                React.createElement('p', {}, 'Nhấn "Kiểm Tra Cú Pháp" để xem kết quả validation')
-                            )
-                        ) :
-                        React.createElement('div', {className: 'space-y-2', style: { maxHeight: '300px', overflowY: 'auto' }},
-                            validationResults.map((item, index) => 
-                                React.createElement('div', {
-                                    key: index,
-                                    className: `p-3 rounded border text-sm ${
-                                        !item.line ? 'bg-[#F8F7F7] border-[#ECECEC]' :
-                                        item.isValid ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-400'
-                                    }`
-                                },
-                                    React.createElement('div', {className: 'flex items-start'},
-                                        React.createElement('span', {
-                                            className: `min-w-[2.5rem] text-right mr-3 font-bold ${
-                                                item.isValid ? 'text-green-600' : 'text-red-600'
-                                            }`
-                                        }, item.lineNumber),
-                                        React.createElement('div', {className: 'flex-1'},
-                                            React.createElement('div', {
-                                                className: `font-mono p-2 rounded ${
-                                                    item.isValid ? 'bg-green-100' : 'bg-red-100'
-                                                }`
-                                            }, item.line || '(trống)'),
-                                            
-                                            // Error details
-                                            item.error && React.createElement('div', {
-                                                className: 'text-red-700 text-sm mt-2 p-2 bg-red-50 rounded border-l-4 border-red-400'
-                                            },
-                                                React.createElement('strong', {}, 'Lỗi: '),
-                                                item.error
-                                            ),
-                                            
-                                            // Success details  
-                                            item.isValid && item.line && item.parsed && React.createElement('div', {
-                                                className: 'text-green-700 text-sm mt-2 p-2 bg-green-50 rounded border-l-4 border-green-400'
-                                            },
-                                                React.createElement('div', {},
-                                                    React.createElement('strong', {}, 'Hợp lệ: '),
-                                                    `${item.parsed.type} - ${item.parsed.numbers?.join(', ')} - ${(item.parsed.money / 1000).toLocaleString()}k`
-                                                ),
-                                                item.warning && React.createElement('div', {
-                                                    className: 'text-orange-600 text-xs mt-1'
-                                                }, item.warning)
-                                            )
-                                        )
-                                    )
-                                )
-                            ),
-                            validationResults.length > 0 && React.createElement('div', {className: 'mt-4 pt-3 border-t'},
-                                React.createElement('div', {className: 'grid grid-cols-3 gap-4 text-sm'},
-                                    React.createElement('div', {className: 'text-center p-2 bg-green-100 rounded'},
-                                        React.createElement('div', {className: 'text-2xl font-bold text-green-600'}, 
-                                            validationResults.filter(r => r.isValid && r.line.trim()).length
-                                        ),
-                                        React.createElement('div', {className: 'text-green-700'}, 'Hợp lệ')
-                                    ),
-                                    React.createElement('div', {className: 'text-center p-2 bg-red-100 rounded'},
-                                        React.createElement('div', {className: 'text-2xl font-bold text-red-600'}, 
-                                            validationResults.filter(r => !r.isValid && r.line.trim()).length
-                                        ),
-                                        React.createElement('div', {className: 'text-red-700'}, 'Có lỗi')
-                                    ),
-                                    React.createElement('div', {className: 'text-center p-2 bg-[#FFEDD5] rounded'},
-                                        React.createElement('div', {className: 'text-2xl font-bold text-[#E36323]'}, 
-                                            validationResults.filter(r => r.line.trim()).length
-                                        ),
-                                        React.createElement('div', {className: 'text-[#E36323]'}, 'Tổng dòng')
-                                    )
-                                )
-                            )
-                        )
                 )
             ),
             
