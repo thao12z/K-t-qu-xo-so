@@ -24,7 +24,8 @@
             maxRetries: 5,
             enableRealTimeUpdates: true,
             cacheMaxAge: 60000, // 1 minute cache max age (sync với shared-data-service)
-            forceOnlineMode: true // Always fetch fresh data
+            forceOnlineMode: true, // Always fetch fresh data
+            accumulateHistory: true // Tích lũy dữ liệu lịch sử qua thời gian
         },
 
         // Store interval IDs for cleanup
@@ -131,40 +132,43 @@
             logger.log('Lottery Data Service initialized');
         },
 
-        // Load cached data from localStorage - WITH FRESHNESS CHECK
+        // Load cached data from localStorage - TÍCH LŨY HISTORICAL DATA
         loadCachedData: function() {
             try {
-                // Trong online mode, chỉ load cache nếu còn fresh
-                if (this.config.forceOnlineMode) {
-                    const cachedData = localStorage.getItem('lotteryData');
-                    if (cachedData) {
-                        const data = JSON.parse(cachedData);
-                        const cacheAge = Date.now() - new Date(data.lastUpdate).getTime();
+                // Load current data (cho realtime display)
+                const cachedData = localStorage.getItem('lotteryData');
+                if (cachedData) {
+                    const data = JSON.parse(cachedData);
+                    const cacheAge = Date.now() - new Date(data.lastUpdate).getTime();
 
-                        // Chỉ load cache nếu còn trong max age
-                        if (cacheAge < this.config.cacheMaxAge) {
-                            this.currentData = { ...this.currentData, ...data };
-                            logger.log('📦 Loaded fresh cached data (age: ' + Math.round(cacheAge/1000) + 's)');
-                        } else {
-                            logger.log('⚠️ Cache expired (age: ' + Math.round(cacheAge/1000) + 's), will fetch fresh');
-                        }
-                    }
-                } else {
-                    const cachedData = localStorage.getItem('lotteryData');
-                    if (cachedData) {
-                        const data = JSON.parse(cachedData);
+                    // Chỉ load current data nếu còn fresh
+                    if (cacheAge < this.config.cacheMaxAge) {
                         this.currentData = { ...this.currentData, ...data };
-                        logger.log('📦 Loaded cached lottery data:', data.lastUpdate);
+                        logger.log('📦 Loaded fresh current data (age: ' + Math.round(cacheAge/1000) + 's)');
+                    } else {
+                        logger.log('⚠️ Current data expired, will fetch fresh');
                     }
                 }
 
-                // Load historical cache - nhưng không dùng cho online mode
-                if (!this.config.forceOnlineMode) {
-                    const historicalData = localStorage.getItem('lotteryHistoricalCache');
-                    if (historicalData) {
-                        this.historicalCache = JSON.parse(historicalData);
-                        logger.log('📦 Loaded historical cache with', Object.keys(this.historicalCache).length, 'dates');
+                // LUÔN load historical cache để tích lũy dữ liệu qua thời gian
+                // Dữ liệu cũ không bị mất khi restart/reload
+                const historicalData = localStorage.getItem('lotteryHistoricalCache');
+                if (historicalData) {
+                    this.historicalCache = JSON.parse(historicalData);
+                    const totalDates = Object.keys(this.historicalCache).length;
+                    logger.log(`📦 Loaded historical cache with ${totalDates} dates`);
+
+                    // Log các ngày có trong cache
+                    if (totalDates > 0) {
+                        const dates = Object.keys(this.historicalCache)
+                            .filter(k => k.startsWith('bac_'))
+                            .map(k => k.replace('bac_', ''))
+                            .sort()
+                            .reverse();
+                        logger.log(`📅 Dates in cache: ${dates.slice(0, 5).join(', ')}${dates.length > 5 ? '...' : ''}`);
                     }
+                } else {
+                    logger.log('📦 No historical cache found, starting fresh');
                 }
             } catch (error) {
                 logger.error('Error loading cached lottery data:', error);
@@ -958,25 +962,25 @@
                     throw new Error(`Cannot fetch RSS feed`);
                 }
 
-                // Parse và cache TẤT CẢ các ngày trong RSS (7 ngày)
+                // LUÔN parse và TÍCH LŨY tất cả 7 ngày vào historical cache
+                // Cache cũ không bị xóa - chỉ thêm/cập nhật
                 this.cacheAllRSSItems(content, region);
 
-                // Lấy data cho ngày cụ thể từ cache
+                // Lấy data cho ngày cụ thể từ cache (vừa được cập nhật)
                 const cacheKey = `${region}_${date}`;
                 if (this.historicalCache[cacheKey]) {
                     const lotteryData = this.historicalCache[cacheKey];
-                    logger.log(`✅ Got data for ${date} from cache:`, lotteryData.results.giai_dac_biet);
+                    logger.log(`✅ Got fresh data for ${date}:`, lotteryData.results.giai_dac_biet);
+
+                    // Log tổng số ngày trong cache
+                    const totalDays = Object.keys(this.historicalCache).filter(k => k.startsWith(region)).length;
+                    logger.log(`📊 Historical cache now has ${totalDays} days of data`);
+
                     return lotteryData;
                 }
 
-                // Nếu không có trong cache, parse trực tiếp
-                const lotteryData = this.parseRSSFeedForDate(content, region, date);
-                if (lotteryData && lotteryData.results) {
-                    this.historicalCache[cacheKey] = lotteryData;
-                    this.saveData();
-                    logger.log(`✅ Fetched data for ${date}:`, lotteryData.results.giai_dac_biet);
-                    return lotteryData;
-                }
+                // Nếu không có trong cache (ngày quá cũ không có trong RSS)
+                logger.log(`⚠️ Date ${date} not in current RSS feed`);
 
                 // Nếu không tìm thấy trong RSS (ngày quá cũ), thử URL cụ thể
                 logger.log(`⚠️ Date ${date} not in RSS, trying specific URL...`);
@@ -1399,12 +1403,10 @@
             this.config.forceOnlineMode = enabled;
             logger.log(`🌐 Online mode: ${enabled ? 'ENABLED' : 'DISABLED'}`);
 
-            if (enabled) {
-                // Clear old cache when enabling online mode
-                this.historicalCache = {};
-                localStorage.removeItem('lotteryHistoricalCache');
-                logger.log('📦 Cleared historical cache for online mode');
-            }
+            // KHÔNG xóa historical cache - luôn tích lũy dữ liệu
+            // Historical cache được giữ lại để có data lịch sử lâu dài
+            const totalDates = Object.keys(this.historicalCache).length;
+            logger.log(`📦 Historical cache preserved with ${totalDates} dates`);
         },
 
         // Get service status
