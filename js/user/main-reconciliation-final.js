@@ -18,7 +18,7 @@
         // Lô (3 fields) - Tính theo điểm
         tien1DiemLo: 23000,          // VD: 23k cho 1 điểm
         tienTra1DiemLo: 80000,       // VD: trả 80k cho 1 điểm thắng
-        tyLeLoThu: 100,              // VD: thu 100% khi thua
+        tienThu1DiemLo: 23000,       // VD: thu 23k cho 1 điểm thua
         
         // Đề (2 fields) - Hệ số nhân
         heSoDeTra: 70,               // VD: 70 (1 ăn 70)
@@ -623,7 +623,7 @@
                 heSoXien4Tra: getUIParameter('heSoXien4Tra', 100),       // From UI: 100
                 heSoBaCangTra: getUIParameter('heSoBaCangTra', 500),
                 lamTronTien: true,
-                tyLeLoThu: getUIParameter('tyLeLoThu', 100) / 100,       // Convert % to decimal
+                tienThu1DiemLo: getUIParameter('tienThu1DiemLo', 23000), // Tiền thu 1 điểm lô khi thua
                 tyLeDeThu: getUIParameter('tyLeDeThu', 100) / 100,
                 tyLeXien2Thu: getUIParameter('tyLeXien2Thu', 100) / 100, // From UI: 100%
                 tyLeXien3Thu: getUIParameter('tyLeXien3Thu', 100) / 100, // From UI: 100%
@@ -942,10 +942,10 @@
         let amount = 0;
 
         if (type === 'lô') {
-            // Lô - Thua theo số tiền gốc × tỷ lệ thu
-            // VD: 50k × 100% = 50k (không theo điểm)
-            // "Lô Thu" cho phép nhà cái thu ít hơn 100%
-            amount = money * (config.tyLeLoThu / 100);
+            // Lô - Thua theo điểm × tiền thu 1 điểm
+            // VD: 50k → 2 điểm × 23k = 46k
+            const diem = Math.floor(money / config.tien1DiemLo);
+            amount = diem * config.tienThu1DiemLo;
         } else if (type === 'đề') {
             amount = money * (config.tyLeDeThu / 100);
         } else if (type === 'xiên') {
@@ -2124,11 +2124,11 @@
                             })
                         ),
                         React.createElement('div', {},
-                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Tỷ lệ lô thu (%)'),
+                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Tiền thu 1 điểm lô'),
                             React.createElement('input', {
                                 type: 'number',
-                                value: parameters.tyLeLoThu,
-                                onChange: (e) => handleParameterChange('tyLeLoThu', parseInt(e.target.value) || 0),
+                                value: parameters.tienThu1DiemLo,
+                                onChange: (e) => handleParameterChange('tienThu1DiemLo', parseInt(e.target.value) || 0),
                                 className: 'mt-1 block w-full border rounded-md px-3 py-2 text-sm'
                             })
                         )
