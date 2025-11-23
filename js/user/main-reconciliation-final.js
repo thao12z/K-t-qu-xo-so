@@ -1261,71 +1261,94 @@
                 return;
             }
 
+            const validationStartTime = performance.now();
             console.log('🔍 [VALIDATION] Validating bets...');
-            console.log('🔧 [DEBUG] BetParser available:', !!window.BetParser);
-            console.log('🔧 [DEBUG] parseSingleLine available:', !!window.BetParser?.parseSingleLine);
-            
+
             // Use advanced parsing to handle multiple formats
             const lines = parseInputText(betText);
-            console.log('🔧 [DEBUG] Parsed lines:', lines);
-            
-            const validation = lines.map((line, index) => {
+            const lineCount = lines.length;
+            console.log(`📊 [VALIDATION] Parsed ${lineCount} lines`);
+
+            // PERFORMANCE: Pre-allocate validation array
+            const validation = new Array(lineCount);
+            let errorCount = 0;
+            let validCount = 0;
+
+            // PERFORMANCE: Only log for small datasets or sample for large ones
+            const shouldLogDetail = lineCount <= 100;
+
+            for (let index = 0; index < lineCount; index++) {
                 const lineNumber = index + 1;
-                const trimmedLine = line.trim();
-                
+                const trimmedLine = lines[index].trim();
+
                 if (!trimmedLine) {
-                    return { lineNumber, line: trimmedLine, isValid: true, error: null };
+                    validation[index] = { lineNumber, line: trimmedLine, isValid: true, error: null };
+                    continue;
                 }
 
-                // Use BetParser if available  
-                // FORCE FALLBACK VALIDATION  
-                console.log(`🔧 [DEBUG] Validating line ${lineNumber}: "${trimmedLine}"`);
+                // Parse the bet
                 const fallbackResult = simpleBetParse(trimmedLine);
-                
+
                 if (fallbackResult.success) {
-                    console.log(`[DEBUG] Line ${lineNumber} VALID:`, fallbackResult.bet);
-                    return { 
-                        lineNumber, 
-                        line: trimmedLine, 
-                        isValid: true, 
+                    validation[index] = {
+                        lineNumber,
+                        line: trimmedLine,
+                        isValid: true,
                         error: null,
                         parsed: fallbackResult.bet,
                         warning: fallbackResult.bet.warning || null
                     };
+                    validCount++;
                 } else {
-                    console.log(`[DEBUG] Line ${lineNumber} INVALID:`, fallbackResult.error);
-                    return { 
-                        lineNumber, 
-                        line: trimmedLine, 
-                        isValid: false, 
+                    validation[index] = {
+                        lineNumber,
+                        line: trimmedLine,
+                        isValid: false,
                         error: fallbackResult.error,
                         parsed: null
                     };
+                    errorCount++;
+
+                    // Only log errors for debugging (limit to first 10)
+                    if (shouldLogDetail || errorCount <= 10) {
+                        console.log(`[DEBUG] Line ${lineNumber} INVALID:`, fallbackResult.error);
+                    }
                 }
-            });
+
+                // PERFORMANCE: Progress update for large datasets every 1000 lines
+                if (lineCount > 1000 && index % 1000 === 0 && index > 0) {
+                    console.log(`📊 [VALIDATION] Progress: ${index}/${lineCount} (${((index/lineCount)*100).toFixed(1)}%)`);
+                }
+            }
 
             setValidationResults(validation);
             setShowValidation(true);
-            
-            // PERSIST validation to localStorage to survive re-renders
+
+            // PERSIST validation to localStorage (with size limit)
             try {
-                localStorage.setItem('lastValidationResults', JSON.stringify({
+                // Only persist if data is not too large (< 5MB)
+                const dataToStore = {
                     validation: validation,
                     betText: betText.trim(),
                     timestamp: Date.now()
-                }));
-                console.log(`[VALIDATION] Persisted to localStorage`);
+                };
+
+                const jsonSize = JSON.stringify(dataToStore).length;
+                if (jsonSize < 5 * 1024 * 1024) { // 5MB limit
+                    localStorage.setItem('lastValidationResults', JSON.stringify(dataToStore));
+                    console.log(`[VALIDATION] Persisted to localStorage (${(jsonSize/1024).toFixed(1)}KB)`);
+                } else {
+                    console.warn(`[VALIDATION] Data too large to persist (${(jsonSize/1024/1024).toFixed(2)}MB)`);
+                }
             } catch (e) {
                 console.warn(`[VALIDATION] Failed to persist:`, e);
             }
-            
-            const errorCount = validation.filter(item => !item.isValid).length;
-            const totalLines = validation.filter(item => item.line.trim()).length;
-            
-            console.log(`[VALIDATION] Completed: ${totalLines} lines, ${errorCount} errors`);
-            console.log(`[VALIDATION] Setting validationResults:`, validation);
-            console.log(`[VALIDATION] State should be set now`);
-            
+
+            const validationEndTime = performance.now();
+            const duration = (validationEndTime - validationStartTime).toFixed(2);
+
+            console.log(`✅ [VALIDATION] Completed in ${duration}ms: ${validCount} valid, ${errorCount} errors, ${lineCount} total`);
+
             if (errorCount > 0) {
                 console.warn(`[VALIDATION] Found ${errorCount} syntax errors that need to be fixed!`);
             }
@@ -1742,108 +1765,161 @@
 
         // ADVANCED STRING PARSING - Handle multiple formats
         const parseInputText = React.useCallback((inputText) => {
-            console.log('Parsing input text, length:', inputText.length);
-            
+            const startTime = performance.now();
+            console.log('📊 Parsing input text, length:', inputText.length, 'chars');
+
             if (!inputText.trim()) return [];
 
             let lines = [];
-            
-            // Strategy 1: Check for comma-separated format in single line
-            if (inputText.includes(',') && inputText.split('\n').length === 1) {
-                console.log('📝 Detected comma-separated format');
-                lines = inputText.split(',').map(item => item.trim()).filter(item => item);
-            }
-            // Strategy 2: Check for WhatsApp/SMS mixed format (comma + newline)
-            else if (inputText.includes(',') && inputText.includes('\n')) {
-                console.log('📝 Detected mixed format (comma + newline)');
-                // First split by newlines, then by commas
+            const inputLength = inputText.length;
+
+            // PERFORMANCE: Use Set for O(1) keyword lookup
+            const betKeywordSet = new Set(['lo', 'de', 'đề', 'lô', 'xien', 'xiên', 'ba cang', 'ba càng', 'bc', 'lx', 'd', 'l']);
+            const betKeywordArray = ['lo', 'de', 'đề', 'lô', 'xien', 'xiên', 'ba\\s*cang', 'ba\\s*càng', 'bc', 'lx', 'd', 'l'];
+
+            // FAST PATH: Check format type with minimal operations
+            const hasNewline = inputText.indexOf('\n') !== -1;
+            const hasComma = inputText.indexOf(',') !== -1;
+            const lineCount = hasNewline ? inputText.split('\n').length : 1;
+
+            // Strategy 1: Newline-separated (most common for large data)
+            if (hasNewline) {
+                console.log('📝 Fast path: Newline-separated format');
+
+                // PERFORMANCE: Single split operation
                 const rawLines = inputText.split('\n');
-                lines = [];
-                rawLines.forEach(line => {
-                    if (line.includes(',')) {
-                        lines.push(...line.split(',').map(item => item.trim()).filter(item => item));
-                    } else {
-                        lines.push(line.trim());
-                    }
-                });
-                lines = lines.filter(line => line);
-            }
-            // Strategy 3: Traditional newline format or single line with multiple bets
-            else {
-                console.log('📝 Detected newline format');
-                lines = inputText.split('\n').map(line => line.trim()).filter(line => line);
 
-                // If only one line but contains multiple bet patterns, split them
-                if (lines.length === 1) {
-                    const singleLine = lines[0];
-                    // Pattern: "de 54 100k de 34 166k" -> split on bet type keywords
-                    const betKeywords = ['lo', 'de', 'đề', 'lô', 'xien', 'xiên', 'ba cang', 'ba càng', 'bc', 'lx', 'd', 'l'];
+                // PERFORMANCE: Pre-allocate array
+                lines = new Array(rawLines.length);
+                let validCount = 0;
 
-                    // First try: Split by money unit followed by bet keyword
-                    // Pattern: "de 15 10m lo 24 23k" -> split at "10m lo" into ["de 15 10m", "lo 24 23k"]
-                    const betKeywordPattern = betKeywords.map(k => k.replace(/\s/g, '\\s*')).join('|');
-                    const moneyUnitSplitRegex = new RegExp(`(\\d+[km])\\s+(?=${betKeywordPattern})`, 'gi');
-
-                    // Check if we have this pattern
-                    if (moneyUnitSplitRegex.test(singleLine)) {
-                        console.log('📝 Detected money-unit-separated format (de 15 10m lo 24 23k)');
-                        // Split by inserting separator after money unit before bet keyword
-                        const splitByMoney = singleLine.replace(
-                            new RegExp(`(\\d+[km])\\s+(?=(${betKeywordPattern}))`, 'gi'),
-                            '$1|||'
-                        ).split('|||').map(s => s.trim()).filter(s => s);
-
-                        if (splitByMoney.length > 1) {
-                            lines = splitByMoney;
-                            console.log(`✅ Split by money unit into ${lines.length} bets:`, lines);
-                        }
-                    }
-
-                    // If still one line, try splitting by bet keywords with space
-                    if (lines.length === 1) {
-                        // Count bet keywords
-                        let keywordCount = 0;
-                        betKeywords.forEach(keyword => {
-                            const regex = new RegExp(`\\b${keyword}\\b`, 'gi');
-                            const matches = singleLine.match(regex);
-                            if (matches) keywordCount += matches.length;
-                        });
-
-                        if (keywordCount > 1) {
-                            console.log(`🔍 Single line contains ${keywordCount} bet keywords, attempting to split`);
-
-                            // Split on bet keywords while preserving the keyword
-                            let splitLines = [];
-                            let currentBet = '';
-                            const words = singleLine.split(/\s+/);
-
-                            for (let i = 0; i < words.length; i++) {
-                                const word = words[i].toLowerCase();
-
-                                // If this is a bet keyword and we have content, save previous bet
-                                if (betKeywords.includes(word) && currentBet.trim()) {
-                                    splitLines.push(currentBet.trim());
-                                    currentBet = words[i]; // Start new bet with keyword
-                                } else {
-                                    currentBet += ' ' + words[i];
+                for (let i = 0; i < rawLines.length; i++) {
+                    const line = rawLines[i].trim();
+                    if (line) {
+                        // Check if line has comma (sub-split needed)
+                        if (hasComma && line.indexOf(',') !== -1) {
+                            const subLines = line.split(',');
+                            for (let j = 0; j < subLines.length; j++) {
+                                const subLine = subLines[j].trim();
+                                if (subLine) {
+                                    lines[validCount++] = subLine;
                                 }
                             }
-
-                            // Add the last bet
-                            if (currentBet.trim()) {
-                                splitLines.push(currentBet.trim());
-                            }
-
-                            if (splitLines.length > 1) {
-                                lines = splitLines;
-                                console.log(`✅ Successfully split into ${lines.length} bets:`, lines);
-                            }
+                        } else {
+                            lines[validCount++] = line;
                         }
                     }
                 }
+
+                // Trim array to actual size
+                lines.length = validCount;
+
+                const endTime = performance.now();
+                console.log(`✅ Parsed ${validCount} lines in ${(endTime - startTime).toFixed(2)}ms`);
+                return lines;
             }
 
-            console.log('Parsed into', lines.length, 'bet lines');
+            // Strategy 2: Single line with comma separation
+            if (hasComma && !hasNewline) {
+                console.log('📝 Comma-separated format');
+                const parts = inputText.split(',');
+                lines = new Array(parts.length);
+                let validCount = 0;
+
+                for (let i = 0; i < parts.length; i++) {
+                    const part = parts[i].trim();
+                    if (part) {
+                        lines[validCount++] = part;
+                    }
+                }
+
+                lines.length = validCount;
+
+                const endTime = performance.now();
+                console.log(`✅ Parsed ${validCount} lines in ${(endTime - startTime).toFixed(2)}ms`);
+                return lines;
+            }
+
+            // Strategy 3: Single line with multiple bets (needs smart splitting)
+            // This is the complex case - optimize for it
+            console.log('📝 Single line format - smart splitting');
+            const singleLine = inputText.trim();
+
+            // PERFORMANCE: Use single compiled regex for all splitting
+            // Pattern: split at money unit (k/m) followed by bet keyword
+            const splitPattern = new RegExp(
+                `(\\d+[km])\\s+(?=(${betKeywordArray.join('|')}))`,
+                'gi'
+            );
+
+            // Check if pattern exists (single test on whole string)
+            if (splitPattern.test(singleLine)) {
+                // Reset regex lastIndex after test
+                splitPattern.lastIndex = 0;
+
+                // PERFORMANCE: Single replace + split operation
+                const parts = singleLine.replace(splitPattern, '$1\x00').split('\x00');
+                lines = new Array(parts.length);
+                let validCount = 0;
+
+                for (let i = 0; i < parts.length; i++) {
+                    const part = parts[i].trim();
+                    if (part) {
+                        lines[validCount++] = part;
+                    }
+                }
+
+                lines.length = validCount;
+
+                if (validCount > 1) {
+                    const endTime = performance.now();
+                    console.log(`✅ Split by money unit into ${validCount} bets in ${(endTime - startTime).toFixed(2)}ms`);
+                    return lines;
+                }
+            }
+
+            // Fallback: Split by bet keywords using efficient single-pass
+            // PERFORMANCE: Use single pass through words instead of multiple regex
+            const words = singleLine.split(/\s+/);
+            const wordCount = words.length;
+
+            if (wordCount > 3) { // At least 2 bets minimum (keyword + number + money each)
+                // PERFORMANCE: Single pass through words
+                const splitLines = [];
+                const currentParts = [];
+
+                for (let i = 0; i < wordCount; i++) {
+                    const word = words[i];
+                    const wordLower = word.toLowerCase();
+
+                    // Check if this is a bet keyword
+                    if (betKeywordSet.has(wordLower) && currentParts.length > 0) {
+                        // Save previous bet
+                        splitLines.push(currentParts.join(' '));
+                        currentParts.length = 0; // Clear array efficiently
+                    }
+
+                    currentParts.push(word);
+                }
+
+                // Add last bet
+                if (currentParts.length > 0) {
+                    splitLines.push(currentParts.join(' '));
+                }
+
+                if (splitLines.length > 1) {
+                    lines = splitLines;
+                    const endTime = performance.now();
+                    console.log(`✅ Split by keywords into ${lines.length} bets in ${(endTime - startTime).toFixed(2)}ms`);
+                    return lines;
+                }
+            }
+
+            // No splitting needed - single bet
+            lines = [singleLine];
+
+            const endTime = performance.now();
+            console.log(`✅ Single bet parsed in ${(endTime - startTime).toFixed(2)}ms`);
             return lines;
         }, []);
 
