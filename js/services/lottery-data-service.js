@@ -905,56 +905,89 @@
 
         // Fetch RSS data for specific date - REALTIME ONLINE
         fetchRSSForDate: async function(date, region = 'bac') {
-            logger.log(`🌐 [ONLINE] Fetching RSS for date: ${date}, region: ${region}`);
+            logger.log(`🌐 [ONLINE] Fetching data for date: ${date}, region: ${region}`);
 
             try {
-                // RSS URL cho ngày cụ thể
-                const rssUrl = `https://xosodaiphat.com/ket-qua-xo-so-mien-bac-xsmb.rss`;
+                // Format date for URL: 2024-11-21 -> 21-11-2024
+                const [year, month, day] = date.split('-');
+                const dateForUrl = `${day}-${month}-${year}`;
+
+                // URLs cho ngày cụ thể (thử nhiều pattern)
+                const dateSpecificUrls = [
+                    `https://xosodaiphat.com/xsmb-${dateForUrl}.html`,
+                    `https://xosodaiphat.com/ket-qua-xsmb-ngay-${dateForUrl}.html`,
+                    `https://xosodaiphat.com/ket-qua-xo-so-mien-bac-ngay-${dateForUrl}.html`
+                ];
+
+                // Fallback to RSS for today
+                const today = new Date().toISOString().split('T')[0];
+                if (date === today) {
+                    dateSpecificUrls.unshift('https://xosodaiphat.com/ket-qua-xo-so-mien-bac-xsmb.rss');
+                }
 
                 const proxies = [
-                    `https://api.allorigins.win/raw?url=${encodeURIComponent(rssUrl)}`,
-                    `https://corsproxy.io/?${encodeURIComponent(rssUrl)}`,
-                    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(rssUrl)}`
+                    (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+                    (url) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+                    (url) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`
                 ];
 
                 let response = null;
+                let content = null;
+                let successUrl = null;
 
-                for (const proxyUrl of proxies) {
-                    try {
-                        logger.log(`🔗 Trying proxy: ${proxyUrl}`);
+                // Try each date-specific URL
+                for (const targetUrl of dateSpecificUrls) {
+                    logger.log(`🔗 Trying URL: ${targetUrl}`);
 
-                        const controller = new AbortController();
-                        const timeoutId = setTimeout(() => controller.abort(), 15000);
-
+                    for (const getProxyUrl of proxies) {
+                        const proxyUrl = getProxyUrl(targetUrl);
                         try {
-                            response = await fetch(proxyUrl, {
-                                method: 'GET',
-                                headers: {
-                                    'Accept': 'application/rss+xml, application/xml, text/xml',
-                                    'Cache-Control': 'no-cache'
-                                },
-                                signal: controller.signal
-                            });
-                        } finally {
-                            clearTimeout(timeoutId);
-                        }
+                            const controller = new AbortController();
+                            const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-                        if (response.ok) {
-                            logger.log(`✅ Proxy success: ${proxyUrl}`);
-                            break;
+                            try {
+                                response = await fetch(proxyUrl, {
+                                    method: 'GET',
+                                    headers: {
+                                        'Accept': 'text/html, application/rss+xml, application/xml, text/xml',
+                                        'Cache-Control': 'no-cache'
+                                    },
+                                    signal: controller.signal
+                                });
+                            } finally {
+                                clearTimeout(timeoutId);
+                            }
+
+                            if (response.ok) {
+                                content = await response.text();
+
+                                // Check if content has lottery data
+                                if (content && (content.includes('DB:') || content.includes('Giải ĐB') || content.includes('đặc biệt'))) {
+                                    successUrl = targetUrl;
+                                    logger.log(`✅ Found lottery data at: ${targetUrl}`);
+                                    break;
+                                }
+                            }
+                        } catch (proxyError) {
+                            logger.warn(`Proxy failed: ${proxyUrl}`, proxyError.message);
+                            continue;
                         }
-                    } catch (proxyError) {
-                        logger.warn(`Proxy failed: ${proxyUrl}`, proxyError.message);
-                        continue;
                     }
+
+                    if (successUrl) break;
                 }
 
-                if (!response || !response.ok) {
-                    throw new Error('All proxies failed');
+                if (!content || !successUrl) {
+                    throw new Error(`Cannot find lottery data for ${date}`);
                 }
 
-                const content = await response.text();
-                const lotteryData = this.parseRSSFeedForDate(content, region, date);
+                // Parse based on content type
+                let lotteryData = null;
+                if (successUrl.includes('.rss')) {
+                    lotteryData = this.parseRSSFeedForDate(content, region, date);
+                } else {
+                    lotteryData = this.parseHTMLForDate(content, region, date);
+                }
 
                 if (lotteryData && lotteryData.results) {
                     // Cache the result
@@ -962,13 +995,105 @@
                     this.historicalCache[cacheKey] = lotteryData;
                     this.saveData();
 
-                    logger.log(`✅ Fetched RSS data for ${date}:`, lotteryData.results.giai_dac_biet);
+                    logger.log(`✅ Fetched data for ${date}:`, lotteryData.results.giai_dac_biet);
                     return lotteryData;
                 }
 
                 return null;
             } catch (error) {
-                logger.error(`❌ Failed to fetch RSS for ${date}:`, error);
+                logger.error(`❌ Failed to fetch data for ${date}:`, error);
+                return null;
+            }
+        },
+
+        // Parse HTML page for specific date
+        parseHTMLForDate: function(html, region, targetDate) {
+            try {
+                logger.log(`📄 Parsing HTML for date: ${targetDate}`);
+
+                // Extract lottery numbers from HTML
+                // Pattern 1: Table format with giải đặc biệt, giải nhất, etc.
+                const results = {};
+
+                // Giải đặc biệt (5 digits)
+                const dbMatch = html.match(/(?:đặc biệt|ĐB|DB)[^>]*>[\s]*(\d{5})/i) ||
+                               html.match(/<[^>]*class="[^"]*giai-dac-biet[^"]*"[^>]*>[\s]*(\d{5})/i) ||
+                               html.match(/>(\d{5})<\/[^>]*>[^<]*(?:đặc biệt|ĐB)/i);
+                if (dbMatch) results.giai_dac_biet = [dbMatch[1]];
+
+                // Giải nhất (5 digits)
+                const g1Match = html.match(/(?:giải nhất|G\.?1)[^>]*>[\s]*(\d{5})/i) ||
+                               html.match(/<[^>]*class="[^"]*giai-nhat[^"]*"[^>]*>[\s]*(\d{5})/i);
+                if (g1Match) results.giai_nhat = [g1Match[1]];
+
+                // Giải nhì (2 numbers, 5 digits each)
+                const g2Matches = html.match(/(?:giải nhì|G\.?2)[^>]*>[\s]*([\d\s\-]+)/i);
+                if (g2Matches) {
+                    const nums = g2Matches[1].match(/\d{5}/g);
+                    if (nums) results.giai_nhi = nums;
+                }
+
+                // Giải ba (6 numbers, 5 digits each)
+                const g3Matches = html.match(/(?:giải ba|G\.?3)[^>]*>[\s]*([\d\s\-]+)/i);
+                if (g3Matches) {
+                    const nums = g3Matches[1].match(/\d{5}/g);
+                    if (nums) results.giai_ba = nums;
+                }
+
+                // Giải tư (4 numbers, 4-5 digits)
+                const g4Matches = html.match(/(?:giải tư|G\.?4)[^>]*>[\s]*([\d\s\-]+)/i);
+                if (g4Matches) {
+                    const nums = g4Matches[1].match(/\d{4,5}/g);
+                    if (nums) results.giai_tu = nums;
+                }
+
+                // Giải năm (6 numbers, 4 digits)
+                const g5Matches = html.match(/(?:giải năm|G\.?5)[^>]*>[\s]*([\d\s\-]+)/i);
+                if (g5Matches) {
+                    const nums = g5Matches[1].match(/\d{4}/g);
+                    if (nums) results.giai_nam = nums;
+                }
+
+                // Giải sáu (3 numbers, 3 digits)
+                const g6Matches = html.match(/(?:giải sáu|G\.?6)[^>]*>[\s]*([\d\s\-]+)/i);
+                if (g6Matches) {
+                    const nums = g6Matches[1].match(/\d{3}/g);
+                    if (nums) results.giai_sau = nums;
+                }
+
+                // Giải bảy (4 numbers, 2 digits)
+                const g7Matches = html.match(/(?:giải bảy|G\.?7)[^>]*>[\s]*([\d\s\-]+)/i);
+                if (g7Matches) {
+                    const nums = g7Matches[1].match(/\d{2}/g);
+                    if (nums) results.giai_bay = nums;
+                }
+
+                // Alternative: Try to extract from structured data
+                if (!results.giai_dac_biet || results.giai_dac_biet.length === 0) {
+                    // Try DB: format
+                    const altMatch = html.match(/DB:\s*(\d{5})/i);
+                    if (altMatch) results.giai_dac_biet = [altMatch[1]];
+                }
+
+                // Validate
+                if (!results.giai_dac_biet || results.giai_dac_biet.length === 0) {
+                    logger.warn('Cannot extract lottery data from HTML');
+                    return null;
+                }
+
+                logger.log(`📊 Extracted results:`, results);
+
+                return {
+                    region,
+                    date: targetDate,
+                    results,
+                    timestamp: new Date().toISOString(),
+                    source: 'html_online',
+                    dataType: 'html'
+                };
+
+            } catch (error) {
+                logger.error('Error parsing HTML:', error);
                 return null;
             }
         },
