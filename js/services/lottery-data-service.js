@@ -1329,10 +1329,63 @@
                 }
             }
 
+            // ===== PRE-COMPUTE SỐ CUỐI CHO ĐỐI CHIẾU =====
+            // Tính trước để không phải tính lại mỗi lần đối chiếu
+
+            // 1. Lô Array: 2 số cuối của TẤT CẢ các giải (27 số)
+            const loArray = [];
+            const allPrizes = [
+                results.giai_dac_biet,
+                results.giai_nhat,
+                results.giai_nhi,
+                results.giai_ba,
+                results.giai_tu,
+                results.giai_nam,
+                results.giai_sau,
+                results.giai_bay
+            ];
+
+            allPrizes.forEach(prizeNumbers => {
+                if (prizeNumbers && Array.isArray(prizeNumbers)) {
+                    prizeNumbers.forEach(num => {
+                        if (num) {
+                            const last2 = num.toString().slice(-2).padStart(2, '0');
+                            loArray.push(last2);
+                        }
+                    });
+                }
+            });
+
+            // 2. Đề Array: 2 số cuối của Giải Đặc Biệt (1 số)
+            const deArray = results.giai_dac_biet[0] ?
+                [results.giai_dac_biet[0].toString().slice(-2).padStart(2, '0')] : [];
+
+            // 3. Ba Càng Array: 3 số cuối của Giải Đặc Biệt (1 số)
+            const baCangArray = results.giai_dac_biet[0] ?
+                [results.giai_dac_biet[0].toString().slice(-3).padStart(3, '0')] : [];
+
+            // 4. Đầu Đuôi: Số đầu và số cuối của Giải Đặc Biệt
+            const specialNumber = results.giai_dac_biet[0] ? results.giai_dac_biet[0].toString() : '';
+            const dauDuoi = {
+                dau: specialNumber.length >= 2 ? specialNumber.slice(-2, -1) : '', // Số hàng chục
+                duoi: specialNumber.length >= 1 ? specialNumber.slice(-1) : ''     // Số hàng đơn vị
+            };
+
+            logger.log(`📊 Pre-computed arrays for ${targetDate}:`);
+            logger.log(`   Lô (2 số cuối): ${loArray.length} numbers`);
+            logger.log(`   Đề (2 số cuối ĐB): ${deArray.join(', ')}`);
+            logger.log(`   Ba Càng (3 số cuối ĐB): ${baCangArray.join(', ')}`);
+            logger.log(`   Đầu: ${dauDuoi.dau}, Đuôi: ${dauDuoi.duoi}`);
+
             return {
                 region,
                 date: targetDate,
                 results,
+                // Pre-computed arrays for reconciliation
+                loArray,        // Tất cả 2 số cuối (27 số)
+                deArray,        // 2 số cuối Giải ĐB
+                baCangArray,    // 3 số cuối Giải ĐB
+                dauDuoi,        // Đầu và Đuôi của Giải ĐB
                 timestamp: new Date().toISOString(),
                 source: 'rss_online',
                 dataType: 'rss'
