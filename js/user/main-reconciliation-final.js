@@ -783,23 +783,38 @@
 
     // STANDARDIZED DATA TRANSFORMER - Unifies all data formats
     const convertToLotteryData = (rawResults) => {
-        console.log(`[CRITICAL] STANDARDIZED convertToLotteryData called with:`, rawResults);
-        console.log(`[CRITICAL] rawResults keys:`, Object.keys(rawResults || {}));
-        console.log(`[CRITICAL] rawResults.results:`, rawResults?.results);
-        console.log(`[CRITICAL] rawResults.giai_dac_biet:`, rawResults?.giai_dac_biet);
         if (!rawResults) {
             console.log(`[CRITICAL] convertToLotteryData: rawResults is null/undefined`);
             return null;
         }
-        
+
+        // FAST PATH: If pre-computed arrays exist (from RSS service), use them directly
+        if (rawResults.loArray && rawResults.deArray && rawResults.baCangArray) {
+            console.log(`[FAST] Using pre-computed arrays from RSS service`);
+            return {
+                specialLast2: rawResults.deArray[0] || null,
+                specialPrize: rawResults.results?.giai_dac_biet?.[0] || null,
+                loNumbers: rawResults.loArray,
+                loNumbersArray: rawResults.loArray, // Alias for compatibility
+                xienNumbers: rawResults.loArray, // Xiên uses same pool as Lô
+                xienNumbersArray: rawResults.loArray, // Alias for compatibility
+                baCangNumbers: rawResults.baCangArray,
+                baCangNumbersArray: rawResults.baCangArray, // Alias for compatibility
+                rawData: rawResults.results || rawResults,
+                allNumbers: rawResults.loArray,
+                date: rawResults.date,
+                dataType: rawResults.dataType || 'rss_precomputed'
+            };
+        }
+
         // DETECT FORMAT: RSS vs Hardcoded vs Other
-        let format = 'unknown';
         let standardizedData = {};
-        
-        if (rawResults.results && rawResults.results.dacbiet) {
-            format = 'rss_nested';
-            console.log(`[DEBUG] Detected RSS nested format`);
-            // RSS format: rawResults.results.dacbiet, .nhat, .nhi, etc.
+
+        if (rawResults.results && rawResults.results.giai_dac_biet) {
+            // RSS format with giai_dac_biet in results
+            standardizedData = rawResults.results;
+        } else if (rawResults.results && rawResults.results.dacbiet) {
+            // RSS format with dacbiet naming
             standardizedData = {
                 giai_dac_biet: rawResults.results.dacbiet || [],
                 giai_nhat: rawResults.results.nhat || [],
@@ -808,14 +823,13 @@
                 giai_tu: rawResults.results.tu || [],
                 giai_nam: rawResults.results.nam || [],
                 giai_sau: rawResults.results.sau || [],
-                giai_bay: rawResults.results.bay || [],
-                date: rawResults.date || 'unknown',
-                dataType: 'rss'
+                giai_bay: rawResults.results.bay || []
             };
+        } else if (rawResults.giai_dac_biet) {
+            // Already standardized format
+            standardizedData = rawResults;
         } else if (rawResults.dacbiet) {
-            format = 'rss_direct';
-            console.log(`[DEBUG] Detected RSS direct format`);
-            // Direct RSS format: rawResults.dacbiet, .nhat, .nhi, etc.
+            // Direct RSS format
             standardizedData = {
                 giai_dac_biet: rawResults.dacbiet || [],
                 giai_nhat: rawResults.nhat || [],
@@ -824,151 +838,70 @@
                 giai_tu: rawResults.tu || [],
                 giai_nam: rawResults.nam || [],
                 giai_sau: rawResults.sau || [],
-                giai_bay: rawResults.bay || [],
-                date: rawResults.actualDate || rawResults.date || 'unknown',
-                dataType: 'rss_direct'
+                giai_bay: rawResults.bay || []
             };
-        } else if (rawResults.giai_dac_biet) {
-            format = 'hardcoded';
-            console.log(`[DEBUG] Detected hardcoded format`);
-            // Hardcoded format: already correct
-            standardizedData = {
-                giai_dac_biet: rawResults.giai_dac_biet || [],
-                giai_nhat: rawResults.giai_nhat || [],
-                giai_nhi: rawResults.giai_nhi || [],
-                giai_ba: rawResults.giai_ba || [],
-                giai_tu: rawResults.giai_tu || [],
-                giai_nam: rawResults.giai_nam || [],
-                giai_sau: rawResults.giai_sau || [],
-                giai_bay: rawResults.giai_bay || [],
-                date: rawResults.date || 'unknown',
-                dataType: rawResults.dataType || 'hardcoded'
-            };
-            } else {
+        } else {
             console.log(`[ERROR] Unknown data format:`, Object.keys(rawResults));
             return null;
         }
-        
-        console.log(`[DEBUG] Format: ${format}, Standardized data:`, standardizedData);
-        
-        // AUTOMATED ARRAY EXTRACTION - Tự động chia array cho từng loại bet
-        const extractArrays = (data) => {
-            const allNumbers = [];
-            const deArray = [];
-            const loArray = [];
-            const xienArray = [];
-            const baCangArray = [];
-            
-            console.log(`[EXTRACTION] Starting extraction from:`, data);
-            
-            // Extract từ giải đặc biệt (5 digits)
-            if (data.giai_dac_biet && data.giai_dac_biet.length > 0) {
-                const specialFull = data.giai_dac_biet[0];
-                console.log(`[CRITICAL] ĐB: ${specialFull} -> Đề: ${specialFull.slice(-2)}, Lô: ${specialFull.slice(-2)}, Ba càng: ${specialFull.slice(-3)}`);
-                
-                // Đề: 2 số cuối
-                const specialLast2 = specialFull.slice(-2);
-                deArray.push(specialLast2);
-                
-                // Lô: 2 số cuối  
-                loArray.push(specialLast2);
-                
-                // Ba càng: 3 số cuối
-                const specialLast3 = specialFull.slice(-3);
-                baCangArray.push(specialLast3);
-                
-                // Xiên: thêm vào pool
-                xienArray.push(specialLast2);
-                allNumbers.push(specialFull);
-            }
-            
-            // Extract từ các giải khác
-            const prizeNames = ['G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'G7'];
-            const allPrizes = [
-                data.giai_nhat, data.giai_nhi, data.giai_ba, 
-                data.giai_tu, data.giai_nam, data.giai_sau, data.giai_bay
-            ];
-            
-            allPrizes.forEach((prizeArray, index) => {
-                const prizeName = prizeNames[index];
-                console.log(`[EXTRACTION] Processing ${prizeName}:`, prizeArray);
-                
-                if (prizeArray && Array.isArray(prizeArray)) {
-                    prizeArray.forEach(number => {
-                        if (number) {
-                            allNumbers.push(number);
-                            
-                            // Lô: 2 số cuối của tất cả giải
-                            const last2 = number.slice(-2);
-                            if (!loArray.includes(last2)) {
-                                loArray.push(last2);
-                                console.log(`[EXTRACTION] ${prizeName} ${number} -> Lô: ${last2}`);
-                            }
-                            
-                            // Xiên: 2 số cuối
-                            if (!xienArray.includes(last2)) {
-                                xienArray.push(last2);
-                                console.log(`[EXTRACTION] ${prizeName} ${number} -> Xiên: ${last2}`);
-                            }
-                            
-                            // Ba càng: chỉ từ giải ĐB đến giải 6 (không có giải 7 vì chỉ 2 digits)
-                            if (index < 6 && number.length >= 3) {
-                                const last3 = number.slice(-3);
-                                if (!baCangArray.includes(last3)) {
-                                    baCangArray.push(last3);
-                                    console.log(`[EXTRACTION] ${prizeName} ${number} -> Ba càng: ${last3}`);
-                                }
-                            }
+
+        // EXTRACT ARRAYS - Optimized version (keep duplicates for counting!)
+        const loArray = [];
+        const baCangArray = [];
+
+        // Get special prize first
+        const specialFull = standardizedData.giai_dac_biet?.[0] || '';
+        const specialLast2 = specialFull ? specialFull.slice(-2).padStart(2, '0') : null;
+        const specialLast3 = specialFull ? specialFull.slice(-3).padStart(3, '0') : null;
+
+        // Process all prizes
+        const allPrizes = [
+            standardizedData.giai_dac_biet,
+            standardizedData.giai_nhat,
+            standardizedData.giai_nhi,
+            standardizedData.giai_ba,
+            standardizedData.giai_tu,
+            standardizedData.giai_nam,
+            standardizedData.giai_sau,
+            standardizedData.giai_bay
+        ];
+
+        allPrizes.forEach((prizeArray, prizeIndex) => {
+            if (prizeArray && Array.isArray(prizeArray)) {
+                for (let i = 0; i < prizeArray.length; i++) {
+                    const number = prizeArray[i];
+                    if (number) {
+                        // Lô/Xiên: 2 số cuối (KEEP DUPLICATES!)
+                        const last2 = number.toString().slice(-2).padStart(2, '0');
+                        loArray.push(last2);
+
+                        // Ba càng: 3 số cuối từ giải ĐB đến giải 6 (không có giải 7)
+                        if (prizeIndex < 7 && number.length >= 3) {
+                            const last3 = number.toString().slice(-3).padStart(3, '0');
+                            baCangArray.push(last3);
                         }
-                    });
-                } else {
-                    console.log(`[EXTRACTION] ${prizeName} is empty or not array`);
+                    }
                 }
-            });
-            
-            console.log(`[EXTRACTION] FINAL ARRAYS:`, {
-                deArray: deArray,
-                loArray: loArray.slice(0, 20), // Show first 20 for Lô
-                xienArray: xienArray.slice(0, 20), // Show first 20 for Xiên  
-                baCangArray: baCangArray.slice(0, 20), // Show first 20 for Ba càng
-                totalNumbers: allNumbers.length
-            });
-            
-            return {
-                deArray,
-                loArray, 
-                xienArray,
-                baCangArray,
-                allNumbers
-            };
-        };
-        
-        const extractedArrays = extractArrays(standardizedData);
-        console.log(`[CRITICAL] Extracted arrays:`, extractedArrays);
-        
-        // BUILD RESULT for bet checking
-        const result = {
-            // Dữ liệu cho ĐỀ: 2 số cuối giải đặc biệt
-            specialLast2: standardizedData.giai_dac_biet?.[0]?.slice(-2) || null,
-            
-            // Dữ liệu cho LÔ: tất cả 2 số cuối từ tất cả giải  
-            loNumbers: extractedArrays.loArray,
-            
-            // Dữ liệu cho XIÊN: 2 số cuối từ tất cả giải
-            xienNumbers: extractedArrays.xienArray,
-            
-            // Dữ liệu cho BA CÀNG: 3 số cuối từ giải ĐB đến giải 6
-            baCangNumbers: extractedArrays.baCangArray,
-            
-            // Raw data for UI display
+            }
+        });
+
+        console.log(`[EXTRACT] Lô: ${loArray.length} numbers, Ba càng: ${baCangArray.length} numbers`);
+
+        // BUILD RESULT
+        return {
+            specialLast2: specialLast2,
+            specialPrize: specialFull,
+            loNumbers: loArray,
+            loNumbersArray: loArray,
+            xienNumbers: loArray, // Xiên uses same pool
+            xienNumbersArray: loArray,
+            baCangNumbers: baCangArray,
+            baCangNumbersArray: baCangArray,
             rawData: standardizedData,
-            
-            // For compatibility
-            allNumbers: extractedArrays.allNumbers
+            allNumbers: loArray,
+            date: rawResults.date || 'unknown',
+            dataType: rawResults.dataType || 'extracted'
         };
-        
-        console.log(`[CRITICAL] FINAL RESULT for bet checking:`, result);
-        return result;
     };
 
     // Calculate win amount using BetParser rules
