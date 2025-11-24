@@ -107,61 +107,7 @@
             return results;
         }
 
-        // === HANDLER 2: Đề đầu/đít format ===
-        // "de dau 5 dit 5 x1000nn" -> tất cả số đầu 5 (50-59) và đít 5 (05,15,25...95)
-        const deDauDitMatch = line.match(/^(de|đề|d)\s+dau\s+(\d)\s+dit\s+(\d)\s*x\s*([\d.]+)(n{1,2}|k|m)?$/i);
-        if (deDauDitMatch) {
-            const dauDigit = deDauDitMatch[2];
-            const ditDigit = deDauDitMatch[3];
-            const moneyValue = parseFloat(deDauDitMatch[4]);
-            const unit = (deDauDitMatch[5] || '').toLowerCase();
-            const money = convertToMoney(moneyValue, unit);
-
-            // Đầu X: X0, X1, X2, ..., X9
-            for (let i = 0; i <= 9; i++) {
-                results.push(`de ${dauDigit}${i}-${money}`);
-            }
-            // Đít X: 0X, 1X, 2X, ..., 9X
-            for (let i = 0; i <= 9; i++) {
-                results.push(`de ${i}${ditDigit}-${money}`);
-            }
-            console.log(`[PREPROCESS] Đề đầu/đít: ${originalLine} -> ${results.length} đề`);
-            return results;
-        }
-
-        // === HANDLER 2b: Đề đầu only ===
-        // "de dau 5 x1000nn"
-        const deDauMatch = line.match(/^(de|đề|d)\s+dau\s+(\d)\s*x\s*([\d.]+)(n{1,2}|k|m)?$/i);
-        if (deDauMatch) {
-            const dauDigit = deDauMatch[2];
-            const moneyValue = parseFloat(deDauMatch[3]);
-            const unit = (deDauMatch[4] || '').toLowerCase();
-            const money = convertToMoney(moneyValue, unit);
-
-            for (let i = 0; i <= 9; i++) {
-                results.push(`de ${dauDigit}${i}-${money}`);
-            }
-            console.log(`[PREPROCESS] Đề đầu: ${originalLine} -> ${results.length} đề`);
-            return results;
-        }
-
-        // === HANDLER 2c: Đề đít only ===
-        // "de dit 5 x1000nn"
-        const deDitMatch = line.match(/^(de|đề|d)\s+d[ií]t\s+(\d)\s*x\s*([\d.]+)(n{1,2}|k|m)?$/i);
-        if (deDitMatch) {
-            const ditDigit = deDitMatch[2];
-            const moneyValue = parseFloat(deDitMatch[3]);
-            const unit = (deDitMatch[4] || '').toLowerCase();
-            const money = convertToMoney(moneyValue, unit);
-
-            for (let i = 0; i <= 9; i++) {
-                results.push(`de ${i}${ditDigit}-${money}`);
-            }
-            console.log(`[PREPROCESS] Đề đít: ${originalLine} -> ${results.length} đề`);
-            return results;
-        }
-
-        // === HANDLER 3: Số 3 chữ số format ===
+        // === HANDLER 2: Số 3 chữ số format ===
         // "de 525 535 565 575 595 x1000nn" -> tách thành 52+25, 53+35, etc.
         const de3DigitMatch = line.match(/^(de|đề|d)\s+((?:\d{3}\s*)+)\s*x\s*([\d.]+)(n{1,2}|k|m)?$/i);
         if (de3DigitMatch) {
@@ -182,7 +128,7 @@
             return results;
         }
 
-        // === HANDLER 4: Multi-bet với dấu chấm ===
+        // === HANDLER 3: Multi-bet với dấu chấm ===
         // "De 00 x 1070n. 90 x 735n. 11 x 330n."
         if (/\d+\s*x\s*[\d.]+n{0,2}\s*\./i.test(line)) {
             // Detect bet type from start
@@ -223,7 +169,7 @@
             }
         }
 
-        // === HANDLER 5: Single multi-number format ===
+        // === HANDLER 4: Single multi-number format ===
         // "17,56 x 94n" without type prefix (assume đề in context)
         const multiNumMatch = line.match(/^([\d,]+)\s*x\s*([\d.]+)(n{1,2}|k|m)?$/i);
         if (multiNumMatch) {
@@ -243,7 +189,7 @@
             }
         }
 
-        // === HANDLER 6: Standard format with "x" separator ===
+        // === HANDLER 5: Standard format with "x" separator ===
         // "de 00 x 1070n" -> "de 00 1070k"
         const standardXMatch = line.match(/^(de|đề|d|lo|lô|l)\s+([\d,\s]+)\s*x\s*([\d.]+)(n{1,2}|k|m)?$/i);
         if (standardXMatch) {
@@ -270,7 +216,7 @@
             }
         }
 
-        // === HANDLER 7: Lo format (point-based) ===
+        // === HANDLER 6: Lo format (point-based) ===
         // "lo 32 23k" or "lo 32 23" -> format as "lo 32-23"
         const loMatch = line.match(/^(lo|lô|l)\s+([\d\s]+)\s+([\d.]+)[km]?$/i);
         if (loMatch) {
