@@ -1,17 +1,21 @@
 <?php
 /**
- * Database Configuration
- * Cấu hình kết nối MySQL - Chỉnh sửa thông tin bên dưới
+ * ⚙️ CẤU HÌNH DATABASE - CHỈ CẦN SỬA 3 DÒNG BÊN DƯỚI
+ *
+ * Hướng dẫn:
+ * 1. Vào cPanel → MySQL Databases → Tạo database mới
+ * 2. Tạo user và gán quyền ALL PRIVILEGES cho database
+ * 3. Điền thông tin vào 3 dòng bên dưới
  */
 
-// Database credentials - THAY ĐỔI THEO THÔNG TIN CPANEL CỦA BẠN
-define('DB_HOST', 'localhost');
-define('DB_NAME', 'lode_db');           // Tên database bạn tạo trong cPanel
-define('DB_USER', 'lode_user');         // Username database
-define('DB_PASS', 'your_password');     // Password database
+// ========== SỬA 3 DÒNG NÀY ==========
+define('DB_NAME', 'TEN_DATABASE');      // Ví dụ: cpanel_lode
+define('DB_USER', 'USERNAME_DATABASE'); // Ví dụ: cpanel_admin
+define('DB_PASS', 'PASSWORD_DATABASE'); // Ví dụ: MatKhau123
+// =====================================
 
-// API Security
-define('API_KEY', 'your-secret-api-key-here'); // Đổi thành key bí mật của bạn
+// Không cần sửa các dòng bên dưới
+define('DB_HOST', 'localhost');
 
 // CORS Headers
 header('Content-Type: application/json; charset=utf-8');
@@ -41,21 +45,10 @@ function getDB() {
         return $pdo;
     } catch (PDOException $e) {
         http_response_code(500);
-        echo json_encode(['error' => 'Database connection failed: ' . $e->getMessage()]);
+        echo json_encode(['error' => 'Lỗi kết nối database: ' . $e->getMessage()]);
         exit();
     }
 }
-
-// API Key validation (optional - bỏ comment nếu muốn bảo mật)
-// function validateApiKey() {
-//     $headers = getallheaders();
-//     $apiKey = $headers['X-API-Key'] ?? '';
-//     if ($apiKey !== API_KEY) {
-//         http_response_code(401);
-//         echo json_encode(['error' => 'Invalid API key']);
-//         exit();
-//     }
-// }
 
 // JSON response helper
 function jsonResponse($data, $code = 200) {
