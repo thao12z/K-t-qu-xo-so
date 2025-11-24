@@ -1643,50 +1643,11 @@
             </div>
         );
     });
-    
-    // ===== TESTING FUNCTIONS =====
-    const TestMainAdmin = {
-        testComponentRender: () => {
-            console.assert(window.MainAdminSystem, ' MainAdminSystem not exported');
-            console.log(' [TEST] MainAdminSystem component exists');
-        },
-        
-        testSystemIntegration: () => {
-            // Test that all required components are available
-            const requiredComponents = [
-                'GlobalStateManager',
-                'LoadingSpinner', 'Button', 'Modal', 'Input', 'Select', 'Badge', 'Card',
-                'NotificationSystem',
-                'UserManagement',
-                'PaymentManagement'
-            ];
-            
-            let missingComponents = [];
-            requiredComponents.forEach(component => {
-                if (!window[component]) {
-                    missingComponents.push(component);
-                }
-            });
-            
-            if (missingComponents.length > 0) {
-                console.warn(' [TEST] Missing components:', missingComponents);
-            } else {
-                console.log(' [TEST] All required components available');
-            }
-        }
-    };
-    
+
     // ===== EXPORT TO GLOBAL SCOPE =====
     window.MainAdminSystem = MainAdminSystem;
     window.Dashboard = Dashboard;
     window.LoginForm = LoginForm;
-    window.TestMainAdmin = TestMainAdmin;
-    
-    // Auto-run tests
-    setTimeout(() => {
-        TestMainAdmin.testComponentRender();
-        TestMainAdmin.testSystemIntegration();
-    }, 200);
     
     // ===== AUTO-MOUNT APPLICATION =====
     // This will mount the application after all modules are loaded
@@ -1707,80 +1668,6 @@
                     'success',
                     'System'
                 );
-                
-                //  DEBUG COMMANDS - Only in development mode
-                const isDevMode = window.DEBUG_MODE || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-
-                if (isDevMode) {
-                    window.DEBUG_ADMIN_SYSTEM = {
-                        // Check current users
-                        checkUsers: () => {
-                            const users = window.GlobalStateManager.getData('users');
-                            console.log(' Current users:', users);
-                            console.table(users);
-                            return users;
-                        },
-
-                        // Create test user
-                        createTestUser: (username = 'testuser', password = 'test123') => {
-                            const newUser = {
-                                id: window.GlobalStateManager.getNextUserId(),
-                                username: username,
-                                email: `${username}@test.com`,
-                                fullName: `Test User ${username}`,
-                                phone: '+1234567890',
-                                password: password,
-                                role: 'user',
-                                accountType: 'user',
-                                status: 'active',
-                                hasAdminAccess: false,
-                                subscriptionType: 'package_30_days',
-                                subscriptionPackage: '30 Days Package',
-                                subscriptionExpiry: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                                subscriptionStatus: 'active',
-                                createdAt: new Date().toISOString(),
-                                createdBy: 'debug_tool',
-                                lastLogin: null,
-                                activatedAt: new Date().toISOString(),
-                                activatedBy: 'debug_tool'
-                            };
-
-                            const currentUsers = window.GlobalStateManager.getData('users');
-                            const updatedUsers = [...currentUsers, newUser];
-                            window.GlobalStateManager.updateData('users', updatedUsers, 'DebugTool');
-
-                            console.log(' Created test user:', newUser);
-                            return newUser;
-                        },
-
-                        // Check localStorage keys
-                        checkStorage: () => {
-                            const keys = ['admin_users', 'adminUsers', 'registeredUsers'];
-                            const result = {};
-                            keys.forEach(key => {
-                                const data = localStorage.getItem(key);
-                                result[key] = data ? JSON.parse(data) : null;
-                            });
-                            console.table(result);
-                            return result;
-                        },
-
-                        // Clear all user data
-                        clearAllUsers: () => {
-                            if (confirm('Are you sure you want to clear all user data?')) {
-                                window.GlobalStateManager.updateData('users', [], 'DebugTool');
-                                console.log(' Cleared all user data');
-                            }
-                        }
-                    };
-
-                    console.log(' Admin Debug commands available: window.DEBUG_ADMIN_SYSTEM');
-                    console.log('- window.DEBUG_ADMIN_SYSTEM.checkUsers()');
-                    console.log('- window.DEBUG_ADMIN_SYSTEM.createTestUser(username, password)');
-                    console.log('- window.DEBUG_ADMIN_SYSTEM.checkStorage()');
-                    console.log('- window.DEBUG_ADMIN_SYSTEM.clearAllUsers()');
-                }
-                
             } catch (error) {
                 console.error(' [MainAdmin] MOUNT_ERROR', { error });
                 

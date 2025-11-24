@@ -677,48 +677,7 @@
     });
     
     // ===== TESTING FUNCTIONS =====
-    const TestPackageManagement = {
-        testComponentRender: () => {
-            console.assert(window.PackageManagement, ' PackageManagement not exported');
-            console.log(' [TEST] PackageManagement component exists');
-        },
-        
-        testDataFlow: () => {
-            // Test package operations
-            const testPackage = {
-                id: 'test_package',
-                name: 'Test Package',
-                price: 100000,
-                duration: 30,
-                durationType: 'days',
-                features: ['Test feature'],
-                popular: false,
-                active: true
-            };
-            
-            const currentPackages = window.GlobalStateManager.getData('packages');
-            const updatedPackages = [...currentPackages, testPackage];
-            window.GlobalStateManager.updateData('packages', updatedPackages, 'Test');
-            
-            const retrieved = window.GlobalStateManager.findPackage('test_package');
-            console.assert(retrieved && retrieved.name === 'Test Package', ' Package data flow failed');
-            
-            // Cleanup
-            window.GlobalStateManager.updateData('packages', currentPackages, 'Test');
-            console.log(' [TEST] Package data flow works');
-        }
-    };
-    
     // ===== EXPORT TO GLOBAL SCOPE =====
     window.PackageManagement = PackageManagement;
-    window.TestPackageManagement = TestPackageManagement;
-    
-    // Auto-run tests
-    setTimeout(() => {
-        TestPackageManagement.testComponentRender();
-        if (window.GlobalStateManager) {
-            TestPackageManagement.testDataFlow();
-        }
-    }, 120);
     
 })(); 

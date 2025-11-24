@@ -957,89 +957,9 @@
             </div>
         );
     });
-    
-    // ===== TESTING FUNCTIONS =====
-    const TestUserManagement = {
-        testComponentRender: () => {
-            console.assert(window.UserManagement, ' UserManagement not exported');
-            console.log(' [TEST] UserManagement component exists');
-        },
-        
-        testUserCreation: () => {
-            // Test user creation flow
-            const testUser = {
-                id: window.GlobalStateManager.getNextUserId(),
-                username: 'test_user_' + Date.now(),
-                email: 'test@example.com',
-                fullName: 'Test User',
-                phone: '+84987654321',
-                password: 'test123',
-                role: 'user',
-                accountType: 'user',
-                status: 'active',
-                hasAdminAccess: false,
-                subscriptionType: 'package_30_days',
-                subscriptionPackage: '30 Days Premium',
-                subscriptionExpiry: '2024-12-31',
-                subscriptionStatus: 'active',
-                createdAt: new Date().toISOString().split('T')[0],
-                createdBy: 'test',
-                lastLogin: null,
-                activatedAt: new Date().toISOString(),
-                activatedBy: 'test'
-            };
-            
-            const currentUsers = window.GlobalStateManager.getData('users');
-            const updatedUsers = [...currentUsers, testUser];
-            window.GlobalStateManager.updateData('users', updatedUsers, 'Test');
-            
-            console.log(' [TEST] Test user created:', {
-                username: testUser.username,
-                password: testUser.password,
-                status: testUser.status,
-                subscriptionStatus: testUser.subscriptionStatus
-            });
-            
-            // Test if user can be found in localStorage
-            setTimeout(() => {
-                const adminUsersData = localStorage.getItem('adminUsers');
-                if (adminUsersData) {
-                    const users = JSON.parse(adminUsersData);
-                    const foundUser = users.find(u => u.username === testUser.username);
-                    if (foundUser) {
-                        console.log(' [TEST] User found in localStorage:', foundUser.username);
-                    } else {
-                        console.error(' [TEST] User not found in localStorage');
-                    }
-                }
-            }, 1000);
-            
-            // Cleanup after test
-            setTimeout(() => {
-                window.GlobalStateManager.updateData('users', currentUsers, 'Test');
-                console.log(' [TEST] Test user cleaned up');
-            }, 5000);
-        },
-        
-        testDataFlow: () => {
-            const currentUsers = window.GlobalStateManager.getData('users');
-            const retrieved = window.GlobalStateManager.findUser(1);
-            console.assert(retrieved && retrieved.username, ' User data flow failed');
-            console.log(' [TEST] User data flow works');
-        }
-    };
-    
+
     // ===== EXPORT TO GLOBAL SCOPE =====
     window.UserManagement = UserManagement;
     window.AddUserModal = AddUserModal;
-    window.TestUserManagement = TestUserManagement;
-    
-    // Auto-run tests
-    setTimeout(() => {
-        TestUserManagement.testComponentRender();
-        if (window.GlobalStateManager) {
-            TestUserManagement.testDataFlow();
-        }
-    }, 100);
     
 })(); 

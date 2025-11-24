@@ -299,48 +299,8 @@
             </div>
         );
     });
-    
-    // ===== TESTING FUNCTIONS =====
-    const TestNotificationSystem = {
-        testComponentRender: () => {
-            console.assert(window.NotificationSystem, ' NotificationSystem not exported');
-            console.log(' [TEST] NotificationSystem component exists');
-        },
-        
-        testDataFlow: () => {
-            // Test notification operations
-            const testNotification = {
-                id: Date.now(),
-                message: 'Test notification',
-                type: 'info',
-                timestamp: new Date().toISOString(),
-                read: false,
-                source: 'Test'
-            };
-            
-            const currentNotifications = window.GlobalStateManager.getData('notifications');
-            const updatedNotifications = [testNotification, ...currentNotifications];
-            window.GlobalStateManager.updateData('notifications', updatedNotifications, 'Test');
-            
-            const retrieved = window.GlobalStateManager.getData('notifications');
-            console.assert(retrieved.length > currentNotifications.length, ' Notification data flow failed');
-            
-            // Cleanup
-            window.GlobalStateManager.updateData('notifications', currentNotifications, 'Test');
-            console.log(' [TEST] Notification data flow works');
-        }
-    };
-    
+
     // ===== EXPORT TO GLOBAL SCOPE =====
     window.NotificationSystem = NotificationSystem;
-    window.TestNotificationSystem = TestNotificationSystem;
-    
-    // Auto-run tests
-    setTimeout(() => {
-        TestNotificationSystem.testComponentRender();
-        if (window.GlobalStateManager) {
-            TestNotificationSystem.testDataFlow();
-        }
-    }, 130);
     
 })(); 
