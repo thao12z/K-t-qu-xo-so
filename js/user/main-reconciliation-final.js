@@ -45,6 +45,272 @@
         strictLoValidation: false        // Bắt buộc lô chia hết cho 1 điểm
     };
     
+    // ==========================================
+    // ADVANCED INPUT PREPROCESSOR
+    // Chuyển đổi input phức tạp thành dạng chuẩn
+    // ==========================================
+    window.advancedPreprocessInput = (rawInput) => {
+        console.log('🔄 [PREPROCESS] Starting advanced input preprocessing...');
+        const results = [];
+
+        // Normalize input - xử lý unicode và whitespace
+        let input = rawInput
+            .replace(/[\u200B-\u200D\uFEFF]/g, '') // Remove zero-width chars
+            .replace(/\r\n/g, '\n')
+            .replace(/\r/g, '\n');
+
+        // Split by newlines first
+        const lines = input.split('\n');
+
+        for (let lineText of lines) {
+            lineText = lineText.trim();
+            if (!lineText) continue;
+
+            // Skip "Tin X:" markers
+            if (/^tin\s*\d+\s*:/i.test(lineText)) {
+                console.log(`[PREPROCESS] Skipping tin marker: ${lineText}`);
+                continue;
+            }
+
+            // Process each line with multiple handlers
+            const processed = processComplexLine(lineText);
+            results.push(...processed);
+        }
+
+        console.log(`✅ [PREPROCESS] Converted to ${results.length} simple bet lines`);
+        return results;
+    };
+
+    // Process a single complex line into multiple simple bets
+    function processComplexLine(line) {
+        const results = [];
+        const originalLine = line;
+
+        // Normalize: remove extra spaces, lowercase
+        line = line.trim();
+
+        // === HANDLER 1: Xiên quay / XQ format ===
+        // "xien quay 00,07,68,54 x 2000" or "xq 00,07,54,66 x 1000"
+        const xienQuayMatch = line.match(/^(xien\s*quay|xiên\s*quây|xq)\s+([\d,\s]+)\s*x\s*([\d.]+)(n{1,2}|k|m)?$/i);
+        if (xienQuayMatch) {
+            const numbersStr = xienQuayMatch[2];
+            const moneyValue = parseFloat(xienQuayMatch[3]);
+            const unit = (xienQuayMatch[4] || '').toLowerCase();
+
+            const numbers = numbersStr.split(/[,\s]+/).filter(n => n && /^\d{1,2}$/.test(n));
+            const money = convertToMoney(moneyValue, unit);
+
+            if (numbers.length >= 2 && numbers.length <= 4) {
+                results.push(`xien ${numbers.join(' ')} ${money}k`);
+                console.log(`[PREPROCESS] Xiên quay: ${originalLine} -> xien ${numbers.join(' ')} ${money}k`);
+            }
+            return results;
+        }
+
+        // === HANDLER 2: Đề đầu/đít format ===
+        // "de dau 5 dit 5 x1000nn" -> tất cả số đầu 5 (50-59) và đít 5 (05,15,25...95)
+        const deDauDitMatch = line.match(/^(de|đề|d)\s+dau\s+(\d)\s+dit\s+(\d)\s*x\s*([\d.]+)(n{1,2}|k|m)?$/i);
+        if (deDauDitMatch) {
+            const dauDigit = deDauDitMatch[2];
+            const ditDigit = deDauDitMatch[3];
+            const moneyValue = parseFloat(deDauDitMatch[4]);
+            const unit = (deDauDitMatch[5] || '').toLowerCase();
+            const money = convertToMoney(moneyValue, unit);
+
+            // Đầu X: X0, X1, X2, ..., X9
+            for (let i = 0; i <= 9; i++) {
+                results.push(`de ${dauDigit}${i} ${money}k`);
+            }
+            // Đít X: 0X, 1X, 2X, ..., 9X
+            for (let i = 0; i <= 9; i++) {
+                results.push(`de ${i}${ditDigit} ${money}k`);
+            }
+            console.log(`[PREPROCESS] Đề đầu/đít: ${originalLine} -> ${results.length} đề`);
+            return results;
+        }
+
+        // === HANDLER 2b: Đề đầu only ===
+        // "de dau 5 x1000nn"
+        const deDauMatch = line.match(/^(de|đề|d)\s+dau\s+(\d)\s*x\s*([\d.]+)(n{1,2}|k|m)?$/i);
+        if (deDauMatch) {
+            const dauDigit = deDauMatch[2];
+            const moneyValue = parseFloat(deDauMatch[3]);
+            const unit = (deDauMatch[4] || '').toLowerCase();
+            const money = convertToMoney(moneyValue, unit);
+
+            for (let i = 0; i <= 9; i++) {
+                results.push(`de ${dauDigit}${i} ${money}k`);
+            }
+            console.log(`[PREPROCESS] Đề đầu: ${originalLine} -> ${results.length} đề`);
+            return results;
+        }
+
+        // === HANDLER 2c: Đề đít only ===
+        // "de dit 5 x1000nn"
+        const deDitMatch = line.match(/^(de|đề|d)\s+d[ií]t\s+(\d)\s*x\s*([\d.]+)(n{1,2}|k|m)?$/i);
+        if (deDitMatch) {
+            const ditDigit = deDitMatch[2];
+            const moneyValue = parseFloat(deDitMatch[3]);
+            const unit = (deDitMatch[4] || '').toLowerCase();
+            const money = convertToMoney(moneyValue, unit);
+
+            for (let i = 0; i <= 9; i++) {
+                results.push(`de ${i}${ditDigit} ${money}k`);
+            }
+            console.log(`[PREPROCESS] Đề đít: ${originalLine} -> ${results.length} đề`);
+            return results;
+        }
+
+        // === HANDLER 3: Số 3 chữ số format ===
+        // "de 525 535 565 575 595 x1000nn" -> tách thành 52+25, 53+35, etc.
+        const de3DigitMatch = line.match(/^(de|đề|d)\s+((?:\d{3}\s*)+)\s*x\s*([\d.]+)(n{1,2}|k|m)?$/i);
+        if (de3DigitMatch) {
+            const numbersStr = de3DigitMatch[2];
+            const moneyValue = parseFloat(de3DigitMatch[3]);
+            const unit = (de3DigitMatch[4] || '').toLowerCase();
+            const money = convertToMoney(moneyValue, unit);
+
+            const numbers3 = numbersStr.match(/\d{3}/g) || [];
+            for (const num3 of numbers3) {
+                // Tách số 3 chữ số thành 2 số: ABC -> AB và BC
+                const first2 = num3.substring(0, 2);
+                const last2 = num3.substring(1, 3);
+                results.push(`de ${first2} ${money}k`);
+                results.push(`de ${last2} ${money}k`);
+            }
+            console.log(`[PREPROCESS] Đề 3 số: ${originalLine} -> ${results.length} đề`);
+            return results;
+        }
+
+        // === HANDLER 4: Multi-bet với dấu chấm ===
+        // "De 00 x 1070n. 90 x 735n. 11 x 330n."
+        if (/\d+\s*x\s*[\d.]+n{0,2}\s*\./i.test(line)) {
+            // Detect bet type from start
+            const typeMatch = line.match(/^(de|đề|d|lo|lô|l)\s+/i);
+            const betType = typeMatch ? typeMatch[1].toLowerCase() : 'de';
+            const normalizedType = betType.match(/^(de|đề|d)$/i) ? 'de' : 'lo';
+
+            // Split by "." and process each segment
+            const segments = line.split(/\.\s*/);
+
+            for (const segment of segments) {
+                if (!segment.trim()) continue;
+
+                // Match: "00 x 1070n" or "17,56 x 94n" (multi-number)
+                const segMatch = segment.match(/([\d,\s]+)\s*x\s*([\d.]+)(n{1,2}|k|m)?/i);
+                if (segMatch) {
+                    const numbersStr = segMatch[1];
+                    const moneyValue = parseFloat(segMatch[2]);
+                    const unit = (segMatch[3] || '').toLowerCase();
+                    const money = convertToMoney(moneyValue, unit);
+
+                    // Split numbers by comma or space
+                    const numbers = numbersStr.split(/[,\s]+/).filter(n => n && /^\d{1,2}$/.test(n));
+
+                    for (const num of numbers) {
+                        if (normalizedType === 'de') {
+                            results.push(`de ${num.padStart(2, '0')} ${money}k`);
+                        } else {
+                            results.push(`lo ${num.padStart(2, '0')} ${money}`);
+                        }
+                    }
+                }
+            }
+
+            if (results.length > 0) {
+                console.log(`[PREPROCESS] Multi-bet dấu chấm: ${originalLine} -> ${results.length} bets`);
+                return results;
+            }
+        }
+
+        // === HANDLER 5: Single multi-number format ===
+        // "17,56 x 94n" without type prefix (assume đề in context)
+        const multiNumMatch = line.match(/^([\d,]+)\s*x\s*([\d.]+)(n{1,2}|k|m)?$/i);
+        if (multiNumMatch) {
+            const numbersStr = multiNumMatch[1];
+            const moneyValue = parseFloat(multiNumMatch[2]);
+            const unit = (multiNumMatch[3] || '').toLowerCase();
+            const money = convertToMoney(moneyValue, unit);
+
+            const numbers = numbersStr.split(',').filter(n => n && /^\d{1,2}$/.test(n));
+            for (const num of numbers) {
+                results.push(`de ${num.padStart(2, '0')} ${money}k`);
+            }
+
+            if (results.length > 0) {
+                console.log(`[PREPROCESS] Multi-number: ${originalLine} -> ${results.length} đề`);
+                return results;
+            }
+        }
+
+        // === HANDLER 6: Standard format with "x" separator ===
+        // "de 00 x 1070n" -> "de 00 1070k"
+        const standardXMatch = line.match(/^(de|đề|d|lo|lô|l)\s+([\d,\s]+)\s*x\s*([\d.]+)(n{1,2}|k|m)?$/i);
+        if (standardXMatch) {
+            const betType = standardXMatch[1].toLowerCase();
+            const normalizedType = betType.match(/^(de|đề|d)$/i) ? 'de' : 'lo';
+            const numbersStr = standardXMatch[2];
+            const moneyValue = parseFloat(standardXMatch[3]);
+            const unit = (standardXMatch[4] || '').toLowerCase();
+            const money = convertToMoney(moneyValue, unit);
+
+            const numbers = numbersStr.split(/[,\s]+/).filter(n => n && /^\d{1,2}$/.test(n));
+
+            for (const num of numbers) {
+                if (normalizedType === 'de') {
+                    results.push(`de ${num.padStart(2, '0')} ${money}k`);
+                } else {
+                    results.push(`lo ${num.padStart(2, '0')} ${money}`);
+                }
+            }
+
+            if (results.length > 0) {
+                console.log(`[PREPROCESS] Standard X format: ${originalLine} -> ${results.length} bets`);
+                return results;
+            }
+        }
+
+        // === HANDLER 7: Lo format (point-based) ===
+        // "lo 32 23k" or "lo 32 23" -> keep as is
+        const loMatch = line.match(/^(lo|lô|l)\s+([\d\s]+)\s+([\d.]+)[km]?$/i);
+        if (loMatch) {
+            const numbers = loMatch[2].trim();
+            const points = loMatch[3];
+            results.push(`lo ${numbers} ${points}`);
+            console.log(`[PREPROCESS] Lo format: ${originalLine} -> lo ${numbers} ${points}`);
+            return results;
+        }
+
+        // === FALLBACK: Return original line if no pattern matched ===
+        // Let simpleBetParse handle it
+        console.log(`[PREPROCESS] Fallback: ${originalLine}`);
+        results.push(originalLine);
+        return results;
+    }
+
+    // Convert money value to thousands (k)
+    function convertToMoney(value, unit) {
+        if (!unit || unit === '') {
+            return value; // Assume already in k
+        }
+        switch (unit.toLowerCase()) {
+            case 'n':
+                return value; // n = nghìn = k
+            case 'nn':
+                return value; // nn cũng là nghìn (không phải 10k)
+            case 'k':
+                return value;
+            case 'm':
+                return value * 1000;
+            default:
+                return value;
+        }
+    }
+
+    // ==========================================
+    // END ADVANCED INPUT PREPROCESSOR
+    // ==========================================
+
     // Lottery functions - ASYNC REALTIME DATA RETRIEVAL
     window.getLotteryData = async (region = 'bac', selectedDate = null) => {
         if (window.LotteryDataService) {
@@ -1796,6 +2062,18 @@
 
             if (!inputText.trim()) return [];
 
+            // === STEP 1: ADVANCED PREPROCESSOR ===
+            // Convert complex formats to simple bet lines
+            const preprocessedLines = window.advancedPreprocessInput(inputText);
+
+            // If preprocessor returns results, use them
+            if (preprocessedLines.length > 0) {
+                const endTime = performance.now();
+                console.log(`✅ Advanced preprocessing complete: ${preprocessedLines.length} lines in ${(endTime - startTime).toFixed(2)}ms`);
+                return preprocessedLines;
+            }
+
+            // === STEP 2: FALLBACK - Original logic ===
             let lines = [];
             const inputLength = inputText.length;
 

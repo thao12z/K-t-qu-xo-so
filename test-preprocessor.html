@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Advanced Preprocessor</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        h2 {
+            color: #E36323;
+        }
+        textarea {
+            width: 100%;
+            min-height: 300px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        .output {
+            background: #f8f8f8;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 20px;
+            white-space: pre-wrap;
+            font-size: 13px;
+        }
+        button {
+            background: #E36323;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+        button:hover {
+            background: #DF5A18;
+        }
+        .stats {
+            background: #E8F5E9;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>🧪 Test Advanced Input Preprocessor</h2>
+        <p>Paste complex bet input below and click "Test Preprocessor"</p>
+
+        <h3>Sample Input:</h3>
+        <textarea id="inputText">tin 1:
+de 00 x 1070n. 90 x 735n. 11 x 330n. 16 x 310n. 25 x 195n. 55 x 84n. 50 x 10n.
+tin 2:
+de 00 x 1043n. 26 x 622n. 10 x 510n. 96 x 509n. 41 x 456n. 11 x 353n. 05 x 174n. 19 x 128n. 16 x 125n. 50 x 107n. 27 x 102n. 17,56 x 94n. 22 x 86n. 44 x 78n. 90 x 75n. 55 x 33n.
+xien quay 00,07,68,54 x 2000
+xq 00,07,54,66 x 1000
+tin 3:
+de 44 x 1079n. 05 x 780n. 24 x 332n. 98 x 65n. 89 x 51n. 99 x 32n. 09 x 7n. 00 x 6n. 50 x 5n.
+de dau 5 dit 5 x1000nn
+de 525 535 565 575 595 x1000nn
+tin 4:
+de 00 x 674n. 90 x 208n. 50 x 130n. 09 x 104n. 59 x 102n. 12,92 x 73n. 14,15,22,25,38,51,52,83 x 65n. 36,41,58,96 x 60n. 17,97 x 52n. 45,54,65,68,75,86,91,95 x 39n. 05,47,67,93,99 x 26n. 39 x 24n. 07,21,24,26,27,29,42,57,62,71,74,77,79,87 x 13n.
+lo 32 23k</textarea>
+
+        <button onclick="testPreprocessor()">Test Preprocessor</button>
+
+        <div id="stats" class="stats" style="display:none;"></div>
+        <div id="output" class="output"></div>
+    </div>
+
+    <script src="js/user/main-reconciliation-final.js"></script>
+    <script>
+        function testPreprocessor() {
+            const input = document.getElementById('inputText').value;
+            const outputDiv = document.getElementById('output');
+            const statsDiv = document.getElementById('stats');
+
+            console.clear();
+            console.log('=== Testing Advanced Preprocessor ===');
+
+            const startTime = performance.now();
+            const result = window.advancedPreprocessInput(input);
+            const endTime = performance.now();
+
+            const duration = (endTime - startTime).toFixed(2);
+
+            // Display stats
+            statsDiv.style.display = 'block';
+            statsDiv.innerHTML = `
+                <strong>📊 Statistics:</strong><br>
+                Input lines: ${input.split('\n').length}<br>
+                Output lines: ${result.length}<br>
+                Processing time: ${duration}ms
+            `;
+
+            // Display results
+            let output = `=== PREPROCESSED OUTPUT (${result.length} lines) ===\n\n`;
+            result.forEach((line, index) => {
+                output += `${index + 1}. ${line}\n`;
+            });
+
+            outputDiv.textContent = output;
+
+            console.log('=== Results ===');
+            console.log('Output lines:', result.length);
+            console.log('Processing time:', duration + 'ms');
+            console.log('Result:', result);
+        }
+
+        // Auto-run test on load
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                testPreprocessor();
+            }, 500);
+        });
+    </script>
+</body>
+</html>
