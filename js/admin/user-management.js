@@ -154,26 +154,40 @@
                 // Update global state
                 const currentUsers = window.GlobalStateManager.getData('users');
                 console.log('📊 [UserManagement] Current users count:', currentUsers.length);
-                
+
                 const updatedUsers = [...currentUsers, newUser];
                 window.GlobalStateManager.updateData('users', updatedUsers, 'UserManagement');
-                
+
                 console.log('✅ [UserManagement] User added to global state. New count:', updatedUsers.length);
-                
+
+                // Sync to MySQL API - REQUIRED for online-only mode
+                if (window.SharedDataService) {
+                    try {
+                        const mysqlResult = await window.SharedDataService.saveToMySQL('user', newUser);
+                        if (mysqlResult) {
+                            console.log('✅ [UserManagement] User synced to MySQL');
+                        } else {
+                            console.warn('⚠️ [UserManagement] MySQL sync failed, user saved locally only');
+                        }
+                    } catch (mysqlError) {
+                        console.error('❌ [UserManagement] MySQL sync error:', mysqlError);
+                    }
+                }
+
                 // Success notification
                 window.GlobalStateManager.addNotification(
                     `✅ Created ${formData.role} ${newUser.fullName}${packageInfo ? ` with ${packageInfo.name}` : ''}`,
                     'success',
                     'UserManagement'
                 );
-                
+
                 console.log('🔄 [UserManagement] USER_CREATED', {
                     userId: newUser.id,
                     userName: newUser.fullName,
                     role: newUser.role,
                     package: packageInfo?.name
                 });
-                
+
                 onUserAdded(newUser);
                 onClose();
                 
@@ -493,6 +507,17 @@
                 const updatedUsers = currentUsers.map(u => u.id === user.id ? updatedUser : u);
 
                 window.GlobalStateManager.updateData('users', updatedUsers, 'UserManagement');
+
+                // Sync to MySQL API
+                if (window.SharedDataService) {
+                    try {
+                        await window.SharedDataService.saveToMySQL('user', updatedUser);
+                        console.log('✅ [UserManagement] User update synced to MySQL');
+                    } catch (mysqlError) {
+                        console.error('❌ [UserManagement] MySQL sync error:', mysqlError);
+                    }
+                }
+
                 window.GlobalStateManager.addNotification(
                     `✅ Updated user: ${updatedUser.fullName}`,
                     'success',
@@ -685,31 +710,45 @@
         }, []);
         
         // Handle user status toggle
-        const handleStatusToggle = useCallback((userId, newStatus) => {
+        const handleStatusToggle = useCallback(async (userId, newStatus) => {
             const currentUsers = window.GlobalStateManager.getData('users');
-            const updatedUsers = currentUsers.map(u => 
-                u.id === userId ? {
-                    ...u,
-                    status: newStatus,
-                    ...(newStatus === 'active' && {
-                        activatedAt: new Date().toISOString(),
-                        activatedBy: 'admin_manual'
-                    })
-                } : u
-            );
-            
+            const updatedUser = currentUsers.find(u => u.id === userId);
+            if (!updatedUser) return;
+
+            const updatedUserData = {
+                ...updatedUser,
+                status: newStatus,
+                ...(newStatus === 'active' && {
+                    activatedAt: new Date().toISOString(),
+                    activatedBy: 'admin_manual'
+                })
+            };
+
+            const updatedUsers = currentUsers.map(u => u.id === userId ? updatedUserData : u);
+
             window.GlobalStateManager.updateData('users', updatedUsers, 'UserManagement');
+
+            // Sync to MySQL API
+            if (window.SharedDataService) {
+                try {
+                    await window.SharedDataService.saveToMySQL('user', updatedUserData);
+                    console.log('✅ [UserManagement] Status change synced to MySQL');
+                } catch (mysqlError) {
+                    console.error('❌ [UserManagement] MySQL sync error:', mysqlError);
+                }
+            }
+
             window.GlobalStateManager.addNotification(
                 `✅ User ${newStatus === 'active' ? 'activated' : 'deactivated'}`,
                 'success',
                 'UserManagement'
             );
-            
+
             console.log('🔄 [UserManagement] STATUS_TOGGLE', { userId, newStatus });
         }, []);
         
         // Handle user deletion
-        const handleDeleteUser = useCallback((userId) => {
+        const handleDeleteUser = useCallback(async (userId) => {
             const user = window.GlobalStateManager.findUser(userId);
             if (!user) return;
 
@@ -718,6 +757,20 @@
                 const updatedUsers = currentUsers.filter(u => u.id !== userId);
 
                 window.GlobalStateManager.updateData('users', updatedUsers, 'UserManagement');
+
+                // Sync deletion to MySQL (mark as deleted)
+                if (window.SharedDataService) {
+                    try {
+                        await window.SharedDataService.saveToMySQL('user', {
+                            ...user,
+                            status: 'deleted'
+                        });
+                        console.log('✅ [UserManagement] User deletion synced to MySQL');
+                    } catch (mysqlError) {
+                        console.error('❌ [UserManagement] MySQL sync error:', mysqlError);
+                    }
+                }
+
                 window.GlobalStateManager.addNotification(
                     `✅ Deleted user ${user.fullName}`,
                     'success',
