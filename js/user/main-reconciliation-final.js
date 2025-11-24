@@ -60,6 +60,12 @@
                 console.log(`[getLotteryData] Current data: ${data ? 'Found' : 'Not found'}`);
             }
 
+            // Check for error response from date validation
+            if (data && data.error) {
+                console.error(`[getLotteryData] ❌ Error: ${data.error}`);
+                return { error: data.error };
+            }
+
             if (data && data.results) {
                 console.log(`[getLotteryData] Returning lottery data for ${data.date || 'unknown'}`);
                 return data.results;
@@ -351,7 +357,7 @@
             const [, type, numbersStr, moneyStr] = match;
             const numbers = numbersStr.split(/\s+/).filter(n => n && n.length > 0);
 
-            // Check if this is ba càng (needs 3-digit numbers)
+            // Get type key for validation
             const typeKey = type.toLowerCase().replace(/\s+/g, '');
             const isBaCang = ['bc', 'bacang', 'bacàng'].includes(typeKey);
 
@@ -373,7 +379,7 @@
                     }
                 }
             }
-            
+
             // Parse money: 100k, 4m, 1.2m, 660k, etc.
             let money = 0;
             if (moneyStr.includes('m')) {
@@ -391,9 +397,8 @@
             } else {
                 return { success: false, error: `Số tiền phải có đơn vị k hoặc m - Ví dụ: 100k, 1.5m` };
             }
-            
+
             // Map type shortcuts to full names
-            const typeKey = type.toLowerCase().replace(/\s+/g, '');
             let mappedType = {
                 'l': 'lô', 'lo': 'lô', 'lô': 'lô',
                 'd': 'đề', 'đ': 'đề', 'de': 'đề', 'đề': 'đề', 'dê': 'đề',
@@ -406,12 +411,19 @@
             }[typeKey] || type;
 
             // Auto-detect xiên type based on number count
+            // Lô xiên MUST have 2, 3, or 4 numbers - auto-detect type
             if (mappedType === 'xiên') {
-                if (numbers.length === 2) mappedType = 'xiên 2';
-                else if (numbers.length === 3) mappedType = 'xiên 3';
-                else if (numbers.length === 4) mappedType = 'xiên 4';
+                if (numbers.length === 2) {
+                    mappedType = 'xiên 2';
+                } else if (numbers.length === 3) {
+                    mappedType = 'xiên 3';
+                } else if (numbers.length === 4) {
+                    mappedType = 'xiên 4';
+                } else {
+                    return { success: false, error: `Lô xiên cần 2, 3 hoặc 4 số - Bạn nhập ${numbers.length} số` };
+                }
             }
-            
+
             // Validate number count for each bet type
             if (mappedType === 'đề' && numbers.length !== 1) {
                 return { success: false, error: `Đề chỉ cần 1 số - Bạn nhập ${numbers.length} số` };
@@ -419,16 +431,15 @@
             if (mappedType === 'lô' && numbers.length < 1) {
                 return { success: false, error: 'Lô cần ít nhất 1 số' };
             }
-            if (mappedType.includes('xiên')) {
-                if (mappedType === 'xiên 2' && numbers.length !== 2) {
-                    return { success: false, error: `Xiên 2 cần 2 số - Bạn nhập ${numbers.length} số` };
-                }
-                if (mappedType === 'xiên 3' && numbers.length !== 3) {
-                    return { success: false, error: `Xiên 3 cần 3 số - Bạn nhập ${numbers.length} số` };
-                }
-                if (mappedType === 'xiên 4' && numbers.length !== 4) {
-                    return { success: false, error: `Xiên 4 cần 4 số - Bạn nhập ${numbers.length} số` };
-                }
+            // Validate xiên types - if user specified explicit type (lx2, x3, etc.), check exact count
+            if (mappedType === 'xiên 2' && numbers.length !== 2) {
+                return { success: false, error: `Xiên 2 cần đúng 2 số - Bạn nhập ${numbers.length} số` };
+            }
+            if (mappedType === 'xiên 3' && numbers.length !== 3) {
+                return { success: false, error: `Xiên 3 cần đúng 3 số - Bạn nhập ${numbers.length} số` };
+            }
+            if (mappedType === 'xiên 4' && numbers.length !== 4) {
+                return { success: false, error: `Xiên 4 cần đúng 4 số - Bạn nhập ${numbers.length} số` };
             }
             if (mappedType === 'ba càng') {
                 if (numbers.length !== 1) {
@@ -1487,6 +1498,15 @@
                         dataType: typeof lotteryData,
                         dataKeys: lotteryData ? Object.keys(lotteryData) : null
                     });
+
+                    // Check for error response (date validation, etc.)
+                    if (lotteryData && lotteryData.error) {
+                        console.error(`❌ Lỗi dữ liệu: ${lotteryData.error}`);
+                        alert(`❌ ${lotteryData.error}`);
+                        setIsLoading(false);
+                        return;
+                    }
+
                     if (lotteryData) {
                         // Get the actual date info from the data
                         const lotteryInfo = window.getLotteryInfo(parameters.mien, parameters.ngay);

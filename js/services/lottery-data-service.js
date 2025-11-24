@@ -709,12 +709,62 @@
             return this.currentData;
         },
 
+        // Validate date and return specific error if invalid
+        validateDateForLottery: function(date) {
+            const now = new Date();
+            const targetDate = new Date(date + 'T00:00:00');
+            const todayStr = now.toISOString().split('T')[0];
+            const currentHour = now.getHours();
+            const currentMinute = now.getMinutes();
+
+            // Check for future dates
+            if (date > todayStr) {
+                return {
+                    valid: false,
+                    error: `Không thể xem kết quả ngày tương lai (${date}). Vui lòng chọn ngày hôm nay hoặc trước đó.`
+                };
+            }
+
+            // Check for today before 6:30 PM
+            if (date === todayStr) {
+                const isAfter630PM = currentHour > 18 || (currentHour === 18 && currentMinute >= 30);
+                if (!isAfter630PM) {
+                    return {
+                        valid: false,
+                        error: `Kết quả xổ số ngày ${date} chưa có. Kết quả sẽ được công bố sau 18:30.`
+                    };
+                }
+            }
+
+            // Check for very old dates (RSS feed typically keeps ~30 days)
+            const thirtyDaysAgo = new Date(now);
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            if (targetDate < thirtyDaysAgo) {
+                return {
+                    valid: true,
+                    warning: `Dữ liệu ngày ${date} có thể không có sẵn (quá 30 ngày). Hệ thống sẽ cố gắng tìm kiếm.`
+                };
+            }
+
+            return { valid: true };
+        },
+
         // Get lottery data for a specific date - ONLINE REALTIME VERSION
         getDataForDate: async function(date, region = null) {
             logger.log(`🌐 [ONLINE getDataForDate] Called with date: "${date}", region: "${region || 'bac'}"`);
 
             const regionKey = region || 'bac';
             const today = new Date().toISOString().split('T')[0];
+
+            // Validate date first
+            const validation = this.validateDateForLottery(date);
+            if (!validation.valid) {
+                logger.error(`❌ Date validation failed: ${validation.error}`);
+                return { error: validation.error };
+            }
+            if (validation.warning) {
+                logger.warn(`⚠️ Date warning: ${validation.warning}`);
+            }
 
             // ONLINE MODE: Always try to fetch fresh data first
             if (this.config.forceOnlineMode) {
@@ -757,7 +807,7 @@
                 }
 
                 logger.log(`❌ [ONLINE] No data available for ${date}`);
-                return null;
+                return { error: `Không tìm thấy dữ liệu xổ số ngày ${date}. Dữ liệu có thể không còn trên hệ thống nguồn.` };
             }
 
             // OFFLINE MODE (legacy behavior)
@@ -809,10 +859,10 @@
             // For future dates
             if (isFutureDate) {
                 logger.log(`🚫 Future date ${date} - not allowed`);
-                return null;
+                return { error: `Không thể xem kết quả ngày tương lai (${date}). Vui lòng chọn ngày hôm nay hoặc trước đó.` };
             }
 
-            return null;
+            return { error: `Không tìm thấy dữ liệu xổ số ngày ${date}. Vui lòng thử lại sau.` };
         },
 
         // Synchronous wrapper for backwards compatibility
