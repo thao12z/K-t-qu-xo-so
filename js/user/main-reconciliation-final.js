@@ -2345,7 +2345,7 @@
             );
         }
         
-        return React.createElement('div', {className: 'max-w-7xl mx-auto p-4'}, 
+        return React.createElement('div', {className: 'max-w-7xl mx-auto p-2 md:p-4 overflow-x-hidden'}, 
             // Header with controls
             React.createElement('div', {className: 'mb-6'},
                 React.createElement('div', {className: 'flex items-center justify-between'},
@@ -2600,9 +2600,9 @@
             
             // Main layout with two panels
             // ============ SECTION B: NHẬP DỮ LIỆU TIN NHẮN ============
-            React.createElement('div', {className: 'grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-6'},
+            React.createElement('div', {className: 'grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-6 mb-6'},
                 // Left panel - Input
-                React.createElement('div', {className: 'bg-white rounded-lg shadow-md p-3 md:p-4'},
+                React.createElement('div', {className: 'bg-white rounded-lg shadow-md p-3 md:p-4 min-w-0'},
                     React.createElement('div', {className: 'flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4'},
                         React.createElement('h2', {className: 'text-base md:text-lg font-semibold text-[#121212]'}, 'Nhập Dữ Liệu Cược'),
                         React.createElement('button', {
@@ -2613,11 +2613,11 @@
                     ),
 
                     // Side-by-side: Input và Preview (stack on mobile)
-                    React.createElement('div', {className: 'grid grid-cols-1 xl:grid-cols-2 gap-4'},
+                    React.createElement('div', {className: 'grid grid-cols-1 lg:grid-cols-2 gap-4'},
                         // LEFT: Input textarea
                         React.createElement('div', {},
                             React.createElement('div', {className: 'text-sm font-medium text-[#7B7B7B] mb-2'}, 'Nhập cược:'),
-                            React.createElement('div', {className: 'flex border rounded-lg overflow-hidden'},
+                            React.createElement('div', {className: 'flex border rounded-lg overflow-hidden w-full'},
                                 // Line numbers
                                 React.createElement('div', {
                                     className: 'bg-[#F8F7F7] border-r border-[#ECECEC] p-3 text-[#7B7B7B] text-sm font-mono min-w-[3rem] text-right select-none',
@@ -2632,12 +2632,13 @@
                                     value: betText,
                                     onChange: handleBetTextChange,
                                     placeholder: 'Nhập theo format:\nD 16 500k\nL 23 100k\nX2 12 34 200k\nBC 123 50k',
-                                    className: 'flex-1 p-2 md:p-3 border-0 outline-none resize-none',
+                                    className: 'flex-1 p-2 md:p-3 border-0 outline-none resize-none w-full',
                                     style: {
                                         lineHeight: '1.5',
-                                        minHeight: '200px',
+                                        minHeight: '300px', // Tăng từ 200px
+                                        maxHeight: '600px', // Giới hạn max height
                                         fontFamily: 'monospace',
-                                        fontSize: '13px'
+                                        fontSize: 'clamp(12px, 2.5vw, 14px)' // Responsive font
                                     },
                                     spellCheck: false
                                 })
@@ -2662,7 +2663,7 @@
                             ),
                             React.createElement('div', {
                                 className: 'border rounded-lg overflow-hidden bg-white',
-                                style: { minHeight: '200px' }
+                                style: { minHeight: '300px', maxHeight: '600px' }
                             },
                                 React.createElement('div', {className: 'flex'},
                                     // Line numbers with error highlighting
@@ -2682,11 +2683,13 @@
                                     ),
                                     // Preview content with error underlines
                                     React.createElement('div', {
-                                        className: 'flex-1 p-3 overflow-x-auto',
+                                        className: 'flex-1 p-3 overflow-x-auto overflow-y-auto',
                                         style: {
                                             lineHeight: '1.5',
                                             fontFamily: 'monospace',
-                                            fontSize: '14px'
+                                            fontSize: 'clamp(12px, 2.5vw, 14px)',
+                                            maxHeight: '550px',
+                                            wordBreak: 'break-word'
                                         }
                                     },
                                         betText.split('\n').map((line, index) => {
