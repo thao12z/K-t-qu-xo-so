@@ -28,6 +28,9 @@
         // ✅ REQUIRED - Subscriber management
         _subscribers: {},
 
+        // Valid localStorage keys for storage event listener
+        _validKeys: ['adminUsers', 'admin_users', 'registeredUsers', 'adminPackages', 'admin_packages', 'adminPayments', 'admin_payments', 'adminNotifications', 'admin_notifications', 'admin_paymentConfig', 'paymentConfig'],
+
         // Debug flag (configurable)
         _debug: window.DEBUG_MODE || false,
         

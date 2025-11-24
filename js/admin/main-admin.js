@@ -10,8 +10,8 @@
                             window.location.hostname !== '127.0.0.1';
 
     const getAdminConfig = () => {
-        // Priority 1: Window config (set by server/deployment)
-        if (window.ADMIN_CREDENTIALS) {
+        // Priority 1: Window config (set by server/deployment) - must have username and password
+        if (window.ADMIN_CREDENTIALS && window.ADMIN_CREDENTIALS.username && window.ADMIN_CREDENTIALS.password) {
             console.log('🔐 Using server-provided admin credentials');
             return window.ADMIN_CREDENTIALS;
         }
@@ -21,30 +21,18 @@
         if (stored) {
             try {
                 const creds = JSON.parse(stored);
-                console.log('🔐 Using stored admin credentials');
-                return creds;
+                if (creds && creds.username && creds.password) {
+                    console.log('🔐 Using stored admin credentials');
+                    return creds;
+                }
             } catch (e) {
                 console.warn('Invalid stored credentials');
             }
         }
 
-        // Priority 3: Block on production, allow defaults only on localhost
-        if (isProductionEnv) {
-            console.error('❌ PRODUCTION: Admin credentials not configured!');
-            console.error('Set window.ADMIN_CREDENTIALS or use window.setAdminCredentials()');
-            // Return blocked credentials that won't work
-            return {
-                username: '__CREDENTIALS_NOT_SET__',
-                password: '__CHANGE_IN_PRODUCTION__',
-                email: '',
-                fullName: 'Not Configured',
-                phone: '',
-                blocked: true
-            };
-        }
-
-        // Development defaults (only on localhost)
-        console.warn('⚠️ Using DEFAULT admin credentials - localhost only');
+        // Priority 3: Default credentials - works on both localhost and production
+        // User can change later via window.setAdminCredentials()
+        console.log('🔐 Using default admin credentials (admin/admin123)');
         return {
             username: 'admin',
             password: 'admin123',
