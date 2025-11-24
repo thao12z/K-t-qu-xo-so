@@ -967,8 +967,9 @@
                 const apiBaseUrl = window.API_BASE_URL || '/api';
 
                 // Use local PHP proxy first (no CORS issues), then fallback to public proxies
+                // Local proxy accepts ?url= parameter for any xosodaiphat.com URL
                 const proxies = [
-                    () => `${apiBaseUrl}/lottery-proxy.php`, // Local PHP proxy - PRIMARY
+                    (url) => `${apiBaseUrl}/lottery-proxy.php?url=${encodeURIComponent(url)}`, // Local PHP proxy - PRIMARY
                     (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
                     (url) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
                     (url) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`
@@ -979,7 +980,7 @@
                 // Fetch RSS feed
                 for (let i = 0; i < proxies.length; i++) {
                     const isLocalProxy = i === 0;
-                    const proxyUrl = isLocalProxy ? proxies[i]() : proxies[i](rssUrl);
+                    const proxyUrl = proxies[i](rssUrl);
                     try {
                         logger.log(`🔗 Trying ${isLocalProxy ? 'LOCAL' : 'PUBLIC'} proxy: ${proxyUrl}`);
 
@@ -989,9 +990,7 @@
                         try {
                             const response = await fetch(proxyUrl, {
                                 method: 'GET',
-                                headers: isLocalProxy ? {
-                                    'Accept': 'application/xml, text/xml'
-                                } : {
+                                headers: {
                                     'Accept': 'application/rss+xml, application/xml, text/xml'
                                 },
                                 signal: controller.signal
