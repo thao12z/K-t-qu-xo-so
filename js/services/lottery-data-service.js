@@ -999,9 +999,13 @@
 
                             if (response.ok) {
                                 content = await response.text();
-                                if (content && content.includes('DB:')) {
+                                // Check for valid RSS content - look for <item> tag or lottery keywords
+                                if (content && (content.includes('<item>') || content.includes('xosodaiphat') || content.includes('XSMB'))) {
                                     logger.log(`✅ RSS fetched successfully via ${isLocalProxy ? 'LOCAL' : 'PUBLIC'} proxy`);
                                     break;
+                                } else {
+                                    logger.warn(`Invalid RSS content from ${isLocalProxy ? 'LOCAL' : 'PUBLIC'} proxy`);
+                                    content = null; // Reset to try next proxy
                                 }
                             }
                         } finally {
