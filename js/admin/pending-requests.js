@@ -1,9 +1,57 @@
 // 📋 PENDING REQUESTS MODULE - Handle User Registrations & Payments
-// Version: 1.0.0 | Created: 2024 | Integration with User System
+// Version: 1.1.0 | Created: 2024 | ONLINE SYNC MODE
 (function() {
     'use strict';
-    
+
     const { useState, useEffect, useCallback, memo } = React;
+
+    // ===== API CONFIGURATION =====
+    const API_BASE_URL = window.API_BASE_URL || '/api';
+
+    // ===== MYSQL SYNC HELPERS =====
+    const syncUserToMySQL = async (userData, action = 'save') => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/sync.php?action=user`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(userData)
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                console.log(`✅ [PendingRequests] User MySQL sync ${action}:`, userData.id);
+                return true;
+            } else {
+                console.error(`❌ [PendingRequests] User MySQL sync failed:`, result.error);
+                return false;
+            }
+        } catch (error) {
+            console.error('❌ [PendingRequests] User MySQL sync error:', error);
+            return false;
+        }
+    };
+
+    const syncPaymentToMySQL = async (paymentData, action = 'save') => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/sync.php?action=payment`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(paymentData)
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                console.log(`✅ [PendingRequests] Payment MySQL sync ${action}:`, paymentData.id);
+                return true;
+            } else {
+                console.error(`❌ [PendingRequests] Payment MySQL sync failed:`, result.error);
+                return false;
+            }
+        } catch (error) {
+            console.error('❌ [PendingRequests] Payment MySQL sync error:', error);
+            return false;
+        }
+    };
     
     // ===== PENDING REQUESTS COMPONENT =====
     const PendingRequests = memo(() => {
@@ -73,12 +121,19 @@
                 const currentUsers = window.GlobalStateManager.getData('users');
                 currentUsers.push(newUser);
                 window.GlobalStateManager.updateData('users', currentUsers, 'PendingRequests');
-                
+
+                // ✅ SYNC USER TO MYSQL
+                syncUserToMySQL(newUser, 'approve').then(success => {
+                    if (success) {
+                        console.log('✅ [PendingRequests] New user synced to MySQL');
+                    }
+                });
+
                 // Remove from pending
                 const updatedPending = pendingUsers.filter(u => u.id !== userData.id);
                 setPendingUsers(updatedPending);
                 localStorage.setItem('adminPendingUsers', JSON.stringify(updatedPending));
-                
+
                 // Create payment record if exists
                 if (userData.paymentId) {
                     const paymentData = pendingPayments.find(p => p.id === userData.paymentId);
@@ -94,18 +149,25 @@
                             approvedAt: new Date().toISOString(),
                             approvedBy: 'admin'
                         };
-                        
+
                         const currentPayments = window.GlobalStateManager.getData('payments');
                         currentPayments.push(paymentRecord);
                         window.GlobalStateManager.updateData('payments', currentPayments, 'PendingRequests');
-                        
+
+                        // ✅ SYNC PAYMENT TO MYSQL
+                        syncPaymentToMySQL(paymentRecord, 'approve').then(success => {
+                            if (success) {
+                                console.log('✅ [PendingRequests] Payment synced to MySQL');
+                            }
+                        });
+
                         // Remove from pending payments
                         const updatedPendingPayments = pendingPayments.filter(p => p.id !== paymentData.id);
                         setPendingPayments(updatedPendingPayments);
                         localStorage.setItem('adminPendingPayments', JSON.stringify(updatedPendingPayments));
                     }
                 }
-                
+
                 window.GlobalStateManager.addNotification(
                     `✅ User ${userData.fullName} approved and activated`,
                     'success',

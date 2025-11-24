@@ -1,9 +1,35 @@
 // 📦 PACKAGE MANAGEMENT MODULE
-// Version: 1.0.0 | Created: 2024 | Follows ADMIN SYSTEM DEVELOPMENT GUIDELINES
+// Version: 1.1.0 | Created: 2024 | ONLINE SYNC MODE
 (function() {
     'use strict';
-    
+
     const { useState, useEffect, useCallback, memo } = React;
+
+    // ===== API CONFIGURATION =====
+    const API_BASE_URL = window.API_BASE_URL || '/api';
+
+    // ===== MYSQL SYNC HELPER =====
+    const syncPackageToMySQL = async (packageData, action = 'save') => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/sync.php?action=package`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(packageData)
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                console.log(`✅ [PackageManagement] MySQL sync ${action}:`, packageData.id);
+                return true;
+            } else {
+                console.error(`❌ [PackageManagement] MySQL sync failed:`, result.error);
+                return false;
+            }
+        } catch (error) {
+            console.error('❌ [PackageManagement] MySQL sync error:', error);
+            return false;
+        }
+    };
     
     // ===== PACKAGE MANAGEMENT COMPONENT =====
     const PackageManagement = memo(() => {
@@ -127,7 +153,14 @@
             const updatedPackages = [...packages, packageToAdd];
             setPackages(updatedPackages);
             setHasUnsavedChanges(true);
-            
+
+            // ✅ SYNC TO MYSQL
+            syncPackageToMySQL(packageToAdd, 'create').then(success => {
+                if (success) {
+                    console.log('✅ [PackageManagement] Package synced to MySQL');
+                }
+            });
+
             setShowAddPackage(false);
             setNewPackage({
                 name: '',
@@ -138,13 +171,13 @@
                 popular: false,
                 active: true
             });
-            
+
             window.GlobalStateManager.addNotification(
                 `✅ Package "${packageToAdd.name}" added successfully`,
                 'success',
                 'PackageManagement'
             );
-            
+
             console.log('🔄 [PackageManagement] PACKAGE_ADDED', { packageId: packageToAdd.id });
         }, [newPackage, packages]);
         
@@ -176,17 +209,26 @@
                 return;
             }
             
+            const updatedPkg = {
+                ...editPackage,
+                ...newPackage,
+                features: newPackage.features.filter(f => f.trim() !== '')
+            };
+
             const updatedPackages = packages.map(pkg =>
-                pkg.id === editPackage.id ? {
-                    ...pkg,
-                    ...newPackage,
-                    features: newPackage.features.filter(f => f.trim() !== '')
-                } : pkg
+                pkg.id === editPackage.id ? updatedPkg : pkg
             );
-            
+
             setPackages(updatedPackages);
             setHasUnsavedChanges(true);
-            
+
+            // ✅ SYNC TO MYSQL
+            syncPackageToMySQL(updatedPkg, 'update').then(success => {
+                if (success) {
+                    console.log('✅ [PackageManagement] Package update synced to MySQL');
+                }
+            });
+
             setShowAddPackage(false);
             setEditPackage(null);
             setNewPackage({
@@ -198,13 +240,13 @@
                 popular: false,
                 active: true
             });
-            
+
             window.GlobalStateManager.addNotification(
                 `✅ Package "${newPackage.name}" updated successfully`,
                 'success',
                 'PackageManagement'
             );
-            
+
             console.log('🔄 [PackageManagement] PACKAGE_UPDATED', { packageId: editPackage.id });
         }, [editPackage, newPackage, packages]);
         
@@ -212,62 +254,85 @@
         const handleDeletePackage = useCallback((packageId) => {
             const packageToDelete = packages.find(p => p.id === packageId);
             if (!packageToDelete) return;
-            
+
             if (confirm(`Are you sure you want to delete package "${packageToDelete.name}"?`)) {
                 const updatedPackages = packages.filter(p => p.id !== packageId);
                 setPackages(updatedPackages);
                 setHasUnsavedChanges(true);
-                
+
+                // ✅ SYNC TO MYSQL - Mark as inactive instead of delete
+                syncPackageToMySQL({ ...packageToDelete, active: false }, 'delete').then(success => {
+                    if (success) {
+                        console.log('✅ [PackageManagement] Package delete synced to MySQL');
+                    }
+                });
+
                 window.GlobalStateManager.addNotification(
                     `✅ Package "${packageToDelete.name}" deleted successfully`,
                     'success',
                     'PackageManagement'
                 );
-                
+
                 console.log('🔄 [PackageManagement] PACKAGE_DELETED', { packageId });
             }
         }, [packages]);
         
         // Toggle package status
         const togglePackageStatus = useCallback((packageId) => {
-            const updatedPackages = packages.map(pkg =>
-                pkg.id === packageId ? { ...pkg, active: !pkg.active } : pkg
+            const pkg = packages.find(p => p.id === packageId);
+            if (!pkg) return;
+
+            const updatedPkg = { ...pkg, active: !pkg.active };
+            const updatedPackages = packages.map(p =>
+                p.id === packageId ? updatedPkg : p
             );
-            
+
             setPackages(updatedPackages);
             setHasUnsavedChanges(true);
-            
-            const packageName = packages.find(p => p.id === packageId)?.name;
-            const newStatus = !packages.find(p => p.id === packageId)?.active;
-            
+
+            // ✅ SYNC TO MYSQL
+            syncPackageToMySQL(updatedPkg, 'toggle').then(success => {
+                if (success) {
+                    console.log('✅ [PackageManagement] Package status synced to MySQL');
+                }
+            });
+
             window.GlobalStateManager.addNotification(
-                `✅ Package "${packageName}" ${newStatus ? 'activated' : 'deactivated'}`,
+                `✅ Package "${pkg.name}" ${updatedPkg.active ? 'activated' : 'deactivated'}`,
                 'success',
                 'PackageManagement'
             );
-            
-            console.log('🔄 [PackageManagement] PACKAGE_STATUS_TOGGLED', { packageId, newStatus });
+
+            console.log('🔄 [PackageManagement] PACKAGE_STATUS_TOGGLED', { packageId, newStatus: updatedPkg.active });
         }, [packages]);
         
         // Toggle popular badge
         const togglePopularBadge = useCallback((packageId) => {
-            const updatedPackages = packages.map(pkg =>
-                pkg.id === packageId ? { ...pkg, popular: !pkg.popular } : pkg
+            const pkg = packages.find(p => p.id === packageId);
+            if (!pkg) return;
+
+            const updatedPkg = { ...pkg, popular: !pkg.popular };
+            const updatedPackages = packages.map(p =>
+                p.id === packageId ? updatedPkg : p
             );
-            
+
             setPackages(updatedPackages);
             setHasUnsavedChanges(true);
-            
-            const packageName = packages.find(p => p.id === packageId)?.name;
-            const newPopular = !packages.find(p => p.id === packageId)?.popular;
-            
+
+            // ✅ SYNC TO MYSQL
+            syncPackageToMySQL(updatedPkg, 'toggle-popular').then(success => {
+                if (success) {
+                    console.log('✅ [PackageManagement] Package popular synced to MySQL');
+                }
+            });
+
             window.GlobalStateManager.addNotification(
-                `✅ Package "${packageName}" ${newPopular ? 'marked as popular' : 'unmarked as popular'}`,
+                `✅ Package "${pkg.name}" ${updatedPkg.popular ? 'marked as popular' : 'unmarked as popular'}`,
                 'success',
                 'PackageManagement'
             );
-            
-            console.log('🔄 [PackageManagement] PACKAGE_POPULAR_TOGGLED', { packageId, newPopular });
+
+            console.log('🔄 [PackageManagement] PACKAGE_POPULAR_TOGGLED', { packageId, newPopular: updatedPkg.popular });
         }, [packages]);
         
         // Add feature field

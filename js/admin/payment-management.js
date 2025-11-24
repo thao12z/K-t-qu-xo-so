@@ -1,9 +1,57 @@
 // 💳 PAYMENT MANAGEMENT MODULE
-// Version: 1.1.0 | Created: 2024 | Follows ADMIN SYSTEM DEVELOPMENT GUIDELINES
+// Version: 1.2.0 | Created: 2024 | ONLINE SYNC MODE
 (function() {
     'use strict';
-    
+
     const { useState, useEffect, useCallback, memo, useMemo } = React;
+
+    // ===== API CONFIGURATION =====
+    const API_BASE_URL = window.API_BASE_URL || '/api';
+
+    // ===== MYSQL SYNC HELPER =====
+    const syncPaymentToMySQL = async (paymentData, action = 'save') => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/sync.php?action=payment`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(paymentData)
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                console.log(`✅ [PaymentManagement] MySQL sync ${action}:`, paymentData.id);
+                return true;
+            } else {
+                console.error(`❌ [PaymentManagement] MySQL sync failed:`, result.error);
+                return false;
+            }
+        } catch (error) {
+            console.error('❌ [PaymentManagement] MySQL sync error:', error);
+            return false;
+        }
+    };
+
+    const syncUserToMySQL = async (userData, action = 'save') => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/sync.php?action=user`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(userData)
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                console.log(`✅ [PaymentManagement] User MySQL sync ${action}:`, userData.id);
+                return true;
+            } else {
+                console.error(`❌ [PaymentManagement] User MySQL sync failed:`, result.error);
+                return false;
+            }
+        } catch (error) {
+            console.error('❌ [PaymentManagement] User MySQL sync error:', error);
+            return false;
+        }
+    };
     
     // ===== ORDER ID GENERATOR =====
     const generateOrderId = () => {
@@ -120,17 +168,47 @@
                     alert('❌ Failed to process payment approval');
                     return;
                 }
-                
+
+                // ✅ SYNC PAYMENT TO MYSQL
+                const updatedPayment = {
+                    ...payment,
+                    status: 'completed',
+                    approvedAt: new Date().toISOString(),
+                    approvedBy: 'admin'
+                };
+                syncPaymentToMySQL(updatedPayment, 'approve').then(paymentSynced => {
+                    if (paymentSynced) {
+                        console.log('✅ [PaymentManagement] Payment synced to MySQL');
+                    }
+                });
+
+                // ✅ SYNC USER TO MYSQL
+                const updatedUser = {
+                    ...user,
+                    status: 'active',
+                    subscriptionType: activationData.packageId,
+                    subscriptionPackage: activationData.packageName,
+                    subscriptionStatus: 'active',
+                    subscriptionExpiry: activationData.expiryDate,
+                    activatedAt: new Date().toISOString(),
+                    activatedBy: 'PaymentApproval'
+                };
+                syncUserToMySQL(updatedUser, 'activate').then(userSynced => {
+                    if (userSynced) {
+                        console.log('✅ [PaymentManagement] User activation synced to MySQL');
+                    }
+                });
+
                 // Show success message with order ID
                 const orderId = payment.orderId || 'N/A';
                 alert(`✅ Payment approved for ${user.fullName} - ${packageInfo.name}\nOrder ID: ${orderId}`);
-                console.log('✅ [PaymentManagement] APPROVE_PAYMENT_SUCCESS', { 
-                    paymentId, 
+                console.log('✅ [PaymentManagement] APPROVE_PAYMENT_SUCCESS', {
+                    paymentId,
                     orderId: orderId,
                     packageName: packageInfo.name,
                     userName: user.fullName
                 });
-                
+
             } catch (error) {
                 console.error('❌ [PaymentManagement] APPROVE_PAYMENT_ERROR', { error });
                 alert('❌ Error occurred: ' + error.message);
@@ -141,25 +219,35 @@
         const handleRejectPayment = useCallback((paymentId) => {
             const payment = window.GlobalStateManager.findPayment(paymentId);
             if (!payment) return;
-            
+
             if (confirm('Are you sure you want to reject this payment?')) {
+                const rejectedPayment = {
+                    ...payment,
+                    status: 'failed',
+                    rejectedAt: new Date().toISOString(),
+                    rejectedBy: 'admin'
+                };
+
                 const currentPayments = window.GlobalStateManager.getData('payments');
                 const updatedPayments = currentPayments.map(p =>
-                    p.id === paymentId ? {
-                        ...p,
-                        status: 'failed',
-                        rejectedAt: new Date().toISOString(),
-                        rejectedBy: 'admin'
-                    } : p
+                    p.id === paymentId ? rejectedPayment : p
                 );
-                
+
                 window.GlobalStateManager.updateData('payments', updatedPayments, 'PaymentManagement');
+
+                // ✅ SYNC TO MYSQL
+                syncPaymentToMySQL(rejectedPayment, 'reject').then(success => {
+                    if (success) {
+                        console.log('✅ [PaymentManagement] Payment rejection synced to MySQL');
+                    }
+                });
+
                 window.GlobalStateManager.addNotification(
                     '✅ Payment rejected',
                     'success',
                     'PaymentManagement'
                 );
-                
+
                 console.log('🔄 [PaymentManagement] PAYMENT_REJECTED', { paymentId });
             }
         }, []);
