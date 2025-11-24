@@ -260,8 +260,177 @@
     // Export to window
     window.SecurityUtils = SecurityUtils;
 
+    // ===== PRODUCTION PROTECTION =====
+    // Enhanced console protection and DevTools detection
+
+    if (isProduction) {
+        // 1. OVERRIDE CONSOLE - Disable all console methods in production
+        const noop = () => {};
+        const originalConsole = {
+            log: console.log,
+            warn: console.warn,
+            error: console.error,
+            info: console.info,
+            debug: console.debug,
+            table: console.table,
+            trace: console.trace,
+            dir: console.dir,
+            dirxml: console.dirxml,
+            group: console.group,
+            groupCollapsed: console.groupCollapsed,
+            groupEnd: console.groupEnd,
+            clear: console.clear
+        };
+
+        // Override all console methods (except clear)
+        console.log = noop;
+        console.warn = noop;
+        console.info = noop;
+        console.debug = noop;
+        console.table = noop;
+        console.trace = noop;
+        console.dir = noop;
+        console.dirxml = noop;
+        console.group = noop;
+        console.groupCollapsed = noop;
+        console.groupEnd = noop;
+
+        // Only show critical errors (but sanitized)
+        console.error = (...args) => {
+            // Sanitize error messages to not reveal code structure
+            const sanitized = args.map(arg => {
+                if (typeof arg === 'string') {
+                    return arg.replace(/\/js\/.*\.js/g, '[hidden]')
+                              .replace(/line \d+/gi, '')
+                              .replace(/at .*\(/g, 'at [hidden](');
+                }
+                return '[Error]';
+            });
+            originalConsole.error(...sanitized);
+        };
+
+        // 2. DEVTOOLS DETECTION
+        let devtoolsOpen = false;
+        const threshold = 160; // Threshold for detecting devtools
+
+        const detectDevTools = () => {
+            const widthThreshold = window.outerWidth - window.innerWidth > threshold;
+            const heightThreshold = window.outerHeight - window.innerHeight > threshold;
+            const isOpen = widthThreshold || heightThreshold;
+
+            if (isOpen && !devtoolsOpen) {
+                devtoolsOpen = true;
+                // Clear console when devtools is opened
+                console.clear();
+                // Redirect or show warning
+                document.body.innerHTML = '<div style="display:flex;justify-content:center;align-items:center;height:100vh;font-family:Arial;"><h2>⚠️ Unauthorized Access Detected</h2></div>';
+                setTimeout(() => {
+                    window.location.href = 'about:blank';
+                }, 2000);
+            }
+        };
+
+        // Check every 500ms
+        setInterval(detectDevTools, 500);
+
+        // Alternative: Detect by checking console object
+        const checkElement = () => {
+            const before = new Date();
+            debugger; // This will pause if devtools is open
+            const after = new Date();
+            const diff = after - before;
+
+            if (diff > 100) {
+                console.clear();
+                document.body.innerHTML = '<div style="display:flex;justify-content:center;align-items:center;height:100vh;font-family:Arial;"><h2>⚠️ Developer Tools Detected</h2></div>';
+                setTimeout(() => window.location.href = 'about:blank', 2000);
+            }
+        };
+
+        // Check periodically
+        setInterval(checkElement, 2000);
+
+        // 3. AUTO-CLEAR CONSOLE
+        setInterval(() => {
+            console.clear();
+        }, 1000);
+
+        // 4. DISABLE RIGHT-CLICK
+        document.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            return false;
+        });
+
+        // 5. DISABLE F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U
+        document.addEventListener('keydown', (e) => {
+            // F12
+            if (e.keyCode === 123) {
+                e.preventDefault();
+                return false;
+            }
+            // Ctrl+Shift+I (Inspect)
+            if (e.ctrlKey && e.shiftKey && e.keyCode === 73) {
+                e.preventDefault();
+                return false;
+            }
+            // Ctrl+Shift+J (Console)
+            if (e.ctrlKey && e.shiftKey && e.keyCode === 74) {
+                e.preventDefault();
+                return false;
+            }
+            // Ctrl+U (View Source)
+            if (e.ctrlKey && e.keyCode === 85) {
+                e.preventDefault();
+                return false;
+            }
+            // Ctrl+Shift+C (Inspect Element)
+            if (e.ctrlKey && e.shiftKey && e.keyCode === 67) {
+                e.preventDefault();
+                return false;
+            }
+        });
+
+        // 6. DISABLE TEXT SELECTION (Optional - might affect UX)
+        // document.addEventListener('selectstart', (e) => {
+        //     e.preventDefault();
+        //     return false;
+        // });
+
+        // 7. OBFUSCATE DOM STRUCTURE
+        // Add random classes to make HTML harder to read
+        const obfuscateDOM = () => {
+            const elements = document.querySelectorAll('*');
+            elements.forEach((el) => {
+                if (!el.classList.contains('obf')) {
+                    el.classList.add('obf-' + Math.random().toString(36).substr(2, 9));
+                }
+            });
+        };
+
+        // Run after page load
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', obfuscateDOM);
+        } else {
+            obfuscateDOM();
+        }
+
+        // Store original console methods for admin debug mode
+        window.__CONSOLE__ = originalConsole;
+
+        // Secret key to re-enable console for debugging (only for admins)
+        window.enableDebugMode = (key) => {
+            if (key === 'admin2025debug') {
+                Object.assign(console, originalConsole);
+                console.log('🔓 Debug mode enabled');
+                return true;
+            }
+            return false;
+        };
+    }
+
     if (!isProduction) {
         console.log('✅ SecurityUtils loaded successfully');
+        console.log('ℹ️  Production mode: Console disabled, DevTools detection enabled');
     }
 
 })(); 
