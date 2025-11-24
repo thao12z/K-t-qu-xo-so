@@ -151,7 +151,8 @@
                 if (!segment.trim()) continue;
 
                 // Match: "00 x 1070n" or "17,56 x 94n" (multi-number)
-                const segMatch = segment.match(/([\d,\s]+)\s*x\s*([\d.]+)(n{1,2}|k|m)?/i);
+                // Also handle optional bet type prefix: "De 00 x 1070n"
+                const segMatch = segment.match(/(?:de|đề|d|lo|lô|l)?\s*([\d,\s]+)\s*x\s*([\d.]+)(n{1,2}|k|m)?/i);
                 if (segMatch) {
                     const numbersStr = segMatch[1];
                     const moneyValue = parseFloat(segMatch[2]);
