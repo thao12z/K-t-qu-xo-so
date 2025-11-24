@@ -335,29 +335,42 @@
             }
             
             // Enhanced pattern for real formats: Lx, D, L + numbers + money (k, m, .2m etc)
-            const match = line.toLowerCase().match(/^(lx|l|d|lo|lô|de|đề|xien|xiên|ba\s*cang|ba\s*càng)\s+([\d\s]+?)\s+([\d.]+[km]?)$/);
+            // Support more bet type variations
+            const match = line.toLowerCase().match(/^(lx\d?|x\d|l|d|đ|lo|lô|de|đề|dê|xien\d?|xiên\d?|bc|ba\s*cang|ba\s*càng)\s+([\d\s]+)\s+([\d.]+[km])$/i);
             if (!match) {
                 // More specific error messages
-                if (!/^(lx|l|d|lo|lô|de|đề|xien|xiên|ba\s*cang|ba\s*càng)/i.test(line)) {
-                    return { success: false, error: 'Loại cược không hợp lệ - Cần: L/D/Lx (Lô/Đề/Xiên)' };
+                if (!/^(lx\d?|x\d|l|d|đ|lo|lô|de|đề|dê|xien\d?|xiên\d?|bc|ba\s*cang|ba\s*càng)/i.test(line)) {
+                    return { success: false, error: 'Loại cược không hợp lệ - Cần: L/D/Lx/BC (Lô/Đề/Xiên/Ba càng)' };
                 }
-                if (!/[\d.]+[km]?$/i.test(line)) {
-                    return { success: false, error: 'Số tiền không hợp lệ - Cần: 100k, 1m, 1.5m' };
+                if (!/[\d.]+[km]$/i.test(line)) {
+                    return { success: false, error: 'Số tiền phải có đơn vị k hoặc m - Ví dụ: 100k, 1.5m' };
                 }
                 return { success: false, error: 'Cú pháp không đúng - Ví dụ: "D 34 100k"' };
             }
             
             const [, type, numbersStr, moneyStr] = match;
             const numbers = numbersStr.split(/\s+/).filter(n => n && n.length > 0);
-            
+
+            // Check if this is ba càng (needs 3-digit numbers)
+            const typeKey = type.toLowerCase().replace(/\s+/g, '');
+            const isBaCang = ['bc', 'bacang', 'bacàng'].includes(typeKey);
+
             // Validate numbers
             for (const num of numbers) {
-                if (!/^\d{1,2}$/.test(num)) {
-                    return { success: false, error: `Số "${num}" không hợp lệ - Cần 1-2 chữ số (00-99)` };
-                }
-                const numValue = parseInt(num);
-                if (numValue < 0 || numValue > 99) {
-                    return { success: false, error: `Số "${num}" ngoài phạm vi - Cần từ 00 đến 99` };
+                if (isBaCang) {
+                    // Ba càng allows 3-digit numbers (000-999)
+                    if (!/^\d{1,3}$/.test(num)) {
+                        return { success: false, error: `Số "${num}" không hợp lệ - Ba càng cần 1-3 chữ số` };
+                    }
+                } else {
+                    // Other types need 1-2 digit numbers (00-99)
+                    if (!/^\d{1,2}$/.test(num)) {
+                        return { success: false, error: `Số "${num}" không hợp lệ - Cần 1-2 chữ số (00-99)` };
+                    }
+                    const numValue = parseInt(num);
+                    if (numValue < 0 || numValue > 99) {
+                        return { success: false, error: `Số "${num}" ngoài phạm vi - Cần từ 00 đến 99` };
+                    }
                 }
             }
             
@@ -380,13 +393,24 @@
             }
             
             // Map type shortcuts to full names
-            const mappedType = {
-                'lx': 'xiên', 'l': 'lô', 'd': 'đề',
-                'lo': 'lô', 'lô': 'lô',
-                'de': 'đề', 'đề': 'đề', 
+            const typeKey = type.toLowerCase().replace(/\s+/g, '');
+            let mappedType = {
+                'l': 'lô', 'lo': 'lô', 'lô': 'lô',
+                'd': 'đề', 'đ': 'đề', 'de': 'đề', 'đề': 'đề', 'dê': 'đề',
+                'lx': 'xiên', 'lx2': 'xiên 2', 'lx3': 'xiên 3', 'lx4': 'xiên 4',
+                'x2': 'xiên 2', 'x3': 'xiên 3', 'x4': 'xiên 4',
                 'xien': 'xiên', 'xiên': 'xiên',
-                'ba cang': 'ba càng', 'ba càng': 'ba càng'
-            }[type.toLowerCase()] || type;
+                'xien2': 'xiên 2', 'xien3': 'xiên 3', 'xien4': 'xiên 4',
+                'xiên2': 'xiên 2', 'xiên3': 'xiên 3', 'xiên4': 'xiên 4',
+                'bc': 'ba càng', 'bacang': 'ba càng', 'bacàng': 'ba càng'
+            }[typeKey] || type;
+
+            // Auto-detect xiên type based on number count
+            if (mappedType === 'xiên') {
+                if (numbers.length === 2) mappedType = 'xiên 2';
+                else if (numbers.length === 3) mappedType = 'xiên 3';
+                else if (numbers.length === 4) mappedType = 'xiên 4';
+            }
             
             // Validate number count for each bet type
             if (mappedType === 'đề' && numbers.length !== 1) {
@@ -395,13 +419,25 @@
             if (mappedType === 'lô' && numbers.length < 1) {
                 return { success: false, error: 'Lô cần ít nhất 1 số' };
             }
-            if (mappedType === 'xiên') {
-                if (numbers.length < 2 || numbers.length > 4) {
-                    return { success: false, error: `Xiên cần 2-4 số - Bạn nhập ${numbers.length} số` };
+            if (mappedType.includes('xiên')) {
+                if (mappedType === 'xiên 2' && numbers.length !== 2) {
+                    return { success: false, error: `Xiên 2 cần 2 số - Bạn nhập ${numbers.length} số` };
+                }
+                if (mappedType === 'xiên 3' && numbers.length !== 3) {
+                    return { success: false, error: `Xiên 3 cần 3 số - Bạn nhập ${numbers.length} số` };
+                }
+                if (mappedType === 'xiên 4' && numbers.length !== 4) {
+                    return { success: false, error: `Xiên 4 cần 4 số - Bạn nhập ${numbers.length} số` };
                 }
             }
-            if (mappedType === 'ba càng' && numbers.length !== 1) {
-                return { success: false, error: `Ba càng chỉ cần 1 số 3 chữ số - Bạn nhập ${numbers.length} số` };
+            if (mappedType === 'ba càng') {
+                if (numbers.length !== 1) {
+                    return { success: false, error: `Ba càng chỉ cần 1 số - Bạn nhập ${numbers.length} số` };
+                }
+                // Ba càng needs 3-digit number
+                if (numbers[0].length !== 3) {
+                    return { success: false, error: `Ba càng cần số 3 chữ số (000-999) - Bạn nhập "${numbers[0]}"` };
+                }
             }
             
             // RELAXED validation - warn but don't block (for real-world data)
@@ -2264,20 +2300,20 @@
             
             // Main layout with two panels
             // ============ SECTION B: NHẬP DỮ LIỆU TIN NHẮN ============
-            React.createElement('div', {className: 'grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6'},
+            React.createElement('div', {className: 'grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-6'},
                 // Left panel - Input
-                React.createElement('div', {className: 'bg-white rounded-lg shadow-md p-4'},
-                    React.createElement('div', {className: 'flex items-center justify-between mb-4'},
-                        React.createElement('h2', {className: 'text-lg font-semibold text-[#121212]'}, 'Nhập Dữ Liệu Cược'),
+                React.createElement('div', {className: 'bg-white rounded-lg shadow-md p-3 md:p-4'},
+                    React.createElement('div', {className: 'flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4'},
+                        React.createElement('h2', {className: 'text-base md:text-lg font-semibold text-[#121212]'}, 'Nhập Dữ Liệu Cược'),
                         React.createElement('button', {
                             onClick: handleValidateBets,
                             disabled: !betText.trim(),
-                            className: 'px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 disabled:opacity-50 text-sm'
+                            className: 'px-3 md:px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 disabled:opacity-50 text-sm whitespace-nowrap'
                         }, 'Kiểm Tra Cú Pháp')
                     ),
-                    
-                    // Side-by-side: Input và Preview
-                    React.createElement('div', {className: 'grid grid-cols-1 lg:grid-cols-2 gap-4'},
+
+                    // Side-by-side: Input và Preview (stack on mobile)
+                    React.createElement('div', {className: 'grid grid-cols-1 xl:grid-cols-2 gap-4'},
                         // LEFT: Input textarea
                         React.createElement('div', {},
                             React.createElement('div', {className: 'text-sm font-medium text-[#7B7B7B] mb-2'}, 'Nhập cược:'),
@@ -2296,12 +2332,12 @@
                                     value: betText,
                                     onChange: handleBetTextChange,
                                     placeholder: 'Nhập theo format:\nD 16 500k\nL 23 100k\nX2 12 34 200k\nBC 123 50k',
-                                    className: 'flex-1 p-3 border-0 outline-none resize-none',
+                                    className: 'flex-1 p-2 md:p-3 border-0 outline-none resize-none',
                                     style: {
                                         lineHeight: '1.5',
-                                        minHeight: '250px',
+                                        minHeight: '200px',
                                         fontFamily: 'monospace',
-                                        fontSize: '14px'
+                                        fontSize: '13px'
                                     },
                                     spellCheck: false
                                 })
@@ -2326,7 +2362,7 @@
                             ),
                             React.createElement('div', {
                                 className: 'border rounded-lg overflow-hidden bg-white',
-                                style: { minHeight: '250px' }
+                                style: { minHeight: '200px' }
                             },
                                 React.createElement('div', {className: 'flex'},
                                     // Line numbers with error highlighting

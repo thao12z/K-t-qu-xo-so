@@ -1053,14 +1053,39 @@
                     // Extract date
                     let itemDate = null;
 
+                    // Try multiple date formats
                     if (pubDateNode && pubDateNode.textContent) {
-                        const pubMatch = pubDateNode.textContent.trim().match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
-                        if (pubMatch) {
-                            const [_, d, m, y] = pubMatch;
+                        const pubText = pubDateNode.textContent.trim();
+
+                        // Format 1: DD/MM/YYYY
+                        const pubMatch1 = pubText.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+                        if (pubMatch1) {
+                            const [_, d, m, y] = pubMatch1;
                             itemDate = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+                        }
+
+                        // Format 2: RFC 822 - "Sat, 23 Nov 2025 18:30:00 GMT"
+                        if (!itemDate) {
+                            const rfcMatch = pubText.match(/(\d{1,2})\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(\d{4})/i);
+                            if (rfcMatch) {
+                                const months = { 'jan': '01', 'feb': '02', 'mar': '03', 'apr': '04', 'may': '05', 'jun': '06',
+                                                'jul': '07', 'aug': '08', 'sep': '09', 'oct': '10', 'nov': '11', 'dec': '12' };
+                                const [_, d, monthName, y] = rfcMatch;
+                                const m = months[monthName.toLowerCase()];
+                                itemDate = `${y}-${m}-${d.padStart(2, '0')}`;
+                            }
+                        }
+
+                        // Format 3: YYYY-MM-DD
+                        if (!itemDate) {
+                            const isoMatch = pubText.match(/(\d{4})-(\d{2})-(\d{2})/);
+                            if (isoMatch) {
+                                itemDate = isoMatch[0];
+                            }
                         }
                     }
 
+                    // Fallback: Extract from description
                     if (!itemDate) {
                         const descMatch = normalized.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
                         if (descMatch) {
