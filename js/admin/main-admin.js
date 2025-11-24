@@ -217,11 +217,103 @@
         const [importResult, setImportResult] = useState(null);
         const [lastExport, setLastExport] = useState(null);
 
-        // Load last export info
+        // Firebase config state
+        const [firebaseConfig, setFirebaseConfig] = useState({
+            apiKey: '',
+            authDomain: '',
+            databaseURL: '',
+            projectId: '',
+            storageBucket: '',
+            messagingSenderId: '',
+            appId: ''
+        });
+        const [firebaseEnabled, setFirebaseEnabled] = useState(false);
+        const [firebaseSyncing, setFirebaseSyncing] = useState(false);
+
+        // Load last export info and Firebase config
         useEffect(() => {
             const lastExportInfo = localStorage.getItem('lastDataExport');
             if (lastExportInfo) {
                 setLastExport(JSON.parse(lastExportInfo));
+            }
+
+            // Load Firebase config
+            const savedFirebaseConfig = localStorage.getItem('firebase_config');
+            if (savedFirebaseConfig) {
+                try {
+                    const config = JSON.parse(savedFirebaseConfig);
+                    setFirebaseConfig(config);
+                    setFirebaseEnabled(true);
+                } catch (e) {
+                    console.error('Invalid Firebase config:', e);
+                }
+            }
+        }, []);
+
+        // Save Firebase config
+        const handleSaveFirebaseConfig = useCallback(async () => {
+            if (!firebaseConfig.databaseURL) {
+                window.GlobalStateManager?.addNotification(
+                    '❌ Vui lòng nhập Database URL',
+                    'error',
+                    'Firebase'
+                );
+                return;
+            }
+
+            try {
+                localStorage.setItem('firebase_config', JSON.stringify(firebaseConfig));
+
+                // Initialize Firebase
+                if (window.FirebaseSyncService) {
+                    const success = await window.FirebaseSyncService.init(firebaseConfig);
+                    if (success) {
+                        setFirebaseEnabled(true);
+                        window.GlobalStateManager?.addNotification(
+                            '✅ Firebase đã được kết nối thành công!',
+                            'success',
+                            'Firebase'
+                        );
+                    } else {
+                        throw new Error('Failed to initialize Firebase');
+                    }
+                }
+            } catch (error) {
+                window.GlobalStateManager?.addNotification(
+                    `❌ Lỗi kết nối Firebase: ${error.message}`,
+                    'error',
+                    'Firebase'
+                );
+            }
+        }, [firebaseConfig]);
+
+        // Sync to Firebase
+        const handleFirebaseSync = useCallback(async () => {
+            if (!window.FirebaseSyncService?.isEnabled) {
+                window.GlobalStateManager?.addNotification(
+                    '❌ Firebase chưa được cấu hình',
+                    'error',
+                    'Firebase'
+                );
+                return;
+            }
+
+            setFirebaseSyncing(true);
+            try {
+                await window.FirebaseSyncService.syncToCloud();
+                window.GlobalStateManager?.addNotification(
+                    '✅ Đã sync dữ liệu lên Firebase thành công!',
+                    'success',
+                    'Firebase'
+                );
+            } catch (error) {
+                window.GlobalStateManager?.addNotification(
+                    `❌ Sync thất bại: ${error.message}`,
+                    'error',
+                    'Firebase'
+                );
+            } finally {
+                setFirebaseSyncing(false);
             }
         }, []);
 
@@ -463,10 +555,82 @@
                     <h1 className="text-2xl font-bold">📦 Export / Import Data</h1>
                 </div>
 
+                {/* Firebase Cloud Sync */}
+                <window.Card title="🔥 Firebase Cloud Sync (Tự động)">
+                    <div className="space-y-4">
+                        <div className={`p-3 rounded-lg ${firebaseEnabled ? 'bg-green-50 border border-green-200' : 'bg-gray-50 border border-gray-200'}`}>
+                            <p className={`text-sm ${firebaseEnabled ? 'text-green-800' : 'text-gray-600'}`}>
+                                <strong>Trạng thái:</strong> {firebaseEnabled ? '✅ Đã kết nối' : '⚪ Chưa cấu hình'}
+                            </p>
+                            {firebaseEnabled && (
+                                <p className="text-xs text-green-600 mt-1">
+                                    Dữ liệu sẽ tự động sync khi admin tạo/sửa users
+                                </p>
+                            )}
+                        </div>
+
+                        <div className="space-y-3">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Database URL *</label>
+                                <window.Input
+                                    value={firebaseConfig.databaseURL}
+                                    onChange={(value) => setFirebaseConfig(prev => ({ ...prev, databaseURL: value }))}
+                                    placeholder="https://your-project.firebaseio.com"
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">API Key</label>
+                                    <window.Input
+                                        value={firebaseConfig.apiKey}
+                                        onChange={(value) => setFirebaseConfig(prev => ({ ...prev, apiKey: value }))}
+                                        placeholder="AIza..."
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Project ID</label>
+                                    <window.Input
+                                        value={firebaseConfig.projectId}
+                                        onChange={(value) => setFirebaseConfig(prev => ({ ...prev, projectId: value }))}
+                                        placeholder="your-project-id"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex gap-2">
+                            <window.Button
+                                variant="primary"
+                                onClick={handleSaveFirebaseConfig}
+                            >
+                                💾 Lưu & Kết nối
+                            </window.Button>
+
+                            {firebaseEnabled && (
+                                <window.Button
+                                    variant="secondary"
+                                    onClick={handleFirebaseSync}
+                                    disabled={firebaseSyncing}
+                                >
+                                    {firebaseSyncing ? '⏳ Đang sync...' : '🔄 Sync ngay'}
+                                </window.Button>
+                            )}
+                        </div>
+
+                        <div className="text-xs text-gray-500 border-t pt-2">
+                            <strong>Hướng dẫn:</strong> Tạo project Firebase miễn phí tại{' '}
+                            <a href="https://console.firebase.google.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">
+                                console.firebase.google.com
+                            </a>
+                            {' '}→ Realtime Database → Copy config
+                        </div>
+                    </div>
+                </window.Card>
+
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                     <p className="text-yellow-800 text-sm">
-                        <strong>Lưu ý:</strong> Tính năng này cho phép bạn xuất toàn bộ dữ liệu (users, packages, payments)
-                        ra file JSON và import vào máy khác. Sử dụng để đồng bộ dữ liệu giữa các máy tính.
+                        <strong>Backup thủ công:</strong> Nếu không dùng Firebase, bạn có thể export/import file JSON thủ công bên dưới.
                     </p>
                 </div>
 

@@ -16,13 +16,14 @@
             enableRealTimeSync: true,
             enableAutoActions: true,
             onlineMode: true, // Always sync online
-            apiBaseUrl: window.API_BASE_URL || null, // Set for server mode
+            apiBaseUrl: window.API_BASE_URL || '/api', // API endpoint
             wsUrl: window.WS_URL || null, // WebSocket URL for realtime
             cacheMaxAge: 60000, // 1 minute cache max
             debugMode: window.DEBUG_MODE || false,
             // Server data file URL - admin exports to this file
             serverDataUrl: window.SERVER_DATA_URL || '/data/admin-data.json',
-            enableServerSync: true // Enable fetching from server
+            enableServerSync: true, // Enable fetching from server
+            enableMySQLSync: true // Enable MySQL API sync
         },
 
         // State tracking
@@ -164,6 +165,168 @@
             }
         },
 
+        // Fetch data from MySQL API
+        fetchFromMySQL: async function() {
+            if (!this.config.enableMySQLSync) {
+                return false;
+            }
+
+            try {
+                console.log('🗄️ Fetching data from MySQL API...');
+
+                const response = await fetch(`${this.config.apiBaseUrl}/sync.php?action=all`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    if (response.status === 404) {
+                        console.log('🗄️ MySQL API not found - using localStorage only');
+                        this.config.enableMySQLSync = false;
+                        return false;
+                    }
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                const result = await response.json();
+
+                if (!result.success || !result.data) {
+                    console.warn('🗄️ Invalid API response');
+                    return false;
+                }
+
+                const { users, packages, payments, config } = result.data;
+
+                // Save users to localStorage
+                if (users && users.length > 0) {
+                    // Transform MySQL format to localStorage format
+                    const transformedUsers = users.map(u => ({
+                        id: u.id,
+                        username: u.username,
+                        password: u.password,
+                        fullName: u.full_name,
+                        email: u.email,
+                        phone: u.phone,
+                        role: u.role,
+                        status: u.status,
+                        subscriptionType: u.subscription_type,
+                        subscriptionPackage: u.subscription_package,
+                        subscriptionExpiry: u.subscription_expiry,
+                        subscriptionStatus: u.subscription_status,
+                        activatedAt: u.activated_at,
+                        activatedBy: u.activated_by,
+                        createdAt: u.created_at,
+                        updatedAt: u.updated_at
+                    }));
+
+                    localStorage.setItem('admin_users', JSON.stringify(transformedUsers));
+                    localStorage.setItem('adminUsers', JSON.stringify(transformedUsers));
+                    localStorage.setItem('registeredUsers', JSON.stringify(transformedUsers));
+
+                    console.log(`🗄️ Loaded ${transformedUsers.length} users from MySQL`);
+                }
+
+                // Save packages
+                if (packages && packages.length > 0) {
+                    const transformedPackages = packages.map(p => ({
+                        id: p.id,
+                        name: p.name,
+                        price: p.price,
+                        duration: p.duration,
+                        features: typeof p.features === 'string' ? JSON.parse(p.features) : p.features,
+                        active: p.active == 1
+                    }));
+
+                    localStorage.setItem('adminPackages', JSON.stringify(transformedPackages));
+                    console.log(`🗄️ Loaded ${transformedPackages.length} packages from MySQL`);
+                }
+
+                // Save payments
+                if (payments && payments.length > 0) {
+                    localStorage.setItem('adminPayments', JSON.stringify(payments));
+                }
+
+                // Save config
+                if (config) {
+                    if (config.contact_info) {
+                        localStorage.setItem('adminContactInfo', config.contact_info);
+                    }
+                    if (config.payment_config) {
+                        localStorage.setItem('admin_paymentConfig', config.payment_config);
+                    }
+                }
+
+                // Trigger local sync
+                this.syncAll();
+
+                console.log('✅ MySQL sync completed');
+                return true;
+
+            } catch (error) {
+                console.warn('🗄️ MySQL fetch failed:', error.message);
+                return false;
+            }
+        },
+
+        // Save data to MySQL API
+        saveToMySQL: async function(action, data) {
+            if (!this.config.enableMySQLSync) {
+                return false;
+            }
+
+            try {
+                const response = await fetch(`${this.config.apiBaseUrl}/sync.php?action=${action}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                const result = await response.json();
+                console.log(`🗄️ Saved to MySQL (${action}):`, result);
+                return result.success;
+
+            } catch (error) {
+                console.warn(`🗄️ Save to MySQL failed (${action}):`, error.message);
+                return false;
+            }
+        },
+
+        // Sync all localStorage data to MySQL
+        syncAllToMySQL: async function() {
+            if (!this.config.enableMySQLSync) {
+                return false;
+            }
+
+            try {
+                console.log('🗄️ Syncing all data to MySQL...');
+
+                const data = {
+                    users: JSON.parse(localStorage.getItem('admin_users') || '[]'),
+                    packages: JSON.parse(localStorage.getItem('adminPackages') || '[]'),
+                    config: {
+                        contactInfo: JSON.parse(localStorage.getItem('adminContactInfo') || 'null'),
+                        paymentConfig: JSON.parse(localStorage.getItem('admin_paymentConfig') || 'null')
+                    }
+                };
+
+                const result = await this.saveToMySQL('sync', data);
+                console.log('✅ Synced all data to MySQL');
+                return result;
+
+            } catch (error) {
+                console.error('❌ Sync to MySQL failed:', error);
+                return false;
+            }
+        },
+
         // Initialize service
         init: async function() {
             console.log('📡 Initializing SharedDataService v3.0 ONLINE MODE...');
@@ -185,7 +348,11 @@
 
             // Fetch from server first (to get latest user accounts)
             if (this.state.isOnline) {
-                await this.fetchFromServer();
+                // Try MySQL API first, then fallback to static file
+                const mysqlSuccess = await this.fetchFromMySQL();
+                if (!mysqlSuccess) {
+                    await this.fetchFromServer();
+                }
             }
 
             // Start background sync (faster in online mode)
