@@ -15,10 +15,9 @@
         mien: 'bac',
         ngay: getLatestAvailableDate(),
         
-        // Lô (3 fields) - Tính theo điểm
-        tien1DiemLo: 23000,          // VD: 23k cho 1 điểm
-        tienTra1DiemLo: 80000,       // VD: trả 80k cho 1 điểm thắng
-        tienThu1DiemLo: 23000,       // VD: thu 23k cho 1 điểm thua
+        // Lô (2 fields) - Tính theo điểm
+        tien1DiemLo: 23000,          // User nhập - dùng cho cả tính điểm và thua
+        tienTra1DiemLo: 80000,       // Cố định - trả 80k cho 1 điểm thắng
 
         // Đề (3 fields) - Tính theo điểm + hệ số
         tien1DiemDe: 1000,           // VD: 1k cho 1 điểm đề
@@ -338,24 +337,35 @@
             // Check for basic structure
             const parts = line.split(' ').filter(p => p.trim());
             if (parts.length < 3) {
-                return { success: false, error: 'Thiếu thông tin - Cần: [loại] [số] [tiền]' };
+                return { success: false, error: 'Thiếu thông tin - Cần: [loại] [số] [tiền/điểm]' };
             }
-            
-            // Enhanced pattern for real formats: Lx, D, L + numbers + money (k, m, .2m etc)
-            // Support more bet type variations
-            const match = line.toLowerCase().match(/^(lx\d?|x\d|l|d|đ|lo|lô|de|đề|dê|xien\d?|xiên\d?|bc|ba\s*cang|ba\s*càng)\s+([\d\s]+)\s+([\d.]+[km])$/i);
+
+            // Check if this is Lô type (uses points instead of money)
+            const isLoType = /^(l|lo|lô)\s+/i.test(line);
+
+            // Enhanced pattern - Lô can use points (number without k/m or with k/m ignored)
+            // Other types require k/m suffix for money
+            let match;
+            if (isLoType) {
+                // Lô: last part is POINTS (can be "20" or "20k" - k is ignored)
+                match = line.toLowerCase().match(/^(l|lo|lô)\s+([\d\s]+)\s+([\d.]+)[km]?$/i);
+            } else {
+                // Other types: last part is MONEY (requires k/m)
+                match = line.toLowerCase().match(/^(lx\d?|x\d|d|đ|de|đề|dê|xien\d?|xiên\d?|bc|ba\s*cang|ba\s*càng)\s+([\d\s]+)\s+([\d.]+[km])$/i);
+            }
+
             if (!match) {
                 // More specific error messages
                 if (!/^(lx\d?|x\d|l|d|đ|lo|lô|de|đề|dê|xien\d?|xiên\d?|bc|ba\s*cang|ba\s*càng)/i.test(line)) {
                     return { success: false, error: 'Loại cược không hợp lệ - Cần: L/D/Lx/BC (Lô/Đề/Xiên/Ba càng)' };
                 }
-                if (!/[\d.]+[km]$/i.test(line)) {
+                if (!isLoType && !/[\d.]+[km]$/i.test(line)) {
                     return { success: false, error: 'Số tiền phải có đơn vị k hoặc m - Ví dụ: 100k, 1.5m' };
                 }
-                return { success: false, error: 'Cú pháp không đúng - Ví dụ: "D 34 100k"' };
+                return { success: false, error: isLoType ? 'Cú pháp không đúng - Ví dụ: "L 12 20" (20 điểm)' : 'Cú pháp không đúng - Ví dụ: "D 34 100k"' };
             }
-            
-            const [, type, numbersStr, moneyStr] = match;
+
+            const [, type, numbersStr, amountStr] = match;
             const numbers = numbersStr.split(/\s+/).filter(n => n && n.length > 0);
 
             // Get type key for validation
@@ -381,22 +391,38 @@
                 }
             }
 
-            // Parse money: 100k, 4m, 1.2m, 660k, etc.
+            // Parse amount: money for most types, points for Lô
             let money = 0;
-            if (moneyStr.includes('m')) {
-                const value = parseFloat(moneyStr.replace('m', ''));
-                if (isNaN(value) || value <= 0) {
-                    return { success: false, error: `Số tiền "${moneyStr}" không hợp lệ` };
+            let points = 0;
+
+            if (isLoType) {
+                // Lô: amountStr is POINTS (e.g., "20" or "20k" → 20 points)
+                // Remove k/m suffix if present
+                const pointValue = parseFloat(amountStr.replace(/[km]/gi, ''));
+                if (isNaN(pointValue) || pointValue <= 0) {
+                    return { success: false, error: `Số điểm "${amountStr}" không hợp lệ` };
                 }
-                money = value * 1000000;
-            } else if (moneyStr.includes('k')) {
-                const value = parseInt(moneyStr.replace('k', ''));
-                if (isNaN(value) || value <= 0) {
-                    return { success: false, error: `Số tiền "${moneyStr}" không hợp lệ` };
-                }
-                money = value * 1000;
+                points = Math.floor(pointValue);
+                // Money will be calculated later using tien1DiemLo
+                // For now, store points as money (will be recalculated)
+                money = points; // Placeholder - actual calculation in processResult
             } else {
-                return { success: false, error: `Số tiền phải có đơn vị k hoặc m - Ví dụ: 100k, 1.5m` };
+                // Other types: amountStr is MONEY with k/m suffix
+                if (amountStr.includes('m')) {
+                    const value = parseFloat(amountStr.replace('m', ''));
+                    if (isNaN(value) || value <= 0) {
+                        return { success: false, error: `Số tiền "${amountStr}" không hợp lệ` };
+                    }
+                    money = value * 1000000;
+                } else if (amountStr.includes('k')) {
+                    const value = parseInt(amountStr.replace('k', ''));
+                    if (isNaN(value) || value <= 0) {
+                        return { success: false, error: `Số tiền "${amountStr}" không hợp lệ` };
+                    }
+                    money = value * 1000;
+                } else {
+                    return { success: false, error: `Số tiền phải có đơn vị k hoặc m - Ví dụ: 100k, 1.5m` };
+                }
             }
 
             // Map type shortcuts to full names
@@ -452,21 +478,7 @@
                 }
             }
             
-            // RELAXED validation - warn but don't block (for real-world data)
-            let warning = '';
-            if (mappedType === 'lô' && money % 23000 !== 0) {
-                const diem = Math.floor(money / 23000);
-                const validAmount = diem * 23000;
-                const wasted = money - validAmount;
-                if (diem === 0) {
-                    warning = `⚠️ Tiền đặt ${(money/1000)}k < 23k nên không đủ 1 điểm!`;
-                } else {
-                    warning = `⚠️ Chỉ tính ${diem} điểm (${(validAmount/1000)}k), thừa ${(wasted/1000)}k`;
-                }
-            } else if (mappedType === 'đề' && money % 100000 !== 0) {
-                warning = `(Khuyến nghị: Đề nên là bội số của 100k)`;
-            }
-            
+            // Return bet object with points for Lô
             return {
                 success: true,
                 bet: {
@@ -474,7 +486,8 @@
                     betType: mappedType,
                     numbers: numbers,
                     money: money,
-                    warning: warning
+                    points: isLoType ? points : 0, // Lô uses points directly
+                    isPointBased: isLoType // Flag to indicate point-based calculation
                 }
             };
         } catch (error) {
@@ -672,7 +685,6 @@
                 heSoXien4Tra: getUIParameter('heSoXien4Tra', 100),       // From UI: 100
                 heSoBaCangTra: getUIParameter('heSoBaCangTra', 500),
                 lamTronTien: true,
-                tienThu1DiemLo: getUIParameter('tienThu1DiemLo', 23000), // Tiền thu 1 điểm lô khi thua
                 tyLeDeThu: getUIParameter('tyLeDeThu', 100) / 100,
                 tyLeXien2Thu: getUIParameter('tyLeXien2Thu', 100) / 100, // From UI: 100%
                 tyLeXien3Thu: getUIParameter('tyLeXien3Thu', 100) / 100, // From UI: 100%
@@ -966,13 +978,17 @@
         let amount = 0;
 
         if (type === 'lô') {
-            // Lô - Theo điểm: chỉ tính điểm nguyên (làm tròn xuống)
-            // VD: 50k / 23k = 2.17 → chỉ tính 2 điểm
-            const diem = Math.floor(money / config.tien1DiemLo);
+            // Lô - Dùng điểm trực tiếp từ input
+            // VD: "L 12 20" → 20 điểm × 80000 = 1,600,000
+            const diem = bet.points || Math.floor(money / config.tien1DiemLo);
             amount = diem * config.tienTra1DiemLo;
         } else if (type === 'đề') {
-            // Đề - Hệ số nhân: bet_amount × heSoTra
-            amount = money * config.heSoDeTra;
+            // Đề - Thắng theo điểm × giá trị cố định
+            // Điểm = tiền / tien1DiemDe (user cấu hình)
+            // Thắng = điểm × 1000 × heSoDeTra (1000đ là gốc cố định, 70 là hệ số)
+            // VD: 100k / 1500 = 66 điểm × 1000 × 70 = 4,620,000
+            const diem = Math.floor(money / config.tien1DiemDe);
+            amount = diem * 1000 * config.heSoDeTra;
         } else if (type === 'xiên') {
             const count = numbers.length;
             if (count === 2) amount = money * config.heSoXien2Tra;
@@ -991,10 +1007,10 @@
         let amount = 0;
 
         if (type === 'lô') {
-            // Lô - Thua theo điểm × tiền thu 1 điểm
-            // VD: 50k → 2 điểm × 23k = 46k
-            const diem = Math.floor(money / config.tien1DiemLo);
-            amount = diem * config.tienThu1DiemLo;
+            // Lô - Dùng điểm trực tiếp từ input × tiền 1 điểm lô (user cấu hình)
+            // VD: "L 12 20" → 20 điểm × 21700 = 434,000
+            const diem = bet.points || Math.floor(money / config.tien1DiemLo);
+            amount = diem * config.tien1DiemLo;
         } else if (type === 'đề') {
             // Đề - Thua theo điểm × tiền 1 điểm đề
             // VD: 100k / 1k = 100 điểm × 1k × 100% = 100k
@@ -2176,21 +2192,12 @@
                             })
                         ),
                         React.createElement('div', {},
-                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Tiền trả 1 điểm lô'),
+                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Tiền thắng 1 điểm lô (cố định)'),
                             React.createElement('input', {
                                 type: 'number',
-                                value: parameters.tienTra1DiemLo,
-                                onChange: (e) => handleParameterChange('tienTra1DiemLo', parseInt(e.target.value) || 0),
-                                className: 'mt-1 block w-full border rounded-md px-3 py-2 text-sm'
-                            })
-                        ),
-                        React.createElement('div', {},
-                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Tiền thu 1 điểm lô'),
-                            React.createElement('input', {
-                                type: 'number',
-                                value: parameters.tienThu1DiemLo,
-                                onChange: (e) => handleParameterChange('tienThu1DiemLo', parseInt(e.target.value) || 0),
-                                className: 'mt-1 block w-full border rounded-md px-3 py-2 text-sm'
+                                value: 80000,
+                                disabled: true,
+                                className: 'mt-1 block w-full border rounded-md px-3 py-2 text-sm bg-gray-100'
                             })
                         )
                     ),
