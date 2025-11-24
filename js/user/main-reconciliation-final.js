@@ -66,13 +66,8 @@
             lineText = lineText.trim();
             if (!lineText) continue;
 
-            // Skip "Tin X:" markers
-            if (/^tin\s*\d+\s*:/i.test(lineText)) {
-                console.log(`[PREPROCESS] Skipping tin marker: ${lineText}`);
-                continue;
-            }
-
             // Process each line with multiple handlers
+            // "Tin X:" prefix is handled inside processComplexLine
             const processed = processComplexLine(lineText);
             results.push(...processed);
         }
@@ -88,6 +83,19 @@
 
         // Normalize: remove extra spaces, lowercase
         line = line.trim();
+
+        // === SPECIAL: Remove "Tin X:" prefix if present ===
+        // "Tin 1: De 00 x 1070n" → "De 00 x 1070n"
+        const tinPrefixMatch = line.match(/^tin\s*\d+\s*:\s*/i);
+        if (tinPrefixMatch) {
+            line = line.substring(tinPrefixMatch[0].length).trim();
+            console.log(`[PREPROCESS] Removed tin prefix: "${originalLine}" -> "${line}"`);
+            // If line is now empty (was just "Tin X:"), skip it
+            if (!line) {
+                console.log(`[PREPROCESS] Skipping empty tin marker: ${originalLine}`);
+                return results; // Return empty array to skip this line
+            }
+        }
 
         // === HANDLER 1: Xiên quay / XQ format ===
         // "xien quay 00,07,68,54 x 2000" or "xq 00,07,54,66 x 1000"
