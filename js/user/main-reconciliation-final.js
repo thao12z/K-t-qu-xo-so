@@ -101,8 +101,8 @@
             const money = convertToMoney(moneyValue, unit);
 
             if (numbers.length >= 2 && numbers.length <= 4) {
-                results.push(`xien ${numbers.join(' ')} ${money}k`);
-                console.log(`[PREPROCESS] Xiên quay: ${originalLine} -> xien ${numbers.join(' ')} ${money}k`);
+                results.push(`xien quay ${numbers.join(' ')}-${money}`);
+                console.log(`[PREPROCESS] Xiên quay: ${originalLine} -> xien quay ${numbers.join(' ')}-${money}`);
             }
             return results;
         }
@@ -119,11 +119,11 @@
 
             // Đầu X: X0, X1, X2, ..., X9
             for (let i = 0; i <= 9; i++) {
-                results.push(`de ${dauDigit}${i} ${money}k`);
+                results.push(`de ${dauDigit}${i}-${money}`);
             }
             // Đít X: 0X, 1X, 2X, ..., 9X
             for (let i = 0; i <= 9; i++) {
-                results.push(`de ${i}${ditDigit} ${money}k`);
+                results.push(`de ${i}${ditDigit}-${money}`);
             }
             console.log(`[PREPROCESS] Đề đầu/đít: ${originalLine} -> ${results.length} đề`);
             return results;
@@ -139,7 +139,7 @@
             const money = convertToMoney(moneyValue, unit);
 
             for (let i = 0; i <= 9; i++) {
-                results.push(`de ${dauDigit}${i} ${money}k`);
+                results.push(`de ${dauDigit}${i}-${money}`);
             }
             console.log(`[PREPROCESS] Đề đầu: ${originalLine} -> ${results.length} đề`);
             return results;
@@ -155,7 +155,7 @@
             const money = convertToMoney(moneyValue, unit);
 
             for (let i = 0; i <= 9; i++) {
-                results.push(`de ${i}${ditDigit} ${money}k`);
+                results.push(`de ${i}${ditDigit}-${money}`);
             }
             console.log(`[PREPROCESS] Đề đít: ${originalLine} -> ${results.length} đề`);
             return results;
@@ -175,8 +175,8 @@
                 // Tách số 3 chữ số thành 2 số: ABC -> AB và BC
                 const first2 = num3.substring(0, 2);
                 const last2 = num3.substring(1, 3);
-                results.push(`de ${first2} ${money}k`);
-                results.push(`de ${last2} ${money}k`);
+                results.push(`de ${first2}-${money}`);
+                results.push(`de ${last2}-${money}`);
             }
             console.log(`[PREPROCESS] Đề 3 số: ${originalLine} -> ${results.length} đề`);
             return results;
@@ -209,9 +209,9 @@
 
                     for (const num of numbers) {
                         if (normalizedType === 'de') {
-                            results.push(`de ${num.padStart(2, '0')} ${money}k`);
+                            results.push(`de ${num.padStart(2, '0')}-${money}`);
                         } else {
-                            results.push(`lo ${num.padStart(2, '0')} ${money}`);
+                            results.push(`lo ${num.padStart(2, '0')}-${money}`);
                         }
                     }
                 }
@@ -234,7 +234,7 @@
 
             const numbers = numbersStr.split(',').filter(n => n && /^\d{1,2}$/.test(n));
             for (const num of numbers) {
-                results.push(`de ${num.padStart(2, '0')} ${money}k`);
+                results.push(`de ${num.padStart(2, '0')}-${money}`);
             }
 
             if (results.length > 0) {
@@ -258,9 +258,9 @@
 
             for (const num of numbers) {
                 if (normalizedType === 'de') {
-                    results.push(`de ${num.padStart(2, '0')} ${money}k`);
+                    results.push(`de ${num.padStart(2, '0')}-${money}`);
                 } else {
-                    results.push(`lo ${num.padStart(2, '0')} ${money}`);
+                    results.push(`lo ${num.padStart(2, '0')}-${money}`);
                 }
             }
 
@@ -271,13 +271,13 @@
         }
 
         // === HANDLER 7: Lo format (point-based) ===
-        // "lo 32 23k" or "lo 32 23" -> keep as is
+        // "lo 32 23k" or "lo 32 23" -> format as "lo 32-23"
         const loMatch = line.match(/^(lo|lô|l)\s+([\d\s]+)\s+([\d.]+)[km]?$/i);
         if (loMatch) {
             const numbers = loMatch[2].trim();
             const points = loMatch[3];
-            results.push(`lo ${numbers} ${points}`);
-            console.log(`[PREPROCESS] Lo format: ${originalLine} -> lo ${numbers} ${points}`);
+            results.push(`lo ${numbers}-${points}`);
+            console.log(`[PREPROCESS] Lo format: ${originalLine} -> lo ${numbers}-${points}`);
             return results;
         }
 
@@ -593,13 +593,39 @@
         try {
             // Clean and normalize input
             const originalLine = line;
-            line = line.trim().replace(/,/g, ' ').replace(/\s+/g, ' ');
-            
+            line = line.trim();
+
             // Check for empty line
             if (!line) {
                 return { success: false, error: 'Dòng trống' };
             }
-            
+
+            // === HANDLE DASH FORMAT ===
+            // Convert "de 00-1043" or "lo 32-23" to "de 00 1043k" or "lo 32 23"
+            // Also handle "xien quay 00 07 68 54-2000" format
+            const dashFormatMatch = line.match(/^(xien\s+quay|xiên\s+quây|xq|de|đề|d|lo|lô|l)\s+([\d\s]+)-(\d+)$/i);
+            if (dashFormatMatch) {
+                const betType = dashFormatMatch[1].trim().toLowerCase();
+                const numbersStr = dashFormatMatch[2].trim();
+                const moneyValue = dashFormatMatch[3];
+
+                // Check if this is xiên quay format
+                if (betType.match(/^(xien\s*quay|xiên\s*quây|xq)$/i)) {
+                    // Xiên quay: convert to standard xiên format
+                    line = `xien ${numbersStr} ${moneyValue}k`;
+                } else if (betType.match(/^(l|lo|lô)$/i)) {
+                    // Lô: points-based, no k needed
+                    line = `lo ${numbersStr} ${moneyValue}`;
+                } else {
+                    // Đề: add k suffix
+                    line = `de ${numbersStr} ${moneyValue}k`;
+                }
+                console.log(`[PARSE] Converted dash format: "${originalLine}" -> "${line}"`);
+            }
+
+            // Normalize commas and spaces
+            line = line.replace(/,/g, ' ').replace(/\s+/g, ' ');
+
             // Check for basic structure
             const parts = line.split(' ').filter(p => p.trim());
             if (parts.length < 3) {
