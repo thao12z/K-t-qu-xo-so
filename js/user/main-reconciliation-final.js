@@ -19,8 +19,9 @@
         tien1DiemLo: 23000,          // VD: 23k cho 1 điểm
         tienTra1DiemLo: 80000,       // VD: trả 80k cho 1 điểm thắng
         tienThu1DiemLo: 23000,       // VD: thu 23k cho 1 điểm thua
-        
-        // Đề (2 fields) - Hệ số nhân
+
+        // Đề (3 fields) - Tính theo điểm + hệ số
+        tien1DiemDe: 1000,           // VD: 1k cho 1 điểm đề
         heSoDeTra: 70,               // VD: 70 (1 ăn 70)
         tyLeDeThu: 100,              // VD: thu 100% khi thua
         
@@ -664,7 +665,8 @@
                 // Config for calculateWinAmount function - USE ACTUAL PARAMETERS
                 tien1DiemLo: getUIParameter('tien1DiemLo', 23000),
                 tienTra1DiemLo: getUIParameter('tienTra1DiemLo', 80000),
-                heSoDeTra: getUIParameter('heSoDeTra', 80),
+                tien1DiemDe: getUIParameter('tien1DiemDe', 1000),
+                heSoDeTra: getUIParameter('heSoDeTra', 70),
                 heSoXien2Tra: getUIParameter('heSoXien2Tra', 10),        // From UI: 10
                 heSoXien3Tra: getUIParameter('heSoXien3Tra', 40),        // From UI: 40  
                 heSoXien4Tra: getUIParameter('heSoXien4Tra', 100),       // From UI: 100
@@ -994,7 +996,10 @@
             const diem = Math.floor(money / config.tien1DiemLo);
             amount = diem * config.tienThu1DiemLo;
         } else if (type === 'đề') {
-            amount = money * (config.tyLeDeThu / 100);
+            // Đề - Thua theo điểm × tiền 1 điểm đề
+            // VD: 100k / 1k = 100 điểm × 1k × 100% = 100k
+            const diem = Math.floor(money / config.tien1DiemDe);
+            amount = diem * config.tien1DiemDe * (config.tyLeDeThu / 100);
         } else if (type === 'xiên') {
             const count = numbers.length;
             let rate = 0;
@@ -2192,7 +2197,16 @@
                     
                     // Đề parameters
                     React.createElement('div', {className: 'space-y-3'},
-                        React.createElement('h3', {className: 'font-semibold text-green-600'}, 'Đề (2 tham số)'),
+                        React.createElement('h3', {className: 'font-semibold text-green-600'}, 'Đề (3 tham số)'),
+                        React.createElement('div', {},
+                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Tiền 1 điểm đề'),
+                            React.createElement('input', {
+                                type: 'number',
+                                value: parameters.tien1DiemDe,
+                                onChange: (e) => handleParameterChange('tien1DiemDe', parseInt(e.target.value) || 0),
+                                className: 'mt-1 block w-full border rounded-md px-3 py-2 text-sm'
+                            })
+                        ),
                         React.createElement('div', {},
                             React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Hệ số đề trả'),
                             React.createElement('input', {
