@@ -6,24 +6,33 @@
 (function() {
     'use strict';
 
-    console.log('🔄 SharedDataService v3.0 - ONLINE REALTIME MODE');
+    console.log('🔄 SharedDataService v4.0 - ONLINE ONLY (MySQL)');
 
     const SharedDataService = {
-        // Configuration - ONLINE MODE
+        // Configuration - ONLINE ONLY MODE (No localStorage fallback)
         config: {
-            pollingInterval: 10000, // 10 seconds for faster sync (giảm từ 30s)
+            pollingInterval: 10000, // 10 seconds for faster sync
             maxRetries: 5,
             enableRealTimeSync: true,
             enableAutoActions: true,
-            onlineMode: true, // Always sync online
+            onlineMode: true, // REQUIRED: Always online
             apiBaseUrl: window.API_BASE_URL || '/api', // API endpoint
             wsUrl: window.WS_URL || null, // WebSocket URL for realtime
             cacheMaxAge: 60000, // 1 minute cache max
             debugMode: window.DEBUG_MODE || false,
-            // Server data file URL - admin exports to this file
-            serverDataUrl: window.SERVER_DATA_URL || '/data/admin-data.json',
-            enableServerSync: true, // Enable fetching from server
-            enableMySQLSync: true // Enable MySQL API sync
+            // REMOVED: serverDataUrl - no static file fallback
+            enableServerSync: false, // DISABLED: No static file sync
+            enableMySQLSync: true, // REQUIRED: MySQL API only
+            requireOnline: true // NEW: Require online connection
+        },
+
+        // In-memory cache (loaded from MySQL)
+        cache: {
+            users: [],
+            packages: [],
+            payments: [],
+            config: null,
+            lastFetch: null
         },
 
         // State tracking
@@ -36,13 +45,31 @@
             wsConnected: false
         },
 
-        // Online status check
+        // Online status check - REQUIRED for operation
         checkOnlineStatus: function() {
             this.state.isOnline = navigator.onLine;
             if (!this.state.isOnline) {
-                console.warn('⚠️ Network offline - using cached data');
+                console.error('❌ Network offline - System requires internet connection');
+                this.showOfflineError();
             }
             return this.state.isOnline;
+        },
+
+        // Show offline error to user
+        showOfflineError: function() {
+            if (document.getElementById('offline-error')) return;
+
+            const errorDiv = document.createElement('div');
+            errorDiv.id = 'offline-error';
+            errorDiv.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#FE5938;color:white;padding:15px;text-align:center;z-index:99999;font-weight:bold;';
+            errorDiv.innerHTML = '⚠️ Mất kết nối mạng! Hệ thống yêu cầu kết nối internet để hoạt động.';
+            document.body.prepend(errorDiv);
+        },
+
+        // Hide offline error
+        hideOfflineError: function() {
+            const errorDiv = document.getElementById('offline-error');
+            if (errorDiv) errorDiv.remove();
         },
 
         // Fetch data from server and merge with localStorage
@@ -165,12 +192,8 @@
             }
         },
 
-        // Fetch data from MySQL API
+        // Fetch data from MySQL API - PRIMARY DATA SOURCE
         fetchFromMySQL: async function() {
-            if (!this.config.enableMySQLSync) {
-                return false;
-            }
-
             try {
                 console.log('🗄️ Fetching data from MySQL API...');
 
@@ -183,8 +206,7 @@
 
                 if (!response.ok) {
                     if (response.status === 404) {
-                        console.log('🗄️ MySQL API not found - using localStorage only');
-                        this.config.enableMySQLSync = false;
+                        console.error('🗄️ MySQL API not found at:', this.config.apiBaseUrl);
                         return false;
                     }
                     throw new Error(`HTTP ${response.status}`);
@@ -193,15 +215,14 @@
                 const result = await response.json();
 
                 if (!result.success || !result.data) {
-                    console.warn('🗄️ Invalid API response');
+                    console.error('🗄️ Invalid API response');
                     return false;
                 }
 
                 const { users, packages, payments, config } = result.data;
 
-                // Save users to localStorage
+                // Save users to memory cache AND localStorage (for component compatibility)
                 if (users && users.length > 0) {
-                    // Transform MySQL format to localStorage format
                     const transformedUsers = users.map(u => ({
                         id: u.id,
                         username: u.username,
@@ -221,6 +242,10 @@
                         updatedAt: u.updated_at
                     }));
 
+                    // Store in memory cache
+                    this.cache.users = transformedUsers;
+
+                    // Also store in localStorage for component compatibility
                     localStorage.setItem('admin_users', JSON.stringify(transformedUsers));
                     localStorage.setItem('adminUsers', JSON.stringify(transformedUsers));
                     localStorage.setItem('registeredUsers', JSON.stringify(transformedUsers));
@@ -228,7 +253,7 @@
                     console.log(`🗄️ Loaded ${transformedUsers.length} users from MySQL`);
                 }
 
-                // Save packages
+                // Save packages to cache and localStorage
                 if (packages && packages.length > 0) {
                     const transformedPackages = packages.map(p => ({
                         id: p.id,
@@ -239,17 +264,20 @@
                         active: p.active == 1
                     }));
 
+                    this.cache.packages = transformedPackages;
                     localStorage.setItem('adminPackages', JSON.stringify(transformedPackages));
                     console.log(`🗄️ Loaded ${transformedPackages.length} packages from MySQL`);
                 }
 
-                // Save payments
+                // Save payments to cache
                 if (payments && payments.length > 0) {
+                    this.cache.payments = payments;
                     localStorage.setItem('adminPayments', JSON.stringify(payments));
                 }
 
-                // Save config
+                // Save config to cache
                 if (config) {
+                    this.cache.config = config;
                     if (config.contact_info) {
                         localStorage.setItem('adminContactInfo', config.contact_info);
                     }
@@ -258,14 +286,12 @@
                     }
                 }
 
-                // Trigger local sync
-                this.syncAll();
-
-                console.log('✅ MySQL sync completed');
+                this.cache.lastFetch = new Date().toISOString();
+                console.log('✅ MySQL sync completed - Data cached');
                 return true;
 
             } catch (error) {
-                console.warn('🗄️ MySQL fetch failed:', error.message);
+                console.error('🗄️ MySQL fetch failed:', error.message);
                 return false;
             }
         },
@@ -327,35 +353,41 @@
             }
         },
 
-        // Initialize service
+        // Initialize service - ONLINE ONLY
         init: async function() {
-            console.log('📡 Initializing SharedDataService v3.0 ONLINE MODE...');
+            console.log('📡 Initializing SharedDataService v4.0 ONLINE ONLY MODE...');
 
             // Setup online/offline event listeners
             window.addEventListener('online', () => {
                 this.state.isOnline = true;
+                this.hideOfflineError();
                 console.log('🌐 Network online - syncing data...');
-                this.fetchFromServer(); // Fetch from server when online
+                this.fetchFromMySQL();
             });
 
             window.addEventListener('offline', () => {
                 this.state.isOnline = false;
-                console.warn('⚠️ Network offline');
+                this.showOfflineError();
+                console.error('❌ Network offline - System cannot operate');
             });
 
             // Initial online check
             this.checkOnlineStatus();
 
-            // Fetch from server first (to get latest user accounts)
+            // REQUIRED: Fetch from MySQL (no fallback)
             if (this.state.isOnline) {
-                // Try MySQL API first, then fallback to static file
                 const mysqlSuccess = await this.fetchFromMySQL();
                 if (!mysqlSuccess) {
-                    await this.fetchFromServer();
+                    console.error('❌ Failed to connect to MySQL API. System cannot operate.');
+                    this.showAPIError();
+                    return;
                 }
+            } else {
+                console.error('❌ System requires internet connection');
+                return;
             }
 
-            // Start background sync (faster in online mode)
+            // Start background sync
             this.startBackgroundSync();
 
             // Setup real-time listeners
@@ -364,10 +396,30 @@
             // Setup auto-actions
             this.setupAutoActions();
 
-            // Initial sync
+            // Initial sync from cache
             this.syncAll();
 
-            console.log('✅ SharedDataService v3.0 initialized - Online Mode:', this.config.onlineMode);
+            console.log('✅ SharedDataService v4.0 initialized - ONLINE ONLY');
+        },
+
+        // Show API connection error
+        showAPIError: function() {
+            const errorDiv = document.createElement('div');
+            errorDiv.id = 'api-error';
+            errorDiv.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;padding:30px;border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,0.3);text-align:center;z-index:99999;max-width:400px;';
+            errorDiv.innerHTML = `
+                <h2 style="color:#FE5938;margin-bottom:15px;">❌ Lỗi Kết Nối Server</h2>
+                <p style="color:#666;margin-bottom:20px;">Không thể kết nối đến MySQL API. Vui lòng kiểm tra:</p>
+                <ul style="text-align:left;color:#666;margin-bottom:20px;">
+                    <li>File api/config.php đã được cấu hình</li>
+                    <li>Database MySQL đã được tạo</li>
+                    <li>Server đang chạy</li>
+                </ul>
+                <button onclick="location.reload()" style="background:#E36323;color:white;border:none;padding:10px 20px;border-radius:5px;cursor:pointer;">
+                    🔄 Thử Lại
+                </button>
+            `;
+            document.body.appendChild(errorDiv);
         },
 
         // Sync all data
@@ -1015,6 +1067,6 @@
     // Export to window
     window.SharedDataService = SharedDataService;
 
-    console.log('✅ Enhanced SharedDataService v2.2.0 loaded successfully - No demo data!');
+    console.log('✅ SharedDataService v4.0 loaded - ONLINE ONLY MODE (MySQL)');
 
 })(); 

@@ -7,9 +7,9 @@
     // API endpoint for authentication
     const API_BASE_URL = window.API_BASE_URL || '/api';
 
-    // Auth service for MySQL-based authentication
+    // Auth service for MySQL-based authentication (ONLINE ONLY - No fallback)
     const AuthService = {
-        // Login via MySQL API
+        // Login via MySQL API - ONLINE ONLY
         login: async function(username, password) {
             try {
                 const response = await fetch(`${API_BASE_URL}/auth.php?action=login`, {
@@ -23,7 +23,7 @@
                 const result = await response.json();
 
                 if (!response.ok) {
-                    throw new Error(result.error || 'Login failed');
+                    throw new Error(result.error || 'Đăng nhập thất bại');
                 }
 
                 // Save token to sessionStorage
@@ -35,20 +35,9 @@
                 return result;
 
             } catch (error) {
-                // Fallback to default credentials if API not available
-                if (error.message.includes('fetch') || error.message.includes('NetworkError')) {
-                    console.warn('⚠️ API not available, using fallback credentials');
-                    if (username === 'admin' && password === 'admin123') {
-                        return {
-                            success: true,
-                            user: {
-                                username: 'admin',
-                                fullName: 'Administrator',
-                                role: 'admin'
-                            }
-                        };
-                    }
-                    throw new Error('Invalid credentials');
+                // No fallback - must be online
+                if (error.message.includes('fetch') || error.message.includes('NetworkError') || error.name === 'TypeError') {
+                    throw new Error('Không thể kết nối server. Vui lòng kiểm tra kết nối mạng và cấu hình API.');
                 }
                 throw error;
             }
