@@ -1,4 +1,4 @@
-// 🤖 AUTO PAYMENT VERIFIER MODULE
+//  AUTO PAYMENT VERIFIER MODULE
 // Version: 1.0.0 | Created: 2024
 // Tự động khớp giao dịch ngân hàng với pending payments
 (function() {
@@ -11,7 +11,7 @@
         info: (...args) => window.Logger ? window.Logger.info(...args) : console.info(...args)
     };
 
-    logger.log('🤖 [AutoPaymentVerifier] Loading version 1.0.0');
+    logger.log(' [AutoPaymentVerifier] Loading version 1.0.0');
 
     const { useState, useCallback, memo } = React;
 
@@ -35,7 +35,7 @@
                 }
             }
 
-            logger.log('🤖 [AutoPaymentVerifier] Parsed transactions:', transactions.length);
+            logger.log(' [AutoPaymentVerifier] Parsed transactions:', transactions.length);
             return transactions;
         },
 
@@ -77,7 +77,7 @@
          */
         matchWithPendingPayments(transactions) {
             if (!window.GlobalStateManager) {
-                logger.error('❌ [AutoPaymentVerifier] GlobalStateManager not available');
+                logger.error(' [AutoPaymentVerifier] GlobalStateManager not available');
                 return { matched: [], unmatched: transactions };
             }
 
@@ -119,7 +119,7 @@
                 }
             }
 
-            logger.log('🤖 [AutoPaymentVerifier] Match results:', {
+            logger.log(' [AutoPaymentVerifier] Match results:', {
                 matched: matched.length,
                 unmatched: unmatched.length
             });
@@ -177,7 +177,7 @@
 
                     if (result) {
                         success++;
-                        logger.log('✅ [AutoPaymentVerifier] Auto-approved:', {
+                        logger.log(' [AutoPaymentVerifier] Auto-approved:', {
                             orderId: payment.orderId,
                             user: user.fullName
                         });
@@ -185,7 +185,7 @@
                         failed++;
                     }
                 } catch (error) {
-                    logger.error('❌ [AutoPaymentVerifier] Error approving payment:', error);
+                    logger.error(' [AutoPaymentVerifier] Error approving payment:', error);
                     failed++;
                 }
             }
@@ -222,7 +222,7 @@
                 setResults(matchResults);
 
             } catch (error) {
-                logger.error('❌ [AutoPaymentVerifier] Error:', error);
+                logger.error(' [AutoPaymentVerifier] Error:', error);
                 alert('Lỗi xử lý dữ liệu: ' + error.message);
             }
 
@@ -250,7 +250,7 @@
             );
 
             window.GlobalStateManager.addNotification(
-                `✅ Đã tự động duyệt ${success} giao dịch${failed > 0 ? `, ${failed} lỗi` : ''}`,
+                ` Đã tự động duyệt ${success} giao dịch${failed > 0 ? `, ${failed} lỗi` : ''}`,
                 success > 0 ? 'success' : 'warning',
                 'AutoPaymentVerifier'
             );
@@ -273,7 +273,7 @@
                 }));
 
                 window.GlobalStateManager.addNotification(
-                    `✅ Đã duyệt giao dịch ${matchItem.payment.orderId}`,
+                    ` Đã duyệt giao dịch ${matchItem.payment.orderId}`,
                     'success',
                     'AutoPaymentVerifier'
                 );
@@ -293,20 +293,20 @@
         return React.createElement('div', { className: 'space-y-6' },
             // Header
             React.createElement('div', { className: 'flex justify-between items-center' },
-                React.createElement('h2', { className: 'text-xl font-bold' }, '🤖 Auto Payment Verifier'),
+                React.createElement('h2', { className: 'text-xl font-bold' }, ' Auto Payment Verifier'),
                 results && results.matched.length > 0 && React.createElement(window.Button, {
                     variant: 'success',
                     onClick: handleAutoApprove
-                }, `✅ Tự động duyệt (${results.matched.filter(m => m.confidence === 'high').length})`)
+                }, ` Tự động duyệt (${results.matched.filter(m => m.confidence === 'high').length})`)
             ),
 
             // Input section
-            React.createElement(window.Card, { title: '📋 Nhập dữ liệu giao dịch ngân hàng' },
+            React.createElement(window.Card, { title: ' Nhập dữ liệu giao dịch ngân hàng' },
                 React.createElement('div', { className: 'space-y-4' },
                     // Instructions
                     React.createElement('div', { className: 'bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm' },
                         React.createElement('p', { className: 'font-medium text-blue-800 mb-2' },
-                            '📌 Hướng dẫn sử dụng:'
+                            ' Hướng dẫn sử dụng:'
                         ),
                         React.createElement('ul', { className: 'list-disc list-inside text-blue-700 space-y-1' },
                             React.createElement('li', {}, 'Copy lịch sử giao dịch từ app ngân hàng hoặc SMS'),
@@ -331,7 +331,7 @@
                             onClick: handleVerify,
                             disabled: processing || !rawText.trim(),
                             variant: 'primary'
-                        }, processing ? '⏳ Đang xử lý...' : '🔍 Kiểm tra & Khớp')
+                        }, processing ? '⏳ Đang xử lý...' : ' Kiểm tra & Khớp')
                     )
                 )
             ),
@@ -340,7 +340,7 @@
             results && React.createElement('div', { className: 'space-y-4' },
                 // Matched transactions
                 results.matched.length > 0 && React.createElement(window.Card, {
-                    title: `✅ Giao dịch khớp (${results.matched.length})`
+                    title: ` Giao dịch khớp (${results.matched.length})`
                 },
                     React.createElement('div', { className: 'space-y-3' },
                         results.matched.map((match, index) =>
@@ -392,13 +392,13 @@
                                         ),
                                         !match.amountMatch && React.createElement('p', {
                                             className: 'text-sm text-yellow-700 mt-2'
-                                        }, '⚠️ Số tiền không khớp chính xác')
+                                        }, ' Số tiền không khớp chính xác')
                                     ),
                                     React.createElement(window.Button, {
                                         size: 'small',
                                         variant: 'success',
                                         onClick: () => handleApproveSingle(match)
-                                    }, '✅ Duyệt')
+                                    }, ' Duyệt')
                                 )
                             )
                         )
@@ -407,7 +407,7 @@
 
                 // Unmatched transactions
                 results.unmatched.length > 0 && React.createElement(window.Card, {
-                    title: `❓ Không tìm thấy (${results.unmatched.length})`
+                    title: ` Không tìm thấy (${results.unmatched.length})`
                 },
                     React.createElement('div', { className: 'space-y-2' },
                         results.unmatched.map((transaction, index) =>
@@ -440,7 +440,7 @@
                 results.matched.length === 0 && results.unmatched.length > 0 &&
                 React.createElement('div', { className: 'bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center' },
                     React.createElement('p', { className: 'text-yellow-800' },
-                        '⚠️ Không tìm thấy giao dịch nào khớp với pending payments'
+                        ' Không tìm thấy giao dịch nào khớp với pending payments'
                     )
                 )
             )
@@ -451,6 +451,6 @@
     window.AutoPaymentVerifier = AutoPaymentVerifier;
     window.AutoPaymentVerifierService = AutoPaymentVerifierService;
 
-    logger.log('✅ [AutoPaymentVerifier] Module loaded successfully');
+    logger.log(' [AutoPaymentVerifier] Module loaded successfully');
 
 })();

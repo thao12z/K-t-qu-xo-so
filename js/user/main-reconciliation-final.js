@@ -1,7 +1,7 @@
   (function() {
     'use strict';
     
-    console.log('🧮 FINAL VERSION: Starting with working foundation...');
+    console.log(' FINAL VERSION: Starting with working foundation...');
     
     // Helper function - DEFAULT TO TODAY for current data
     const getLatestAvailableDate = () => {
@@ -50,7 +50,7 @@
     // Chuyển đổi input phức tạp thành dạng chuẩn
     // ==========================================
     window.advancedPreprocessInput = (rawInput) => {
-        console.log('🔄 [PREPROCESS] Starting advanced input preprocessing...');
+        console.log(' [PREPROCESS] Starting advanced input preprocessing...');
         const results = [];
 
         // Normalize input - xử lý unicode và whitespace
@@ -72,7 +72,7 @@
             results.push(...processed);
         }
 
-        console.log(`✅ [PREPROCESS] Converted to ${results.length} simple bet lines`);
+        console.log(` [PREPROCESS] Converted to ${results.length} simple bet lines`);
         return results;
     };
 
@@ -273,7 +273,7 @@
 
             if (selectedDate) {
                 // ASYNC: Fetch data for specific date (now async in online mode)
-                console.log(`[getLotteryData] 🌐 Fetching data for ${selectedDate}...`);
+                console.log(`[getLotteryData]  Fetching data for ${selectedDate}...`);
                 data = await window.LotteryDataService.getDataForDate(selectedDate, region);
                 console.log(`[getLotteryData] Requested ${selectedDate}: ${data ? 'Found' : 'Not found'}`);
             } else {
@@ -283,7 +283,7 @@
 
             // Check for error response from date validation
             if (data && data.error) {
-                console.error(`[getLotteryData] ❌ Error: ${data.error}`);
+                console.error(`[getLotteryData]  Error: ${data.error}`);
                 return { error: data.error };
             }
 
@@ -396,11 +396,11 @@
         const baCangArray = [];
 
         // Extract from special prize (Giải Đặc Biệt) - ĐỀ CHỈ TỪ ĐẶC BIỆT
-        console.log(`🔍 [extractAllLotteryNumbers] Raw special prize:`, rawResults.giai_dac_biet);
+        console.log(` [extractAllLotteryNumbers] Raw special prize:`, rawResults.giai_dac_biet);
         
         if (rawResults.giai_dac_biet && rawResults.giai_dac_biet.length > 0) {
             const specialNumber = rawResults.giai_dac_biet[0];
-            console.log(`🔍 [extractAllLotteryNumbers] Special number found: "${specialNumber}" (type: ${typeof specialNumber})`);
+            console.log(` [extractAllLotteryNumbers] Special number found: "${specialNumber}" (type: ${typeof specialNumber})`);
             
             if (specialNumber && specialNumber.length >= 2) {
                 const lastTwo = specialNumber.slice(-2);
@@ -508,7 +508,7 @@
             return data;
         };
 
-        console.log('🚀 LotteryDataService enhanced with auto array extraction!');
+        console.log(' LotteryDataService enhanced with auto array extraction!');
     };
 
     // Auto-enhance when available
@@ -960,7 +960,7 @@
         const numbers = bet.numbers;
         const type = bet.type.toLowerCase();
         
-        console.log(`🔍 [OPTIMIZED DEBUG] Checking:`, {
+        console.log(` [OPTIMIZED DEBUG] Checking:`, {
             type: type,
             numbers: numbers,
             deArray: deArray,
@@ -1332,7 +1332,7 @@
     
     // Main component with core functionality
     const MainReconciliation = () => {
-        console.log('📄 FINAL: Rendering MainReconciliation...');
+        console.log(' FINAL: Rendering MainReconciliation...');
         
         // Package status check - CRITICAL SECURITY
         const currentUser = window.AuthService?.getCurrentUser();
@@ -1371,7 +1371,7 @@
                 const savedParams = localStorage.getItem('lottery_parameters');
                 if (savedParams) {
                     const parsed = JSON.parse(savedParams);
-                    console.log('💾 Loaded saved parameters from localStorage');
+                    console.log(' Loaded saved parameters from localStorage');
                     return { ...window.DEFAULT_PARAMETERS, ...parsed };
                 }
             } catch (error) {
@@ -1433,7 +1433,7 @@
                 return;
             }
 
-            console.log('🔍 [AUTO-VALIDATION] Validating bets...');
+            console.log(' [AUTO-VALIDATION] Validating bets...');
 
             const lines = parseInputText(text);
 
@@ -1478,7 +1478,7 @@
 
             const validCount = validation.filter(v => v.isValid && v.line.trim()).length;
             const errorCount = validation.filter(v => !v.isValid && v.line.trim()).length;
-            console.log(`✅ [AUTO-VALIDATION] Valid: ${validCount}, Errors: ${errorCount}`);
+            console.log(` [AUTO-VALIDATION] Valid: ${validCount}, Errors: ${errorCount}`);
         }, [parseInputText]);
 
         // Handlers
@@ -1526,12 +1526,12 @@
             }
 
             const validationStartTime = performance.now();
-            console.log('🔍 [VALIDATION] Validating bets...');
+            console.log(' [VALIDATION] Validating bets...');
 
             // Use advanced parsing to handle multiple formats
             const lines = parseInputText(betText);
             const lineCount = lines.length;
-            console.log(`📊 [VALIDATION] Parsed ${lineCount} lines`);
+            console.log(` [VALIDATION] Parsed ${lineCount} lines`);
 
             // PERFORMANCE: Pre-allocate validation array
             const validation = new Array(lineCount);
@@ -1581,7 +1581,7 @@
 
                 // PERFORMANCE: Progress update for large datasets every 1000 lines
                 if (lineCount > 1000 && index % 1000 === 0 && index > 0) {
-                    console.log(`📊 [VALIDATION] Progress: ${index}/${lineCount} (${((index/lineCount)*100).toFixed(1)}%)`);
+                    console.log(` [VALIDATION] Progress: ${index}/${lineCount} (${((index/lineCount)*100).toFixed(1)}%)`);
                 }
             }
 
@@ -1611,7 +1611,7 @@
             const validationEndTime = performance.now();
             const duration = (validationEndTime - validationStartTime).toFixed(2);
 
-            console.log(`✅ [VALIDATION] Completed in ${duration}ms: ${validCount} valid, ${errorCount} errors, ${lineCount} total`);
+            console.log(` [VALIDATION] Completed in ${duration}ms: ${validCount} valid, ${errorCount} errors, ${lineCount} total`);
 
             if (errorCount > 0) {
                 console.warn(`[VALIDATION] Found ${errorCount} syntax errors that need to be fixed!`);
@@ -1708,18 +1708,18 @@
             }
             
             if (!activeValidationResults) {
-                alert('⚠️ Bạn phải kiểm tra cú pháp trước khi đối chiếu!\n\nHãy nhấn nút "Kiểm Tra Cú Pháp" để xác nhận dữ liệu đầu vào hợp lệ.');
+                alert(' Bạn phải kiểm tra cú pháp trước khi đối chiếu!\n\nHãy nhấn nút "Kiểm Tra Cú Pháp" để xác nhận dữ liệu đầu vào hợp lệ.');
                 return;
             }
             
             const invalidLines = activeValidationResults.filter(item => item.line.trim() && !item.isValid);
             console.log(`[DEBUG] Invalid lines count:`, invalidLines.length);
             if (invalidLines.length > 0) {
-                alert(`❌ Có ${invalidLines.length} dòng lỗi cú pháp!\n\nVui lòng sửa các lỗi sau trước khi đối chiếu:\n\n${invalidLines.slice(0, 5).map(item => `Dòng ${item.lineNumber}: ${item.error}`).join('\n')}${invalidLines.length > 5 ? `\n... và ${invalidLines.length - 5} lỗi khác` : ''}`);
+                alert(` Có ${invalidLines.length} dòng lỗi cú pháp!\n\nVui lòng sửa các lỗi sau trước khi đối chiếu:\n\n${invalidLines.slice(0, 5).map(item => `Dòng ${item.lineNumber}: ${item.error}`).join('\n')}${invalidLines.length > 5 ? `\n... và ${invalidLines.length - 5} lỗi khác` : ''}`);
                 return;
             }
             
-            console.log(`✅ [VALIDATION] Passed: ${activeValidationResults.filter(r => r.isValid && r.line.trim()).length} valid lines`);
+            console.log(` [VALIDATION] Passed: ${activeValidationResults.filter(r => r.isValid && r.line.trim()).length} valid lines`);
         
             
             // Check RSS timing first - ENHANCED WITH DATE LOGIC
@@ -1752,11 +1752,11 @@
                 let lotteryData = null;
                 let actualDataDate = null;
                 
-                console.log(`🔍 Tìm dữ liệu cho ngày: ${parameters.ngay}`);
+                console.log(` Tìm dữ liệu cho ngày: ${parameters.ngay}`);
                 
                 // Strategy 1: Use requested date with proper info extraction - ASYNC ONLINE
                 if (parameters.ngay) {
-                    console.log(`[DEBUG] 🌐 Requesting lottery data ONLINE for date: "${parameters.ngay}"`);
+                    console.log(`[DEBUG]  Requesting lottery data ONLINE for date: "${parameters.ngay}"`);
 
                     // ASYNC: Await the fetch
                     lotteryData = await window.getLotteryData(parameters.mien, parameters.ngay);
@@ -1769,8 +1769,8 @@
 
                     // Check for error response (date validation, etc.)
                     if (lotteryData && lotteryData.error) {
-                        console.error(`❌ Lỗi dữ liệu: ${lotteryData.error}`);
-                        alert(`❌ ${lotteryData.error}`);
+                        console.error(` Lỗi dữ liệu: ${lotteryData.error}`);
+                        alert(` ${lotteryData.error}`);
                         setIsLoading(false);
                         return;
                     }
@@ -1781,7 +1781,7 @@
                         actualDataDate = lotteryInfo?.date || parameters.ngay;
                         console.log(`[DEBUG] getLotteryInfo result:`, lotteryInfo);
 
-                        console.log(`✅ Tìm thấy dữ liệu ONLINE - Requested: ${parameters.ngay}, Actual: ${actualDataDate}`);
+                        console.log(` Tìm thấy dữ liệu ONLINE - Requested: ${parameters.ngay}, Actual: ${actualDataDate}`);
                         console.log(`Data type: ${lotteryInfo?.dataType || 'rss_online'}`);
                     }
                 }
@@ -1791,7 +1791,7 @@
                 
                 // Final check with enhanced debugging
                 if (!lotteryData) {
-                    console.error(`❌ CRITICAL: No lottery data for ${parameters.ngay}`);
+                    console.error(` CRITICAL: No lottery data for ${parameters.ngay}`);
                     console.error(`Debug info:`, {
                         requestedDate: parameters.ngay,
                         actualDataDate: actualDataDate,
@@ -1801,7 +1801,7 @@
                     });
 
                     // ONLINE MODE: Show network error message
-                    alert(`❌ Không thể lấy dữ liệu xổ số online cho ngày ${parameters.ngay}.\n\nVui lòng kiểm tra:\n- Kết nối mạng\n- Ngày phải là ngày trong quá khứ hoặc hôm nay sau 18:30\n\nThử lại sau vài giây.`);
+                    alert(` Không thể lấy dữ liệu xổ số online cho ngày ${parameters.ngay}.\n\nVui lòng kiểm tra:\n- Kết nối mạng\n- Ngày phải là ngày trong quá khứ hoặc hôm nay sau 18:30\n\nThử lại sau vài giây.`);
                     setIsLoading(false);
                     return;
                 }
@@ -2003,7 +2003,7 @@
 
         // Handle parameter changes - REAL-TIME UPDATE
         const handleParameterChange = React.useCallback((key, value) => {
-            console.log(`🔧 Parameter changed: ${key} = ${value}`);
+            console.log(` Parameter changed: ${key} = ${value}`);
             
             setParameters(prev => {
                 const newParams = {
@@ -2014,7 +2014,7 @@
                 // Auto-save to localStorage for persistence
                 try {
                     localStorage.setItem('lottery_parameters', JSON.stringify(newParams));
-                    console.log('💾 Parameters saved to localStorage');
+                    console.log(' Parameters saved to localStorage');
                 } catch (error) {
                     console.warn('Could not save parameters to localStorage:', error);
                 }
@@ -2029,7 +2029,7 @@
                     // Trigger re-processing with updated parameters
                     const currentLotteryData = lotteryResults;
                     if (currentLotteryData) {
-                        console.log('♻️ Re-processing existing results with updated parameters');
+                        console.log(' Re-processing existing results with updated parameters');
                         // The existing results will be recalculated on next render
                     }
                 }, 100);
@@ -2039,7 +2039,7 @@
         // ADVANCED STRING PARSING - Handle multiple formats
         const parseInputText = React.useCallback((inputText) => {
             const startTime = performance.now();
-            console.log('📊 Parsing input text, length:', inputText.length, 'chars');
+            console.log(' Parsing input text, length:', inputText.length, 'chars');
 
             if (!inputText.trim()) return [];
 
@@ -2050,7 +2050,7 @@
             // If preprocessor returns results, use them
             if (preprocessedLines.length > 0) {
                 const endTime = performance.now();
-                console.log(`✅ Advanced preprocessing complete: ${preprocessedLines.length} lines in ${(endTime - startTime).toFixed(2)}ms`);
+                console.log(` Advanced preprocessing complete: ${preprocessedLines.length} lines in ${(endTime - startTime).toFixed(2)}ms`);
                 return preprocessedLines;
             }
 
@@ -2069,7 +2069,7 @@
 
             // Strategy 1: Newline-separated (most common for large data)
             if (hasNewline) {
-                console.log('📝 Fast path: Newline-separated format');
+                console.log(' Fast path: Newline-separated format');
 
                 // PERFORMANCE: Single split operation
                 const rawLines = inputText.split('\n');
@@ -2100,13 +2100,13 @@
                 lines.length = validCount;
 
                 const endTime = performance.now();
-                console.log(`✅ Parsed ${validCount} lines in ${(endTime - startTime).toFixed(2)}ms`);
+                console.log(` Parsed ${validCount} lines in ${(endTime - startTime).toFixed(2)}ms`);
                 return lines;
             }
 
             // Strategy 2: Single line with comma separation
             if (hasComma && !hasNewline) {
-                console.log('📝 Comma-separated format');
+                console.log(' Comma-separated format');
                 const parts = inputText.split(',');
                 lines = new Array(parts.length);
                 let validCount = 0;
@@ -2121,13 +2121,13 @@
                 lines.length = validCount;
 
                 const endTime = performance.now();
-                console.log(`✅ Parsed ${validCount} lines in ${(endTime - startTime).toFixed(2)}ms`);
+                console.log(` Parsed ${validCount} lines in ${(endTime - startTime).toFixed(2)}ms`);
                 return lines;
             }
 
             // Strategy 3: Single line with multiple bets (needs smart splitting)
             // This is the complex case - optimize for it
-            console.log('📝 Single line format - smart splitting');
+            console.log(' Single line format - smart splitting');
             const singleLine = inputText.trim();
 
             // PERFORMANCE: Use single compiled regex for all splitting
@@ -2158,7 +2158,7 @@
 
                 if (validCount > 1) {
                     const endTime = performance.now();
-                    console.log(`✅ Split by money unit into ${validCount} bets in ${(endTime - startTime).toFixed(2)}ms`);
+                    console.log(` Split by money unit into ${validCount} bets in ${(endTime - startTime).toFixed(2)}ms`);
                     return lines;
                 }
             }
@@ -2195,7 +2195,7 @@
                 if (splitLines.length > 1) {
                     lines = splitLines;
                     const endTime = performance.now();
-                    console.log(`✅ Split by keywords into ${lines.length} bets in ${(endTime - startTime).toFixed(2)}ms`);
+                    console.log(` Split by keywords into ${lines.length} bets in ${(endTime - startTime).toFixed(2)}ms`);
                     return lines;
                 }
             }
@@ -2204,7 +2204,7 @@
             lines = [singleLine];
 
             const endTime = performance.now();
-            console.log(`✅ Single bet parsed in ${(endTime - startTime).toFixed(2)}ms`);
+            console.log(` Single bet parsed in ${(endTime - startTime).toFixed(2)}ms`);
             return lines;
         }, []);
 
@@ -2231,7 +2231,7 @@
                 };
                 setProcessingProgress(progress);
                 
-                console.log(`⚡ Processing batch ${batchIndex + 1}/${batches} (lines ${start + 1}-${end})`);
+                console.log(` Processing batch ${batchIndex + 1}/${batches} (lines ${start + 1}-${end})`);
                 
                 // Process batch
                 const batchResults = batchLines.map((line, index) => {
@@ -2299,7 +2299,7 @@
         if (!accessCheck.allowed) {
             return React.createElement('div', {className: 'min-h-screen bg-[#F8F7F7] flex items-center justify-center p-8'},
                 React.createElement('div', {className: 'bg-white rounded-lg shadow-lg p-8 max-w-2xl text-center'},
-                    React.createElement('div', {className: 'text-red-500 text-6xl mb-6'}, '🚫'),
+                    React.createElement('div', {className: 'text-red-500 text-6xl mb-6'}, ''),
                     React.createElement('h2', {className: 'text-2xl font-bold text-[#121212] mb-4'}, 'Truy Cập Bị Hạn Chế'),
                     React.createElement('p', {className: 'text-[#7B7B7B] mb-6'}, accessCheck.reason),
                     React.createElement('div', {className: 'space-y-4'},
@@ -2323,7 +2323,7 @@
                                     }
                                 },
                                 className: 'w-full px-6 py-3 bg-[#E36323] text-white rounded-lg hover:bg-[#DF5A18] font-semibold transition-colors'
-                            }, '💰 Xem Gói Dịch Vụ'),
+                            }, ' Xem Gói Dịch Vụ'),
                             React.createElement('button', {
                                 onClick: () => {
                                     if (window.AuthService) {
@@ -2339,7 +2339,7 @@
                                 window.location.href = 'index.html';
                             },
                             className: 'w-full px-6 py-3 bg-[#E36323] text-white rounded-lg hover:bg-[#DF5A18] font-semibold transition-colors'
-                        }, '🔑 Đăng Nhập')
+                        }, ' Đăng Nhập')
                     )
                 )
             );
@@ -2357,7 +2357,7 @@
                         React.createElement('button', {
                             onClick: () => setShowConfig(!showConfig),
                             className: `px-4 py-2 rounded-lg text-sm font-medium ${showConfig ? 'bg-[#E36323] text-white' : 'bg-[#ECECEC] text-[#7B7B7B] hover:bg-[#ECECEC]'}`
-                        }, showConfig ? 'Cấu Hình' : '⚙️ Cấu Hình'),
+                        }, showConfig ? 'Cấu Hình' : ' Cấu Hình'),
 
                         React.createElement('button', {
                             onClick: () => {
@@ -2369,7 +2369,7 @@
                                 }
                             },
                             className: 'px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-sm'
-                        }, '📋 Xem Arrays')
+                        }, ' Xem Arrays')
                     )
                 )
             ),
@@ -2377,7 +2377,7 @@
             // ============ SECTION A: THAM SỐ HỆ THỐNG (16 FIELDS) ============
             // Configuration Panel
             showConfig && React.createElement('div', {className: 'bg-white rounded-lg shadow-md p-4 mb-6'},
-                React.createElement('h2', {className: 'text-lg font-semibold text-[#121212] mb-4'}, '⚙️ Cấu Hình Tham Số'),
+                React.createElement('h2', {className: 'text-lg font-semibold text-[#121212] mb-4'}, ' Cấu Hình Tham Số'),
                 
                 // Date and Region Selection - SECTION A
                 React.createElement('div', {className: 'mb-6'},
@@ -2400,8 +2400,8 @@
                                 const timingCheck = checkRssTiming();
                                 const statusColor = timingCheck.isValid ? 'text-green-600' : 
                                                    timingCheck.canProceed ? 'text-orange-600' : 'text-red-600';
-                                const statusIcon = timingCheck.isValid ? '✅' : 
-                                                  timingCheck.canProceed ? '⚠️' : '❌';
+                                const statusIcon = timingCheck.isValid ? '' : 
+                                                  timingCheck.canProceed ? '' : '';
                                 
                                 return React.createElement('div', {className: `text-xs mt-2 p-2 rounded ${
                                     timingCheck.isValid ? 'bg-green-50' : 
@@ -2436,7 +2436,7 @@
                 ),
                 
                 // 16 Parameters Section - SECTION B
-                React.createElement('h3', {className: 'text-md font-medium text-[#7B7B7B] mb-3'}, '💰 16 Tham Số Tính Toán'),
+                React.createElement('h3', {className: 'text-md font-medium text-[#7B7B7B] mb-3'}, ' 16 Tham Số Tính Toán'),
                 React.createElement('div', {className: 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4'},
                     // Lô parameters
                     React.createElement('div', {className: 'space-y-3'},
@@ -2589,7 +2589,7 @@
             // RSS Timing Warning
             rssTimingWarning && React.createElement('div', {className: 'bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6'},
                 React.createElement('div', {className: 'flex items-center'},
-                    React.createElement('div', {className: 'text-amber-600 mr-2'}, '⚠️'),
+                    React.createElement('div', {className: 'text-amber-600 mr-2'}, ''),
                     React.createElement('div', {},
                         React.createElement('div', {className: 'font-medium text-amber-800'}, 'Cảnh báo thời gian'),
                         React.createElement('div', {className: 'text-amber-700 text-sm'}, rssTimingWarning),
@@ -2658,7 +2658,7 @@
                                 },
                                     validationResults.filter(v => !v.isValid && v.line.trim()).length > 0
                                         ? `${validationResults.filter(v => !v.isValid && v.line.trim()).length} lỗi`
-                                        : '✓ Hợp lệ'
+                                        : ' Hợp lệ'
                                 )
                             ),
                             React.createElement('div', {
@@ -2765,10 +2765,10 @@
                                     'Đang xử lý...'
                                 ) : 
                                 !validationResults ? 
-                                    '⚠️ Cần kiểm tra cú pháp trước' :
+                                    ' Cần kiểm tra cú pháp trước' :
                                     validationResults.filter(item => item.line.trim() && !item.isValid).length > 0 ?
-                                        '❌ Có lỗi cú pháp' :
-                                        '✅ Đối Chiếu Kết Quả'
+                                        ' Có lỗi cú pháp' :
+                                        ' Đối Chiếu Kết Quả'
                         ),
                         React.createElement('button', {
                             onClick: () => {
@@ -2828,8 +2828,8 @@
                         ),
                         React.createElement('div', {className: 'text-sm text-[#7B7B7B]'},
                             lotteryResults.isSimulation ? 
-                                '🎲 Simulation Data' : 
-                                '📡 RSS xosodaiphat.com'
+                                ' Simulation Data' : 
+                                ' RSS xosodaiphat.com'
                         )
                     ),
                     React.createElement('div', {className: 'grid grid-cols-1 md:grid-cols-2 gap-4'},
@@ -2918,9 +2918,9 @@
                                 getPaginatedResults().data.map((item, index) => {
                                     // DEBUG: Log every item to trace issue
                                     if (index === 0) {
-                                        console.log('🔍 [Table Debug] First item full structure:', JSON.stringify(item, null, 2));
-                                        if (item.result) console.log('🔍 [Table Debug] Result object:', item.result);
-                                        if (item.bet) console.log('🔍 [Table Debug] Bet object:', item.bet);
+                                        console.log(' [Table Debug] First item full structure:', JSON.stringify(item, null, 2));
+                                        if (item.result) console.log(' [Table Debug] Result object:', item.result);
+                                        if (item.bet) console.log(' [Table Debug] Bet object:', item.bet);
                                     }
                                     
                                     // Handle different data structures
@@ -3094,5 +3094,5 @@
     console.log('FINAL: Component created successfully');
     
     window.MainReconciliation = MainReconciliation;
-    console.log('🎉 FINAL VERSION: Complete and functional!');
+    console.log(' FINAL VERSION: Complete and functional!');
 })();

@@ -1,4 +1,4 @@
-// 📦 PACKAGE MANAGEMENT MODULE
+//  PACKAGE MANAGEMENT MODULE
 // Version: 1.1.0 | Created: 2024 | ONLINE SYNC MODE
 (function() {
     'use strict';
@@ -19,14 +19,14 @@
 
             const result = await response.json();
             if (result.success) {
-                console.log(`✅ [PackageManagement] MySQL sync ${action}:`, packageData.id);
+                console.log(` [PackageManagement] MySQL sync ${action}:`, packageData.id);
                 return true;
             } else {
-                console.error(`❌ [PackageManagement] MySQL sync failed:`, result.error);
+                console.error(` [PackageManagement] MySQL sync failed:`, result.error);
                 return false;
             }
         } catch (error) {
-            console.error('❌ [PackageManagement] MySQL sync error:', error);
+            console.error(' [PackageManagement] MySQL sync error:', error);
             return false;
         }
     };
@@ -53,11 +53,11 @@
         // Subscribe to global state
         useEffect(() => {
             if (!window.GlobalStateManager) {
-                console.error('❌ [PackageManagement] GlobalStateManager not available');
+                console.error(' [PackageManagement] GlobalStateManager not available');
                 return;
             }
             
-            console.log('🔄 [PackageManagement] COMPONENT_MOUNT');
+            console.log(' [PackageManagement] COMPONENT_MOUNT');
             
             // Load initial data
             const initialPackages = window.GlobalStateManager.getData('packages');
@@ -66,13 +66,13 @@
             
             // Subscribe to changes
             const unsubscribe = window.GlobalStateManager.subscribe('packages', (newPackages) => {
-                console.log('🔄 [PackageManagement] PACKAGES_UPDATE', { count: newPackages.length });
+                console.log(' [PackageManagement] PACKAGES_UPDATE', { count: newPackages.length });
                 setPackages(newPackages);
             }, 'PackageManagement');
             
             return () => {
                 unsubscribe();
-                console.log('🔄 [PackageManagement] COMPONENT_UNMOUNT');
+                console.log(' [PackageManagement] COMPONENT_UNMOUNT');
             };
         }, []);
         
@@ -82,10 +82,10 @@
                 try {
                     window.GlobalStateManager.updateData('packages', packages, 'PackageManagement');
                     setHasUnsavedChanges(false);
-                    console.log('🔄 [PackageManagement] AUTO_SAVED');
+                    console.log(' [PackageManagement] AUTO_SAVED');
                     // Không hiển thị notification cho auto-save để tránh spam
                 } catch (error) {
-                    console.error('❌ [PackageManagement] AUTO_SAVE_ERROR', { error });
+                    console.error(' [PackageManagement] AUTO_SAVE_ERROR', { error });
                 }
             }
         }, [packages, hasUnsavedChanges]);
@@ -94,7 +94,7 @@
         const savePackages = useCallback(() => {
             if (!hasUnsavedChanges) {
                 window.GlobalStateManager.addNotification(
-                    'ℹ️ Không có thay đổi nào để lưu',
+                    ' Không có thay đổi nào để lưu',
                     'info',
                     'PackageManagement'
                 );
@@ -106,15 +106,15 @@
                 window.GlobalStateManager.updateData('packages', packages, 'PackageManagement');
                 setHasUnsavedChanges(false);
                 window.GlobalStateManager.addNotification(
-                    '✅ Đã lưu gói thành công!',
+                    ' Đã lưu gói thành công!',
                     'success',
                     'PackageManagement'
                 );
-                console.log('🔄 [PackageManagement] PACKAGES_SAVED', { count: packages.length });
+                console.log(' [PackageManagement] PACKAGES_SAVED', { count: packages.length });
             } catch (error) {
-                console.error('❌ [PackageManagement] SAVE_ERROR', { error });
+                console.error(' [PackageManagement] SAVE_ERROR', { error });
                 window.GlobalStateManager.addNotification(
-                    '❌ Lưu gói thất bại',
+                    ' Lưu gói thất bại',
                     'error',
                     'PackageManagement'
                 );
@@ -137,7 +137,7 @@
             
             if (!newPackage.name || newPackage.price <= 0) {
                 window.GlobalStateManager.addNotification(
-                    '❌ Please fill all required fields',
+                    ' Please fill all required fields',
                     'error',
                     'PackageManagement'
                 );
@@ -154,10 +154,10 @@
             setPackages(updatedPackages);
             setHasUnsavedChanges(true);
 
-            // ✅ SYNC TO MYSQL
+            //  SYNC TO MYSQL
             syncPackageToMySQL(packageToAdd, 'create').then(success => {
                 if (success) {
-                    console.log('✅ [PackageManagement] Package synced to MySQL');
+                    console.log(' [PackageManagement] Package synced to MySQL');
                 }
             });
 
@@ -173,12 +173,12 @@
             });
 
             window.GlobalStateManager.addNotification(
-                `✅ Package "${packageToAdd.name}" added successfully`,
+                ` Package "${packageToAdd.name}" added successfully`,
                 'success',
                 'PackageManagement'
             );
 
-            console.log('🔄 [PackageManagement] PACKAGE_ADDED', { packageId: packageToAdd.id });
+            console.log(' [PackageManagement] PACKAGE_ADDED', { packageId: packageToAdd.id });
         }, [newPackage, packages]);
         
         // Edit package
@@ -202,7 +202,7 @@
             
             if (!editPackage || !newPackage.name || newPackage.price <= 0) {
                 window.GlobalStateManager.addNotification(
-                    '❌ Please fill all required fields',
+                    ' Please fill all required fields',
                     'error',
                     'PackageManagement'
                 );
@@ -222,10 +222,10 @@
             setPackages(updatedPackages);
             setHasUnsavedChanges(true);
 
-            // ✅ SYNC TO MYSQL
+            //  SYNC TO MYSQL
             syncPackageToMySQL(updatedPkg, 'update').then(success => {
                 if (success) {
-                    console.log('✅ [PackageManagement] Package update synced to MySQL');
+                    console.log(' [PackageManagement] Package update synced to MySQL');
                 }
             });
 
@@ -242,12 +242,12 @@
             });
 
             window.GlobalStateManager.addNotification(
-                `✅ Package "${newPackage.name}" updated successfully`,
+                ` Package "${newPackage.name}" updated successfully`,
                 'success',
                 'PackageManagement'
             );
 
-            console.log('🔄 [PackageManagement] PACKAGE_UPDATED', { packageId: editPackage.id });
+            console.log(' [PackageManagement] PACKAGE_UPDATED', { packageId: editPackage.id });
         }, [editPackage, newPackage, packages]);
         
         // Delete package
@@ -260,20 +260,20 @@
                 setPackages(updatedPackages);
                 setHasUnsavedChanges(true);
 
-                // ✅ SYNC TO MYSQL - Mark as inactive instead of delete
+                //  SYNC TO MYSQL - Mark as inactive instead of delete
                 syncPackageToMySQL({ ...packageToDelete, active: false }, 'delete').then(success => {
                     if (success) {
-                        console.log('✅ [PackageManagement] Package delete synced to MySQL');
+                        console.log(' [PackageManagement] Package delete synced to MySQL');
                     }
                 });
 
                 window.GlobalStateManager.addNotification(
-                    `✅ Package "${packageToDelete.name}" deleted successfully`,
+                    ` Package "${packageToDelete.name}" deleted successfully`,
                     'success',
                     'PackageManagement'
                 );
 
-                console.log('🔄 [PackageManagement] PACKAGE_DELETED', { packageId });
+                console.log(' [PackageManagement] PACKAGE_DELETED', { packageId });
             }
         }, [packages]);
         
@@ -290,20 +290,20 @@
             setPackages(updatedPackages);
             setHasUnsavedChanges(true);
 
-            // ✅ SYNC TO MYSQL
+            //  SYNC TO MYSQL
             syncPackageToMySQL(updatedPkg, 'toggle').then(success => {
                 if (success) {
-                    console.log('✅ [PackageManagement] Package status synced to MySQL');
+                    console.log(' [PackageManagement] Package status synced to MySQL');
                 }
             });
 
             window.GlobalStateManager.addNotification(
-                `✅ Package "${pkg.name}" ${updatedPkg.active ? 'activated' : 'deactivated'}`,
+                ` Package "${pkg.name}" ${updatedPkg.active ? 'activated' : 'deactivated'}`,
                 'success',
                 'PackageManagement'
             );
 
-            console.log('🔄 [PackageManagement] PACKAGE_STATUS_TOGGLED', { packageId, newStatus: updatedPkg.active });
+            console.log(' [PackageManagement] PACKAGE_STATUS_TOGGLED', { packageId, newStatus: updatedPkg.active });
         }, [packages]);
         
         // Toggle popular badge
@@ -319,20 +319,20 @@
             setPackages(updatedPackages);
             setHasUnsavedChanges(true);
 
-            // ✅ SYNC TO MYSQL
+            //  SYNC TO MYSQL
             syncPackageToMySQL(updatedPkg, 'toggle-popular').then(success => {
                 if (success) {
-                    console.log('✅ [PackageManagement] Package popular synced to MySQL');
+                    console.log(' [PackageManagement] Package popular synced to MySQL');
                 }
             });
 
             window.GlobalStateManager.addNotification(
-                `✅ Package "${pkg.name}" ${updatedPkg.popular ? 'marked as popular' : 'unmarked as popular'}`,
+                ` Package "${pkg.name}" ${updatedPkg.popular ? 'marked as popular' : 'unmarked as popular'}`,
                 'success',
                 'PackageManagement'
             );
 
-            console.log('🔄 [PackageManagement] PACKAGE_POPULAR_TOGGLED', { packageId, newPopular: updatedPkg.popular });
+            console.log(' [PackageManagement] PACKAGE_POPULAR_TOGGLED', { packageId, newPopular: updatedPkg.popular });
         }, [packages]);
         
         // Add feature field
@@ -405,11 +405,11 @@
             <div className="space-y-6">
                 {/* Header */}
                 <div className="flex justify-between items-center">
-                    <h1 className="text-2xl font-bold">📦 Package Management</h1>
+                    <h1 className="text-2xl font-bold"> Package Management</h1>
                     <div className="flex items-center space-x-3">
                         {hasUnsavedChanges && (
                             <span className="text-sm text-[#E36323] bg-[#FFF3EE] px-2 py-1 rounded">
-                                ⚠️ Có thay đổi chưa lưu
+                                 Có thay đổi chưa lưu
                             </span>
                         )}
                         <window.Button
@@ -417,13 +417,13 @@
                             variant={hasUnsavedChanges ? "primary" : "secondary"}
                             disabled={isSaving}
                         >
-                            {isSaving ? '💾 Đang lưu...' : hasUnsavedChanges ? '💾 Lưu thay đổi' : '💾 Lưu tất cả'}
+                            {isSaving ? ' Đang lưu...' : hasUnsavedChanges ? ' Lưu thay đổi' : ' Lưu tất cả'}
                         </window.Button>
                         <window.Button
                             onClick={() => setShowAddPackage(true)}
                             variant="primary"
                         >
-                            ➕ Add Package
+                             Add Package
                         </window.Button>
                     </div>
                 </div>
@@ -460,7 +460,7 @@
                                 <ul className="space-y-1">
                                     {pkg.features.map((feature, index) => (
                                         <li key={index} className="text-sm text-[#7B7B7B] flex items-center">
-                                            <span className="text-[#10B981] mr-2">✓</span>
+                                            <span className="text-[#10B981] mr-2"></span>
                                             {feature}
                                         </li>
                                     ))}
@@ -474,28 +474,28 @@
                                     variant="primary"
                                     onClick={() => handleEditPackage(pkg)}
                                 >
-                                    ✏️ Edit
+                                     Edit
                                 </window.Button>
                                 <window.Button
                                     size="small"
                                     variant={pkg.active ? "warning" : "success"}
                                     onClick={() => togglePackageStatus(pkg.id)}
                                 >
-                                    {pkg.active ? '⏸️ Deactivate' : '▶️ Activate'}
+                                    {pkg.active ? '⏸ Deactivate' : '▶ Activate'}
                                 </window.Button>
                                 <window.Button
                                     size="small"
                                     variant={pkg.popular ? "secondary" : "warning"}
                                     onClick={() => togglePopularBadge(pkg.id)}
                                 >
-                                    {pkg.popular ? '⭐ Unmark Popular' : '⭐ Mark Popular'}
+                                    {pkg.popular ? ' Unmark Popular' : ' Mark Popular'}
                                 </window.Button>
                                 <window.Button
                                     size="small"
                                     variant="danger"
                                     onClick={() => handleDeletePackage(pkg.id)}
                                 >
-                                    🗑️ Delete
+                                     Delete
                                 </window.Button>
                             </div>
                         </window.Card>
@@ -594,7 +594,7 @@
                                             variant="danger"
                                             onClick={() => removeFeatureField(null, index, true)}
                                         >
-                                            🗑️
+                                            
                                         </window.Button>
                                     </div>
                                 ))}
@@ -604,7 +604,7 @@
                                     variant="secondary"
                                     onClick={() => addFeatureField(null, true)}
                                 >
-                                    ➕ Add Feature
+                                     Add Feature
                                 </window.Button>
                             </div>
                         </div>
@@ -679,8 +679,8 @@
     // ===== TESTING FUNCTIONS =====
     const TestPackageManagement = {
         testComponentRender: () => {
-            console.assert(window.PackageManagement, '❌ PackageManagement not exported');
-            console.log('✅ [TEST] PackageManagement component exists');
+            console.assert(window.PackageManagement, ' PackageManagement not exported');
+            console.log(' [TEST] PackageManagement component exists');
         },
         
         testDataFlow: () => {
@@ -701,11 +701,11 @@
             window.GlobalStateManager.updateData('packages', updatedPackages, 'Test');
             
             const retrieved = window.GlobalStateManager.findPackage('test_package');
-            console.assert(retrieved && retrieved.name === 'Test Package', '❌ Package data flow failed');
+            console.assert(retrieved && retrieved.name === 'Test Package', ' Package data flow failed');
             
             // Cleanup
             window.GlobalStateManager.updateData('packages', currentPackages, 'Test');
-            console.log('✅ [TEST] Package data flow works');
+            console.log(' [TEST] Package data flow works');
         }
     };
     

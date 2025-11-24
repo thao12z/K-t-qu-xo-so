@@ -43,8 +43,8 @@
     window.Logger = ProductionLogger;
 
     if (!isProduction) {
-        console.log('🔒 Loading SecurityUtils v1.1.0');
-        console.log(`📊 Logger mode: ${isProduction ? 'PRODUCTION' : 'DEVELOPMENT'}`);
+        console.log(' Loading SecurityUtils v1.1.0');
+        console.log(` Logger mode: ${isProduction ? 'PRODUCTION' : 'DEVELOPMENT'}`);
     }
 
     const SecurityUtils = {
@@ -323,7 +323,7 @@
                 // Clear console when devtools is opened
                 console.clear();
                 // Redirect or show warning
-                document.body.innerHTML = '<div style="display:flex;justify-content:center;align-items:center;height:100vh;font-family:Arial;"><h2>⚠️ Unauthorized Access Detected</h2></div>';
+                document.body.innerHTML = '<div style="display:flex;justify-content:center;align-items:center;height:100vh;font-family:Arial;"><h2> Unauthorized Access Detected</h2></div>';
                 setTimeout(() => {
                     window.location.href = 'about:blank';
                 }, 2000);
@@ -342,7 +342,7 @@
 
             if (diff > 100) {
                 console.clear();
-                document.body.innerHTML = '<div style="display:flex;justify-content:center;align-items:center;height:100vh;font-family:Arial;"><h2>⚠️ Developer Tools Detected</h2></div>';
+                document.body.innerHTML = '<div style="display:flex;justify-content:center;align-items:center;height:100vh;font-family:Arial;"><h2> Developer Tools Detected</h2></div>';
                 setTimeout(() => window.location.href = 'about:blank', 2000);
             }
         };
@@ -421,7 +421,7 @@
         window.enableDebugMode = (key) => {
             if (key === 'admin2025debug') {
                 Object.assign(console, originalConsole);
-                console.log('🔓 Debug mode enabled');
+                console.log(' Debug mode enabled');
                 return true;
             }
             return false;
@@ -429,8 +429,8 @@
     }
 
     if (!isProduction) {
-        console.log('✅ SecurityUtils loaded successfully');
-        console.log('ℹ️  Production mode: Console disabled, DevTools detection enabled');
+        console.log(' SecurityUtils loaded successfully');
+        console.log('  Production mode: Console disabled, DevTools detection enabled');
     }
 
 })(); 

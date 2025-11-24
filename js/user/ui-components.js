@@ -1,4 +1,4 @@
-// 🎨 UI COMPONENTS MODULE - MODERN DESIGN SYSTEM
+//  UI COMPONENTS MODULE - MODERN DESIGN SYSTEM
 // Version: 2.0.0 | Updated: 2024 | New UI Design System
 (function() {
     'use strict';
@@ -428,9 +428,9 @@
         testComponentsExist: () => {
             const components = ['LoadingSpinner', 'Button', 'Modal', 'Input', 'Select', 'Badge', 'Card', 'Textarea'];
             components.forEach(componentName => {
-                console.assert(window[componentName], `❌ ${componentName} not exported`);
+                console.assert(window[componentName], ` ${componentName} not exported`);
             });
-            console.log('✅ [TEST] All UI components exist - New Design System v2.0');
+            console.log(' [TEST] All UI components exist - New Design System v2.0');
         }
     };
 
@@ -451,6 +451,6 @@
         TestUIComponents.testComponentsExist();
     }, 50);
 
-    console.log('🎨 UI Components v2.0 loaded - Modern Design System');
+    console.log(' UI Components v2.0 loaded - Modern Design System');
 
 })();

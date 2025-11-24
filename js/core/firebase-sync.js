@@ -6,7 +6,7 @@
 (function() {
     'use strict';
 
-    console.log('🔥 Firebase Sync Service v1.0 loading...');
+    console.log(' Firebase Sync Service v1.0 loading...');
 
     const FirebaseSyncService = {
         // Firebase configuration
@@ -18,7 +18,7 @@
         // Initialize Firebase with config
         init: async function(firebaseConfig) {
             if (!firebaseConfig || !firebaseConfig.databaseURL) {
-                console.log('🔥 Firebase config not provided - sync disabled');
+                console.log(' Firebase config not provided - sync disabled');
                 this.isEnabled = false;
                 return false;
             }
@@ -26,7 +26,7 @@
             try {
                 // Check if Firebase SDK is loaded
                 if (typeof firebase === 'undefined') {
-                    console.warn('🔥 Firebase SDK not loaded - loading from CDN...');
+                    console.warn(' Firebase SDK not loaded - loading from CDN...');
                     await this.loadFirebaseSDK();
                 }
 
@@ -46,11 +46,11 @@
                 // Initial sync from cloud
                 await this.syncFromCloud();
 
-                console.log('✅ Firebase Sync Service initialized successfully');
+                console.log(' Firebase Sync Service initialized successfully');
                 return true;
 
             } catch (error) {
-                console.error('❌ Firebase initialization failed:', error);
+                console.error(' Firebase initialization failed:', error);
                 this.isEnabled = false;
                 return false;
             }
@@ -78,7 +78,7 @@
         // Save data to Firebase
         saveToCloud: async function(path, data) {
             if (!this.isEnabled || !this.database) {
-                console.log('🔥 Firebase not enabled - saving to localStorage only');
+                console.log(' Firebase not enabled - saving to localStorage only');
                 return false;
             }
 
@@ -88,10 +88,10 @@
                     updatedAt: new Date().toISOString(),
                     updatedBy: window.location.hostname
                 });
-                console.log(`🔥 Saved to cloud: ${path}`);
+                console.log(` Saved to cloud: ${path}`);
                 return true;
             } catch (error) {
-                console.error(`❌ Failed to save to cloud: ${path}`, error);
+                console.error(` Failed to save to cloud: ${path}`, error);
                 return false;
             }
         },
@@ -106,12 +106,12 @@
                 const snapshot = await this.database.ref(path).once('value');
                 const result = snapshot.val();
                 if (result && result.data) {
-                    console.log(`🔥 Loaded from cloud: ${path}`);
+                    console.log(` Loaded from cloud: ${path}`);
                     return result.data;
                 }
                 return null;
             } catch (error) {
-                console.error(`❌ Failed to load from cloud: ${path}`, error);
+                console.error(` Failed to load from cloud: ${path}`, error);
                 return null;
             }
         },
@@ -121,7 +121,7 @@
             if (!this.isEnabled) return false;
 
             try {
-                console.log('🔥 Syncing all data to cloud...');
+                console.log(' Syncing all data to cloud...');
 
                 // Get all admin data from localStorage
                 const adminData = {
@@ -135,11 +135,11 @@
                 // Save to cloud
                 await this.saveToCloud('adminData', adminData);
 
-                console.log('✅ All data synced to cloud');
+                console.log(' All data synced to cloud');
                 return true;
 
             } catch (error) {
-                console.error('❌ Sync to cloud failed:', error);
+                console.error(' Sync to cloud failed:', error);
                 return false;
             }
         },
@@ -149,11 +149,11 @@
             if (!this.isEnabled) return false;
 
             try {
-                console.log('🔥 Syncing data from cloud...');
+                console.log(' Syncing data from cloud...');
 
                 const cloudData = await this.getFromCloud('adminData');
                 if (!cloudData) {
-                    console.log('🔥 No cloud data found');
+                    console.log(' No cloud data found');
                     return false;
                 }
 
@@ -166,14 +166,14 @@
                     localStorage.setItem('adminUsers', JSON.stringify(mergedUsers));
                     localStorage.setItem('registeredUsers', JSON.stringify(mergedUsers));
 
-                    console.log(`🔥 Merged ${mergedUsers.length} users from cloud`);
+                    console.log(` Merged ${mergedUsers.length} users from cloud`);
                 }
 
                 if (cloudData.packages && cloudData.packages.length > 0) {
                     const localPackages = JSON.parse(localStorage.getItem('adminPackages') || '[]');
                     const mergedPackages = this.mergeData(localPackages, cloudData.packages, 'id');
                     localStorage.setItem('adminPackages', JSON.stringify(mergedPackages));
-                    console.log(`🔥 Merged ${mergedPackages.length} packages from cloud`);
+                    console.log(` Merged ${mergedPackages.length} packages from cloud`);
                 }
 
                 if (cloudData.payments && cloudData.payments.length > 0) {
@@ -195,11 +195,11 @@
                     window.SharedDataService.syncAll();
                 }
 
-                console.log('✅ Cloud sync completed');
+                console.log(' Cloud sync completed');
                 return true;
 
             } catch (error) {
-                console.error('❌ Sync from cloud failed:', error);
+                console.error(' Sync from cloud failed:', error);
                 return false;
             }
         },
@@ -234,19 +234,19 @@
             this.database.ref('adminData').on('value', (snapshot) => {
                 const data = snapshot.val();
                 if (data && data.updatedBy !== window.location.hostname) {
-                    console.log('🔥 Cloud data changed - syncing...');
+                    console.log(' Cloud data changed - syncing...');
                     this.syncFromCloud();
                 }
             });
 
-            console.log('🔥 Real-time listeners setup complete');
+            console.log(' Real-time listeners setup complete');
         },
 
         // Auto-sync when admin data changes
         onAdminDataChanged: async function(dataType, data) {
             if (!this.isEnabled) return;
 
-            console.log(`🔥 Admin data changed: ${dataType}`);
+            console.log(` Admin data changed: ${dataType}`);
 
             // Debounce to avoid too many writes
             if (this._syncTimeout) {
@@ -283,13 +283,13 @@
                 const config = JSON.parse(savedConfig);
                 FirebaseSyncService.init(config);
             } catch (e) {
-                console.log('🔥 Invalid saved Firebase config');
+                console.log(' Invalid saved Firebase config');
             }
         } else if (window.FIREBASE_CONFIG) {
             FirebaseSyncService.init(window.FIREBASE_CONFIG);
         }
     });
 
-    console.log('✅ Firebase Sync Service loaded');
+    console.log(' Firebase Sync Service loaded');
 
 })();

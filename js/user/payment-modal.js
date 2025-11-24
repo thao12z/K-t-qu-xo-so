@@ -1,11 +1,11 @@
-// 💳 PAYMENT MODAL - User Payment Flow with Order ID Generation
+//  PAYMENT MODAL - User Payment Flow with Order ID Generation
 // Version: 2.1.0 | Created: 2024 | MYSQL SYNC
 (function() {
     'use strict';
 
     const { useState, useEffect, useCallback, memo } = React;
 
-    console.log('💳 PaymentModal v2.1.0 loaded - MySQL Sync');
+    console.log(' PaymentModal v2.1.0 loaded - MySQL Sync');
 
     // ===== API CONFIGURATION =====
     const API_BASE_URL = window.API_BASE_URL || '/api';
@@ -21,14 +21,14 @@
 
             const result = await response.json();
             if (result.success) {
-                console.log('✅ [PaymentModal] Payment synced to MySQL:', paymentData.id);
+                console.log(' [PaymentModal] Payment synced to MySQL:', paymentData.id);
                 return true;
             } else {
-                console.error('❌ [PaymentModal] MySQL sync failed:', result.error);
+                console.error(' [PaymentModal] MySQL sync failed:', result.error);
                 return false;
             }
         } catch (error) {
-            console.error('❌ [PaymentModal] MySQL sync error:', error);
+            console.error(' [PaymentModal] MySQL sync error:', error);
             return false;
         }
     };
@@ -79,7 +79,7 @@
                 const newOrderId = generateOrderId();
                 setOrderId(newOrderId);
                 setPaymentCreated(false);
-                console.log('💳 Generated Order ID:', newOrderId);
+                console.log(' Generated Order ID:', newOrderId);
             }
         }, [isOpen, selectedPackage]);
 
@@ -153,10 +153,10 @@
                     window.GlobalStateManager.updateData('payments', payments, 'PaymentModal');
                 }
 
-                // ✅ SYNC TO MYSQL
+                //  SYNC TO MYSQL
                 syncPaymentToMySQL(paymentRecord);
 
-                console.log('✅ Payment record created:', paymentRecord);
+                console.log(' Payment record created:', paymentRecord);
                 setPaymentCreated(true);
 
             } catch (error) {
@@ -189,7 +189,7 @@
                     className: 'bg-[#E36323] text-white p-4 rounded-t-lg'
                 },
                     React.createElement('div', { className: 'flex justify-between items-center' },
-                        React.createElement('h2', { className: 'text-xl font-bold' }, '💳 Thanh Toán'),
+                        React.createElement('h2', { className: 'text-xl font-bold' }, ' Thanh Toán'),
                         React.createElement('button', {
                             onClick: onClose,
                             className: 'text-white hover:text-gray-200 text-2xl'
@@ -209,7 +209,7 @@
                     // Order ID - CRITICAL
                     React.createElement('div', { className: 'bg-[#FEF3C7] border-2 border-[#F59E0B] rounded-lg p-4' },
                         React.createElement('h4', { className: 'font-bold text-[#F59E0B] mb-2 flex items-center gap-2' },
-                            React.createElement('span', {}, '⚠️'),
+                            React.createElement('span', {}, ''),
                             'MÃ GIAO DỊCH (Nội dung CK)'
                         ),
                         React.createElement('div', {
@@ -221,7 +221,7 @@
                             React.createElement('button', {
                                 onClick: () => copyToClipboard(orderId, 'Mã giao dịch'),
                                 className: 'mt-2 text-sm text-[#E36323] hover:text-[#DF5A18] underline'
-                            }, '📋 Copy mã')
+                            }, ' Copy mã')
                         ),
                         React.createElement('p', { className: 'text-xs text-[#F59E0B] mt-2 text-center' },
                             'Vui lòng ghi chính xác mã này vào nội dung chuyển khoản'
@@ -238,7 +238,7 @@
                                         ? 'border-b-2 border-[#E36323] text-[#E36323]'
                                         : 'text-gray-500 hover:text-gray-700'
                                 }`
-                            }, '📱 QR Code'),
+                            }, ' QR Code'),
                             React.createElement('button', {
                                 onClick: () => setPaymentMethod('bank_transfer'),
                                 className: `flex-1 py-2 px-4 text-sm font-medium ${
@@ -246,7 +246,7 @@
                                         ? 'border-b-2 border-[#E36323] text-[#E36323]'
                                         : 'text-gray-500 hover:text-gray-700'
                                 }`
-                            }, '🏦 Chuyển khoản')
+                            }, ' Chuyển khoản')
                         )
                     ),
 
@@ -287,7 +287,7 @@
                                         React.createElement('button', {
                                             onClick: () => copyToClipboard(bankInfo.accountNumber, 'STK'),
                                             className: 'text-[#E36323] hover:text-[#DF5A18] text-xs'
-                                        }, '📋')
+                                        }, '')
                                     ),
 
                                     React.createElement('span', { className: 'text-gray-600' }, 'Chủ TK:'),
@@ -302,7 +302,7 @@
                                         React.createElement('button', {
                                             onClick: () => copyToClipboard(orderId, 'Nội dung'),
                                             className: 'text-[#E36323] hover:text-[#DF5A18] text-xs'
-                                        }, '📋')
+                                        }, '')
                                     )
                                 )
                             )
@@ -316,14 +316,14 @@
                                 onClick: handleCreatePayment,
                                 disabled: isSubmitting,
                                 className: 'w-full py-3 bg-[#E36323] text-white rounded-lg font-semibold hover:bg-[#DF5A18] disabled:opacity-50'
-                            }, isSubmitting ? '⏳ Đang xử lý...' : '✅ Đã chuyển khoản'),
+                            }, isSubmitting ? '⏳ Đang xử lý...' : ' Đã chuyển khoản'),
                             React.createElement('p', { className: 'text-xs text-gray-500 text-center' },
                                 'Nhấn nút sau khi đã chuyển khoản để gửi thông báo cho Admin'
                             )
                         )
                     ) : (
                         React.createElement('div', { className: 'bg-[#ECFDF5] border border-[#10B981] rounded-lg p-4 text-center' },
-                            React.createElement('div', { className: 'text-3xl mb-2' }, '✅'),
+                            React.createElement('div', { className: 'text-3xl mb-2' }, ''),
                             React.createElement('h4', { className: 'font-bold text-[#10B981] mb-2' }, 'Đã ghi nhận!'),
                             React.createElement('p', { className: 'text-sm text-[#10B981]' },
                                 'Admin sẽ xác nhận và kích hoạt gói trong thời gian sớm nhất.'
@@ -349,6 +349,6 @@
     // Export to global scope
     window.PaymentModal = PaymentModal;
 
-    console.log('✅ PaymentModal component loaded');
+    console.log(' PaymentModal component loaded');
 
 })();

@@ -5,7 +5,7 @@
 (function() {
     'use strict';
 
-    console.log('🔐 Authentication System v3.0.0 - ONLINE ONLY (MySQL)');
+    console.log(' Authentication System v3.0.0 - ONLINE ONLY (MySQL)');
 
     // Configuration
     const AUTH_CONFIG = {
@@ -18,7 +18,7 @@
     };
 
     const LoginPage = React.memo(function LoginPage({ onLogin, onNavigate }) {
-        console.log('🔄 Rendering LoginPage...');
+        console.log(' Rendering LoginPage...');
 
         const [username, setUsername] = React.useState('');
         const [password, setPassword] = React.useState('');
@@ -34,7 +34,7 @@
             setError('');
 
             try {
-                console.log('🔐 [LoginPage] Starting login via MySQL API for:', username);
+                console.log(' [LoginPage] Starting login via MySQL API for:', username);
 
                 // Login via MySQL API - ONLINE ONLY
                 const response = await fetch(`${AUTH_CONFIG.apiBaseUrl}/user-auth.php?action=login`, {
@@ -48,7 +48,7 @@
                 const result = await response.json();
 
                 if (!response.ok) {
-                    console.log('❌ [LoginPage] Login failed:', result.error);
+                    console.log(' [LoginPage] Login failed:', result.error);
                     setError(result.error || 'Đăng nhập thất bại');
                     return;
                 }
@@ -62,7 +62,7 @@
 
                 // Check subscription status
                 if (!user.subscriptionValid && user.subscriptionExpiry) {
-                    console.log('⚠️ [LoginPage] User package expired:', username);
+                    console.log(' [LoginPage] User package expired:', username);
                     setError('Gói dịch vụ đã hết hạn. Vui lòng gia hạn.');
                     return;
                 }
@@ -75,11 +75,11 @@
                     sessionStorage.setItem('user_token', result.token);
                 }
 
-                console.log('✅ [LoginPage] Login successful:', processedUser);
+                console.log(' [LoginPage] Login successful:', processedUser);
                 onLogin(processedUser);
 
             } catch (error) {
-                console.error('❌ [LoginPage] Login error:', error);
+                console.error(' [LoginPage] Login error:', error);
                 if (error.message.includes('fetch') || error.name === 'TypeError') {
                     setError('Không thể kết nối server. Vui lòng kiểm tra kết nối mạng.');
                 } else {
@@ -100,7 +100,7 @@
             <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
                 <div className="max-w-md w-full space-y-8">
                     <div className="text-center">
-                        <h2 className="text-3xl font-bold text-gray-900 mb-2">🔐 Đăng Nhập</h2>
+                        <h2 className="text-3xl font-bold text-gray-900 mb-2"> Đăng Nhập</h2>
                         <p className="text-gray-600">Hệ thống đối soát lô đề đại lý</p>
                     </div>
 
@@ -120,7 +120,7 @@
                             </button>
                         </form>
                         <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-                            <h3 className="text-sm font-medium text-blue-700 mb-2">ℹ️ Thông tin đăng nhập:</h3>
+                            <h3 className="text-sm font-medium text-blue-700 mb-2"> Thông tin đăng nhập:</h3>
                             <div className="text-xs text-blue-600">
                                 <p>Sử dụng tài khoản được cấp bởi admin.</p>
                                 <p className="mt-1">Liên hệ admin nếu chưa có tài khoản.</p>
@@ -185,7 +185,7 @@
             // Check if user account still exists in admin system
             const userExists = this.checkUserExists(currentUser.username);
             if (!userExists) {
-                console.log('⚠️ User account no longer exists, logging out...');
+                console.log(' User account no longer exists, logging out...');
                 this.logout();
                 return false;
             }
@@ -195,7 +195,7 @@
 
         // Process user data for login, calculate package_status
         processUserForLogin: function(user) {
-            console.log('🔍 [AuthService] Processing user for login:', {
+            console.log(' [AuthService] Processing user for login:', {
                 username: user.username,
                 status: user.status,
                 subscriptionStatus: user.subscriptionStatus,
@@ -221,7 +221,7 @@
                 package_status = 'pending';
             }
 
-            console.log('✅ [AuthService] Package status calculated:', {
+            console.log(' [AuthService] Package status calculated:', {
                 username: user.username,
                 package_status: package_status,
                 expiry: expiry,
@@ -266,11 +266,11 @@
     // Listen for admin data changes (when admin deletes users)
     window.addEventListener('storage', (e) => {
         if (e.key === 'registeredUsers' || e.key === 'adminUsers' || e.key === 'admin_users') {
-            console.log('📡 Admin user data changed, validating current session...');
+            console.log(' Admin user data changed, validating current session...');
             if (AuthService.isAuthenticated()) {
                 const isValid = AuthService.validateCurrentSession();
                 if (!isValid) {
-                    console.log('❌ Current user no longer exists, logging out...');
+                    console.log(' Current user no longer exists, logging out...');
                     AuthService.logout();
                     window.location.reload();
                 }
@@ -282,5 +282,5 @@
     window.AuthService = AuthService; // Export AuthService
     // ONLINE MODE: No demo accounts - all users from MySQL
     window.DEMO_ACCOUNTS = [];
-    console.log('✅ Authentication System loaded successfully');
+    console.log(' Authentication System loaded successfully');
 })(); 

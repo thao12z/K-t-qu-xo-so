@@ -1,4 +1,4 @@
-// 💳 PAYMENT MANAGEMENT MODULE
+//  PAYMENT MANAGEMENT MODULE
 // Version: 1.2.0 | Created: 2024 | ONLINE SYNC MODE
 (function() {
     'use strict';
@@ -19,14 +19,14 @@
 
             const result = await response.json();
             if (result.success) {
-                console.log(`✅ [PaymentManagement] MySQL sync ${action}:`, paymentData.id);
+                console.log(` [PaymentManagement] MySQL sync ${action}:`, paymentData.id);
                 return true;
             } else {
-                console.error(`❌ [PaymentManagement] MySQL sync failed:`, result.error);
+                console.error(` [PaymentManagement] MySQL sync failed:`, result.error);
                 return false;
             }
         } catch (error) {
-            console.error('❌ [PaymentManagement] MySQL sync error:', error);
+            console.error(' [PaymentManagement] MySQL sync error:', error);
             return false;
         }
     };
@@ -41,14 +41,14 @@
 
             const result = await response.json();
             if (result.success) {
-                console.log(`✅ [PaymentManagement] User MySQL sync ${action}:`, userData.id);
+                console.log(` [PaymentManagement] User MySQL sync ${action}:`, userData.id);
                 return true;
             } else {
-                console.error(`❌ [PaymentManagement] User MySQL sync failed:`, result.error);
+                console.error(` [PaymentManagement] User MySQL sync failed:`, result.error);
                 return false;
             }
         } catch (error) {
-            console.error('❌ [PaymentManagement] User MySQL sync error:', error);
+            console.error(' [PaymentManagement] User MySQL sync error:', error);
             return false;
         }
     };
@@ -71,11 +71,11 @@
         // Subscribe to global state
         useEffect(() => {
             if (!window.GlobalStateManager) {
-                console.error('❌ [PaymentManagement] GlobalStateManager not available');
+                console.error(' [PaymentManagement] GlobalStateManager not available');
                 return;
             }
             
-            console.log('🔄 [PaymentManagement] COMPONENT_MOUNT');
+            console.log(' [PaymentManagement] COMPONENT_MOUNT');
             
             // Load initial data
             const initialPayments = window.GlobalStateManager.getData('payments');
@@ -89,17 +89,17 @@
             
             // Subscribe to changes
             const unsubscribePayments = window.GlobalStateManager.subscribe('payments', (newPayments) => {
-                console.log('🔄 [PaymentManagement] PAYMENTS_UPDATE', { count: newPayments.length });
+                console.log(' [PaymentManagement] PAYMENTS_UPDATE', { count: newPayments.length });
                 setPayments(newPayments);
             }, 'PaymentManagement');
             
             const unsubscribeUsers = window.GlobalStateManager.subscribe('users', (newUsers) => {
-                console.log('🔄 [PaymentManagement] USERS_UPDATE', { count: newUsers.length });
+                console.log(' [PaymentManagement] USERS_UPDATE', { count: newUsers.length });
                 setUsers(newUsers);
             }, 'PaymentManagement');
             
             const unsubscribePackages = window.GlobalStateManager.subscribe('packages', (newPackages) => {
-                console.log('🔄 [PaymentManagement] PACKAGES_UPDATE', { count: newPackages.length });
+                console.log(' [PaymentManagement] PACKAGES_UPDATE', { count: newPackages.length });
                 setPackages(newPackages);
             }, 'PaymentManagement');
             
@@ -107,35 +107,35 @@
                 unsubscribePayments();
                 unsubscribeUsers();
                 unsubscribePackages();
-                console.log('🔄 [PaymentManagement] COMPONENT_UNMOUNT');
+                console.log(' [PaymentManagement] COMPONENT_UNMOUNT');
             };
         }, []);
         
         // Handle payment approval
         const handleApprovePayment = useCallback((paymentId) => {
-            console.log('🔄 [PaymentManagement] APPROVE_PAYMENT', { paymentId });
+            console.log(' [PaymentManagement] APPROVE_PAYMENT', { paymentId });
             
             try {
                 // Find required data
                 const payment = window.GlobalStateManager.findPayment(paymentId);
                 if (!payment) {
-                    alert('❌ Payment not found');
+                    alert(' Payment not found');
                     return;
                 }
                 
                 const packageInfo = window.GlobalStateManager.findPackage(payment.packageId);
                 if (!packageInfo) {
-                    alert('❌ Package not found');
+                    alert(' Package not found');
                     return;
                 }
                 
                 const user = window.GlobalStateManager.findUser(payment.userId);
                 if (!user) {
-                    alert('❌ User not found');
+                    alert(' User not found');
                     return;
                 }
                 
-                console.log('✅ [PaymentManagement] DATA_VALIDATED', {
+                console.log(' [PaymentManagement] DATA_VALIDATED', {
                     payment: payment.id,
                     user: user.fullName,
                     package: packageInfo.name,
@@ -165,11 +165,11 @@
                 );
                 
                 if (!success) {
-                    alert('❌ Failed to process payment approval');
+                    alert(' Failed to process payment approval');
                     return;
                 }
 
-                // ✅ SYNC PAYMENT TO MYSQL
+                //  SYNC PAYMENT TO MYSQL
                 const updatedPayment = {
                     ...payment,
                     status: 'completed',
@@ -178,11 +178,11 @@
                 };
                 syncPaymentToMySQL(updatedPayment, 'approve').then(paymentSynced => {
                     if (paymentSynced) {
-                        console.log('✅ [PaymentManagement] Payment synced to MySQL');
+                        console.log(' [PaymentManagement] Payment synced to MySQL');
                     }
                 });
 
-                // ✅ SYNC USER TO MYSQL
+                //  SYNC USER TO MYSQL
                 const updatedUser = {
                     ...user,
                     status: 'active',
@@ -195,14 +195,14 @@
                 };
                 syncUserToMySQL(updatedUser, 'activate').then(userSynced => {
                     if (userSynced) {
-                        console.log('✅ [PaymentManagement] User activation synced to MySQL');
+                        console.log(' [PaymentManagement] User activation synced to MySQL');
                     }
                 });
 
                 // Show success message with order ID
                 const orderId = payment.orderId || 'N/A';
-                alert(`✅ Payment approved for ${user.fullName} - ${packageInfo.name}\nOrder ID: ${orderId}`);
-                console.log('✅ [PaymentManagement] APPROVE_PAYMENT_SUCCESS', {
+                alert(` Payment approved for ${user.fullName} - ${packageInfo.name}\nOrder ID: ${orderId}`);
+                console.log(' [PaymentManagement] APPROVE_PAYMENT_SUCCESS', {
                     paymentId,
                     orderId: orderId,
                     packageName: packageInfo.name,
@@ -210,8 +210,8 @@
                 });
 
             } catch (error) {
-                console.error('❌ [PaymentManagement] APPROVE_PAYMENT_ERROR', { error });
-                alert('❌ Error occurred: ' + error.message);
+                console.error(' [PaymentManagement] APPROVE_PAYMENT_ERROR', { error });
+                alert(' Error occurred: ' + error.message);
             }
         }, []);
         
@@ -235,20 +235,20 @@
 
                 window.GlobalStateManager.updateData('payments', updatedPayments, 'PaymentManagement');
 
-                // ✅ SYNC TO MYSQL
+                //  SYNC TO MYSQL
                 syncPaymentToMySQL(rejectedPayment, 'reject').then(success => {
                     if (success) {
-                        console.log('✅ [PaymentManagement] Payment rejection synced to MySQL');
+                        console.log(' [PaymentManagement] Payment rejection synced to MySQL');
                     }
                 });
 
                 window.GlobalStateManager.addNotification(
-                    '✅ Payment rejected',
+                    ' Payment rejected',
                     'success',
                     'PaymentManagement'
                 );
 
-                console.log('🔄 [PaymentManagement] PAYMENT_REJECTED', { paymentId });
+                console.log(' [PaymentManagement] PAYMENT_REJECTED', { paymentId });
             }
         }, []);
         
@@ -273,11 +273,11 @@
         // Get payment method icon
         const getMethodIcon = useCallback((method) => {
             switch (method) {
-                case 'bank_transfer': return '🏦';
-                case 'qr_code': return '📱';
-                case 'bank_card': return '💳';
-                case 'cash': return '💰';
-                default: return '💳';
+                case 'bank_transfer': return '';
+                case 'qr_code': return '';
+                case 'bank_card': return '';
+                case 'cash': return '';
+                default: return '';
             }
         }, []);
         
@@ -310,7 +310,7 @@
                             rel="noopener noreferrer"
                             className="text-xs text-[#E36323] hover:text-[#DF5A18] underline"
                         >
-                            📷 Xem ảnh
+                             Xem ảnh
                         </a>
                     )}
                 </div>
@@ -343,7 +343,7 @@
             <div className="space-y-6">
                 {/* Header */}
                 <div className="flex justify-between items-center">
-                    <h1 className="text-2xl font-bold">💳 Payment Management</h1>
+                    <h1 className="text-2xl font-bold"> Payment Management</h1>
                     
                     <div className="flex items-center space-x-4">
                         {/* Filter */}
@@ -365,7 +365,7 @@
                 <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                     <window.Card padding="small">
                         <div className="flex items-center">
-                            <span className="text-2xl">📊</span>
+                            <span className="text-2xl"></span>
                             <div className="ml-3">
                                 <p className="text-sm font-medium text-[#7B7B7B]">Total</p>
                                 <p className="text-xl font-bold text-[#121212]">{currentStats.total}</p>
@@ -375,7 +375,7 @@
                     
                     <window.Card padding="small">
                         <div className="flex items-center">
-                            <span className="text-2xl">✅</span>
+                            <span className="text-2xl"></span>
                             <div className="ml-3">
                                 <p className="text-sm font-medium text-[#7B7B7B]">Completed</p>
                                 <p className="text-xl font-bold text-[#10B981]">{currentStats.completed}</p>
@@ -395,7 +395,7 @@
                     
                     <window.Card padding="small">
                         <div className="flex items-center">
-                            <span className="text-2xl">❌</span>
+                            <span className="text-2xl"></span>
                             <div className="ml-3">
                                 <p className="text-sm font-medium text-[#7B7B7B]">Failed</p>
                                 <p className="text-xl font-bold text-[#FE5938]">{currentStats.failed}</p>
@@ -405,7 +405,7 @@
                     
                     <window.Card padding="small">
                         <div className="flex items-center">
-                            <span className="text-2xl">💰</span>
+                            <span className="text-2xl"></span>
                             <div className="ml-3">
                                 <p className="text-sm font-medium text-[#7B7B7B]">Revenue</p>
                                 <p className="text-lg font-bold text-[#10B981]">
@@ -441,7 +441,7 @@
                                     const packageInfo = packages.find(p => p.id === payment.packageId);
                                     
                                     // Debug log for payment data
-                                    console.log('🔄 [PaymentManagement] Rendering payment:', {
+                                    console.log(' [PaymentManagement] Rendering payment:', {
                                         id: payment.id,
                                         orderId: payment.orderId,
                                         userId: payment.userId,
@@ -503,24 +503,24 @@
                                                             variant="success"
                                                             onClick={() => handleApprovePayment(payment.id)}
                                                         >
-                                                            ✅ Approve
+                                                             Approve
                                                         </window.Button>
                                                         <window.Button
                                                             size="small"
                                                             variant="danger"
                                                             onClick={() => handleRejectPayment(payment.id)}
                                                         >
-                                                            ❌ Reject
+                                                             Reject
                                                         </window.Button>
                                                     </>
                                                 )}
                                                 
                                                 {payment.status === 'completed' && (
-                                                    <span className="text-[#10B981] text-sm">✅ Processed</span>
+                                                    <span className="text-[#10B981] text-sm"> Processed</span>
                                                 )}
                                                 
                                                 {payment.status === 'failed' && (
-                                                    <span className="text-[#FE5938] text-sm">❌ Failed</span>
+                                                    <span className="text-[#FE5938] text-sm"> Failed</span>
                                                 )}
                                             </td>
                                         </tr>

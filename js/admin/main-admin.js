@@ -1,4 +1,4 @@
-// 🚀 MAIN ADMIN MODULE - CORE ORCHESTRATOR
+//  MAIN ADMIN MODULE - CORE ORCHESTRATOR
 // Version: 1.0.1 | Created: 2024 | Follows ADMIN SYSTEM DEVELOPMENT GUIDELINES
 (function() {
     'use strict';
@@ -96,7 +96,7 @@
         useEffect(() => {
             if (!window.GlobalStateManager) return;
             
-            console.log('🔄 [Dashboard] COMPONENT_MOUNT');
+            console.log(' [Dashboard] COMPONENT_MOUNT');
             
             // Load initial data
             setUsers(window.GlobalStateManager.getData('users'));
@@ -116,7 +116,7 @@
                 unsubscribePayments();
                 unsubscribePackages();
                 unsubscribeNotifications();
-                console.log('🔄 [Dashboard] COMPONENT_UNMOUNT');
+                console.log(' [Dashboard] COMPONENT_UNMOUNT');
             };
         }, []);
         
@@ -151,13 +151,13 @@
         
         return (
             <div className="space-y-6">
-                <h1 className="text-2xl font-bold">📊 Dashboard</h1>
+                <h1 className="text-2xl font-bold"> Dashboard</h1>
                 
                 {/* Stats Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                     <window.Card padding="medium">
                         <div className="flex items-center">
-                            <span className="text-3xl">👥</span>
+                            <span className="text-3xl"></span>
                             <div className="ml-4">
                                 <p className="text-sm font-medium text-[#7B7B7B]">Total Users</p>
                                 <p className="text-2xl font-bold text-[#121212]">{currentStats.totalUsers}</p>
@@ -167,7 +167,7 @@
                     
                     <window.Card padding="medium">
                         <div className="flex items-center">
-                            <span className="text-3xl">✅</span>
+                            <span className="text-3xl"></span>
                             <div className="ml-4">
                                 <p className="text-sm font-medium text-[#7B7B7B]">Active Users</p>
                                 <p className="text-2xl font-bold text-[#10B981]">{currentStats.activeUsers}</p>
@@ -177,7 +177,7 @@
                     
                     <window.Card padding="medium">
                         <div className="flex items-center">
-                            <span className="text-3xl">💰</span>
+                            <span className="text-3xl"></span>
                             <div className="ml-4">
                                 <p className="text-sm font-medium text-[#7B7B7B]">Revenue</p>
                                 <p className="text-2xl font-bold text-[#10B981]">
@@ -208,10 +208,10 @@
                                     className="flex items-start space-x-3 p-3 rounded-lg bg-[#F8F7F7]"
                                 >
                                     <div className="flex-shrink-0">
-                                        {notification.type === 'success' && <span className="text-[#10B981]">✅</span>}
-                                        {notification.type === 'error' && <span className="text-[#FE5938]">❌</span>}
-                                        {notification.type === 'warning' && <span className="text-[#F59E0B]">⚠️</span>}
-                                        {notification.type === 'info' && <span className="text-[#E36323]">ℹ️</span>}
+                                        {notification.type === 'success' && <span className="text-[#10B981]"></span>}
+                                        {notification.type === 'error' && <span className="text-[#FE5938]"></span>}
+                                        {notification.type === 'warning' && <span className="text-[#F59E0B]"></span>}
+                                        {notification.type === 'info' && <span className="text-[#E36323]"></span>}
                                     </div>
                                     <div className="flex-1">
                                         <p className="text-sm text-[#121212]">{notification.message}</p>
@@ -274,7 +274,7 @@
         const handleSaveFirebaseConfig = useCallback(async () => {
             if (!firebaseConfig.databaseURL) {
                 window.GlobalStateManager?.addNotification(
-                    '❌ Vui lòng nhập Database URL',
+                    ' Vui lòng nhập Database URL',
                     'error',
                     'Firebase'
                 );
@@ -290,7 +290,7 @@
                     if (success) {
                         setFirebaseEnabled(true);
                         window.GlobalStateManager?.addNotification(
-                            '✅ Firebase đã được kết nối thành công!',
+                            ' Firebase đã được kết nối thành công!',
                             'success',
                             'Firebase'
                         );
@@ -300,7 +300,7 @@
                 }
             } catch (error) {
                 window.GlobalStateManager?.addNotification(
-                    `❌ Lỗi kết nối Firebase: ${error.message}`,
+                    ` Lỗi kết nối Firebase: ${error.message}`,
                     'error',
                     'Firebase'
                 );
@@ -311,7 +311,7 @@
         const handleFirebaseSync = useCallback(async () => {
             if (!window.FirebaseSyncService?.isEnabled) {
                 window.GlobalStateManager?.addNotification(
-                    '❌ Firebase chưa được cấu hình',
+                    ' Firebase chưa được cấu hình',
                     'error',
                     'Firebase'
                 );
@@ -322,13 +322,13 @@
             try {
                 await window.FirebaseSyncService.syncToCloud();
                 window.GlobalStateManager?.addNotification(
-                    '✅ Đã sync dữ liệu lên Firebase thành công!',
+                    ' Đã sync dữ liệu lên Firebase thành công!',
                     'success',
                     'Firebase'
                 );
             } catch (error) {
                 window.GlobalStateManager?.addNotification(
-                    `❌ Sync thất bại: ${error.message}`,
+                    ` Sync thất bại: ${error.message}`,
                     'error',
                     'Firebase'
                 );
@@ -388,17 +388,17 @@
                 setLastExport(exportInfo);
 
                 window.GlobalStateManager?.addNotification(
-                    `✅ Xuất dữ liệu thành công: ${exportInfo.userCount} users, ${exportInfo.packageCount} packages, ${exportInfo.paymentCount} payments`,
+                    ` Xuất dữ liệu thành công: ${exportInfo.userCount} users, ${exportInfo.packageCount} packages, ${exportInfo.paymentCount} payments`,
                     'success',
                     'DataExport'
                 );
 
-                console.log('📦 [DataExport] Export completed:', exportInfo);
+                console.log(' [DataExport] Export completed:', exportInfo);
 
             } catch (error) {
-                console.error('❌ [DataExport] Export failed:', error);
+                console.error(' [DataExport] Export failed:', error);
                 window.GlobalStateManager?.addNotification(
-                    `❌ Xuất dữ liệu thất bại: ${error.message}`,
+                    ` Xuất dữ liệu thất bại: ${error.message}`,
                     'error',
                     'DataExport'
                 );
@@ -451,12 +451,12 @@
                             window.GlobalStateManager.updateData('users', mergedUsers, 'DataImport');
                         }
 
-                        // ✅ SYNC NEW USERS TO MYSQL
+                        //  SYNC NEW USERS TO MYSQL
                         if (window.SharedDataService && newUsers.length > 0) {
                             for (const user of newUsers) {
                                 await window.SharedDataService.saveToMySQL('user', user);
                             }
-                            console.log(`✅ [DataImport] ${newUsers.length} users synced to MySQL`);
+                            console.log(` [DataImport] ${newUsers.length} users synced to MySQL`);
                         }
 
                         result.imported.users = newUsers.length;
@@ -478,12 +478,12 @@
                             window.GlobalStateManager.updateData('packages', mergedPackages, 'DataImport');
                         }
 
-                        // ✅ SYNC NEW PACKAGES TO MYSQL
+                        //  SYNC NEW PACKAGES TO MYSQL
                         if (window.SharedDataService && newPackages.length > 0) {
                             for (const pkg of newPackages) {
                                 await window.SharedDataService.saveToMySQL('package', pkg);
                             }
-                            console.log(`✅ [DataImport] ${newPackages.length} packages synced to MySQL`);
+                            console.log(` [DataImport] ${newPackages.length} packages synced to MySQL`);
                         }
 
                         result.imported.packages = newPackages.length;
@@ -502,12 +502,12 @@
                             window.GlobalStateManager.updateData('payments', mergedPayments, 'DataImport');
                         }
 
-                        // ✅ SYNC NEW PAYMENTS TO MYSQL
+                        //  SYNC NEW PAYMENTS TO MYSQL
                         if (window.SharedDataService && newPayments.length > 0) {
                             for (const payment of newPayments) {
                                 await window.SharedDataService.saveToMySQL('payment', payment);
                             }
-                            console.log(`✅ [DataImport] ${newPayments.length} payments synced to MySQL`);
+                            console.log(` [DataImport] ${newPayments.length} payments synced to MySQL`);
                         }
 
                         result.imported.payments = newPayments.length;
@@ -524,34 +524,34 @@
                         result.imported.configs++;
                     }
 
-                    // ✅ SYNC CONFIG TO MYSQL
+                    //  SYNC CONFIG TO MYSQL
                     if (window.SharedDataService && (importData.adminContactInfo || importData.admin_paymentConfig)) {
                         await window.SharedDataService.saveToMySQL('config', {
                             contactInfo: importData.adminContactInfo,
                             paymentConfig: importData.admin_paymentConfig
                         });
-                        console.log('✅ [DataImport] Config synced to MySQL');
+                        console.log(' [DataImport] Config synced to MySQL');
                     }
 
                     setImportResult(result);
 
                     window.GlobalStateManager?.addNotification(
-                        `✅ Import thành công: ${result.imported.users} users, ${result.imported.packages} packages, ${result.imported.payments} payments`,
+                        ` Import thành công: ${result.imported.users} users, ${result.imported.packages} packages, ${result.imported.payments} payments`,
                         'success',
                         'DataImport'
                     );
 
-                    console.log('📥 [DataImport] Import completed:', result);
+                    console.log(' [DataImport] Import completed:', result);
 
                 } catch (error) {
-                    console.error('❌ [DataImport] Import failed:', error);
+                    console.error(' [DataImport] Import failed:', error);
                     setImportResult({
                         success: false,
                         error: error.message
                     });
 
                     window.GlobalStateManager?.addNotification(
-                        `❌ Import thất bại: ${error.message}`,
+                        ` Import thất bại: ${error.message}`,
                         'error',
                         'DataImport'
                     );
@@ -585,15 +585,15 @@
         return (
             <div className="space-y-6 p-6">
                 <div className="flex justify-between items-center">
-                    <h1 className="text-2xl font-bold">📦 Export / Import Data</h1>
+                    <h1 className="text-2xl font-bold"> Export / Import Data</h1>
                 </div>
 
                 {/* Firebase Cloud Sync */}
-                <window.Card title="🔥 Firebase Cloud Sync (Tự động)">
+                <window.Card title=" Firebase Cloud Sync (Tự động)">
                     <div className="space-y-4">
                         <div className={`p-3 rounded-lg ${firebaseEnabled ? 'bg-green-50 border border-green-200' : 'bg-gray-50 border border-gray-200'}`}>
                             <p className={`text-sm ${firebaseEnabled ? 'text-green-800' : 'text-gray-600'}`}>
-                                <strong>Trạng thái:</strong> {firebaseEnabled ? '✅ Đã kết nối' : '⚪ Chưa cấu hình'}
+                                <strong>Trạng thái:</strong> {firebaseEnabled ? ' Đã kết nối' : ' Chưa cấu hình'}
                             </p>
                             {firebaseEnabled && (
                                 <p className="text-xs text-green-600 mt-1">
@@ -637,7 +637,7 @@
                                 variant="primary"
                                 onClick={handleSaveFirebaseConfig}
                             >
-                                💾 Lưu & Kết nối
+                                 Lưu & Kết nối
                             </window.Button>
 
                             {firebaseEnabled && (
@@ -646,7 +646,7 @@
                                     onClick={handleFirebaseSync}
                                     disabled={firebaseSyncing}
                                 >
-                                    {firebaseSyncing ? '⏳ Đang sync...' : '🔄 Sync ngay'}
+                                    {firebaseSyncing ? '⏳ Đang sync...' : ' Sync ngay'}
                                 </window.Button>
                             )}
                         </div>
@@ -668,7 +668,7 @@
                 </div>
 
                 {/* Current Data Stats */}
-                <window.Card title="📊 Dữ Liệu Hiện Tại">
+                <window.Card title=" Dữ Liệu Hiện Tại">
                     <div className="grid grid-cols-3 gap-4 text-center">
                         <div className="bg-blue-50 p-4 rounded-lg">
                             <p className="text-2xl font-bold text-blue-600">{currentStats.users}</p>
@@ -686,7 +686,7 @@
                 </window.Card>
 
                 {/* Export Section */}
-                <window.Card title="📤 Export Data">
+                <window.Card title=" Export Data">
                     <div className="space-y-4">
                         <p className="text-gray-600">
                             Xuất toàn bộ dữ liệu admin ra file JSON. File này có thể được import vào máy khác.
@@ -709,13 +709,13 @@
                             disabled={isExporting}
                             className="w-full sm:w-auto"
                         >
-                            {isExporting ? '⏳ Đang xuất...' : '📥 Download Backup File'}
+                            {isExporting ? '⏳ Đang xuất...' : ' Download Backup File'}
                         </window.Button>
                     </div>
                 </window.Card>
 
                 {/* Import Section */}
-                <window.Card title="📥 Import Data">
+                <window.Card title=" Import Data">
                     <div className="space-y-4">
                         <p className="text-gray-600">
                             Import dữ liệu từ file JSON backup. Dữ liệu mới sẽ được merge với dữ liệu hiện tại
@@ -753,7 +753,7 @@
                             <div className={`p-4 rounded-lg ${importResult.success ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
                                 {importResult.success ? (
                                     <div>
-                                        <p className="font-semibold text-green-800 mb-2">✅ Import thành công!</p>
+                                        <p className="font-semibold text-green-800 mb-2"> Import thành công!</p>
                                         <ul className="text-sm text-green-700 space-y-1">
                                             <li>• {importResult.imported.users} users mới</li>
                                             <li>• {importResult.imported.packages} packages mới</li>
@@ -775,7 +775,7 @@
                                     </div>
                                 ) : (
                                     <div>
-                                        <p className="font-semibold text-red-800">❌ Import thất bại</p>
+                                        <p className="font-semibold text-red-800"> Import thất bại</p>
                                         <p className="text-sm text-red-700">{importResult.error}</p>
                                     </div>
                                 )}
@@ -785,10 +785,10 @@
                 </window.Card>
 
                 {/* Instructions */}
-                <window.Card title="📋 Hướng Dẫn Sử Dụng">
+                <window.Card title=" Hướng Dẫn Sử Dụng">
                     <div className="space-y-4 text-sm text-gray-600">
                         <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-                            <p className="font-semibold text-green-800 mb-2">🌐 Cách 1: Publish lên Server (Khuyến nghị)</p>
+                            <p className="font-semibold text-green-800 mb-2"> Cách 1: Publish lên Server (Khuyến nghị)</p>
                             <p className="text-green-700 mb-2">User ở máy khác sẽ tự động nhận data khi truy cập hệ thống</p>
                             <ol className="list-decimal list-inside space-y-1 text-green-700">
                                 <li>Click "Download Backup File" để tải file JSON</li>
@@ -799,7 +799,7 @@
                         </div>
 
                         <div className="border-t pt-3">
-                            <p className="font-semibold text-gray-800 mb-2">📁 Cách 2: Import thủ công</p>
+                            <p className="font-semibold text-gray-800 mb-2"> Cách 2: Import thủ công</p>
                             <div className="space-y-1">
                                 <div className="flex items-start gap-2">
                                     <span className="font-bold text-[#E36323]">1.</span>
@@ -841,11 +841,11 @@
                 "Có thể tùy chỉnh gói theo yêu cầu"
             ],
             purchase_steps: [
-                { step: 1, title: 'Chọn Gói', desc: 'Chọn gói phù hợp với nhu cầu', icon: '🎯' },
-                { step: 2, title: 'Liên Hệ', desc: 'Liên hệ Admin qua Zalo/Telegram', icon: '📞' },
-                { step: 3, title: 'Xác Nhận', desc: 'Admin xác nhận và báo giá', icon: '✅' },
-                { step: 4, title: 'Thanh Toán', desc: 'Thanh toán theo hướng dẫn', icon: '💰' },
-                { step: 5, title: 'Kích Hoạt', desc: 'Nhận tài khoản và sử dụng', icon: '🚀' }
+                { step: 1, title: 'Chọn Gói', desc: 'Chọn gói phù hợp với nhu cầu', icon: '' },
+                { step: 2, title: 'Liên Hệ', desc: 'Liên hệ Admin qua Zalo/Telegram', icon: '' },
+                { step: 3, title: 'Xác Nhận', desc: 'Admin xác nhận và báo giá', icon: '' },
+                { step: 4, title: 'Thanh Toán', desc: 'Thanh toán theo hướng dẫn', icon: '' },
+                { step: 5, title: 'Kích Hoạt', desc: 'Nhận tài khoản và sử dụng', icon: '' }
             ]
         });
         const [isSaving, setIsSaving] = useState(false);
@@ -871,7 +871,7 @@
                 // Save to localStorage for local cache
                 localStorage.setItem('adminContactInfo', JSON.stringify(contactInfo));
 
-                // ✅ SYNC TO MYSQL
+                //  SYNC TO MYSQL
                 if (window.SharedDataService) {
                     const configData = {
                         contactInfo: contactInfo,
@@ -879,21 +879,21 @@
                     };
                     const result = await window.SharedDataService.saveToMySQL('config', configData);
                     if (result) {
-                        console.log('✅ [ContactSettings] Synced to MySQL');
+                        console.log(' [ContactSettings] Synced to MySQL');
                     } else {
-                        console.warn('⚠️ [ContactSettings] MySQL sync failed');
+                        console.warn(' [ContactSettings] MySQL sync failed');
                     }
                 }
 
                 window.GlobalStateManager?.addNotification(
-                    '✅ Contact settings saved successfully',
+                    ' Contact settings saved successfully',
                     'success',
                     'ContactSettings'
                 );
             } catch (error) {
-                console.error('❌ [ContactSettings] Save error:', error);
+                console.error(' [ContactSettings] Save error:', error);
                 window.GlobalStateManager?.addNotification(
-                    '❌ Failed to save contact settings',
+                    ' Failed to save contact settings',
                     'error',
                     'ContactSettings'
                 );
@@ -953,19 +953,19 @@
         return (
             <div className="space-y-6 p-6">
                 <div className="flex justify-between items-center">
-                    <h1 className="text-2xl font-bold">📞 Contact Settings</h1>
+                    <h1 className="text-2xl font-bold"> Contact Settings</h1>
                     <window.Button
                         variant="primary"
                         onClick={handleSave}
                         disabled={isSaving}
                     >
-                        {isSaving ? 'Saving...' : '💾 Save Changes'}
+                        {isSaving ? 'Saving...' : ' Save Changes'}
                     </window.Button>
                 </div>
 
                 {/* Contact Information */}
                 <window.Card>
-                    <h2 className="text-lg font-semibold mb-4">📱 Thông Tin Liên Hệ</h2>
+                    <h2 className="text-lg font-semibold mb-4"> Thông Tin Liên Hệ</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label className="block text-sm font-medium text-[#121212] mb-1">Zalo</label>
@@ -1004,7 +1004,7 @@
 
                 {/* Payment Methods */}
                 <window.Card>
-                    <h2 className="text-lg font-semibold mb-4">💳 Phương Thức Thanh Toán</h2>
+                    <h2 className="text-lg font-semibold mb-4"> Phương Thức Thanh Toán</h2>
                     <div className="space-y-2 mb-4">
                         {contactInfo.payment_methods.map((method, index) => (
                             <div key={index} className="flex items-center justify-between bg-[#F8F7F7] p-2 rounded">
@@ -1014,7 +1014,7 @@
                                     onClick={() => removePaymentMethod(index)}
                                     className="text-[#FE5938] hover:text-[#E54A2A]"
                                 >
-                                    🗑️
+                                    
                                 </button>
                             </div>
                         ))}
@@ -1027,14 +1027,14 @@
                             className="flex-1"
                         />
                         <window.Button type="button" variant="secondary" onClick={addPaymentMethod}>
-                            ➕ Thêm
+                             Thêm
                         </window.Button>
                     </div>
                 </window.Card>
 
                 {/* Important Notes */}
                 <window.Card>
-                    <h2 className="text-lg font-semibold mb-4">⚠️ Lưu Ý Quan Trọng</h2>
+                    <h2 className="text-lg font-semibold mb-4"> Lưu Ý Quan Trọng</h2>
                     <div className="space-y-2 mb-4">
                         {contactInfo.notes.map((note, index) => (
                             <div key={index} className="flex items-center justify-between bg-[#FFF9E6] p-2 rounded">
@@ -1044,7 +1044,7 @@
                                     onClick={() => removeNote(index)}
                                     className="text-[#FE5938] hover:text-[#E54A2A]"
                                 >
-                                    🗑️
+                                    
                                 </button>
                             </div>
                         ))}
@@ -1057,14 +1057,14 @@
                             className="flex-1"
                         />
                         <window.Button type="button" variant="secondary" onClick={addNote}>
-                            ➕ Thêm
+                             Thêm
                         </window.Button>
                     </div>
                 </window.Card>
 
                 {/* Purchase Steps */}
                 <window.Card>
-                    <h2 className="text-lg font-semibold mb-4">📋 Quy Trình Mua Gói</h2>
+                    <h2 className="text-lg font-semibold mb-4"> Quy Trình Mua Gói</h2>
                     <div className="space-y-4">
                         {contactInfo.purchase_steps.map((step, index) => (
                             <div key={index} className="bg-[#FFF3EE] p-4 rounded-lg">
@@ -1152,7 +1152,7 @@
                     setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
 
                     window.GlobalStateManager?.addNotification(
-                        '✅ Đổi mật khẩu thành công',
+                        ' Đổi mật khẩu thành công',
                         'success',
                         'AdminSettings'
                     );
@@ -1162,7 +1162,7 @@
             } catch (error) {
                 setMessage({ type: 'error', text: error.message });
                 window.GlobalStateManager?.addNotification(
-                    `❌ ${error.message}`,
+                    ` ${error.message}`,
                     'error',
                     'AdminSettings'
                 );
@@ -1174,11 +1174,11 @@
         return (
             <div className="space-y-6 p-6">
                 <div className="flex justify-between items-center">
-                    <h1 className="text-2xl font-bold">⚙️ Admin Settings</h1>
+                    <h1 className="text-2xl font-bold"> Admin Settings</h1>
                 </div>
 
                 {/* Password Change Section */}
-                <window.Card title="🔐 Đổi Mật Khẩu Admin">
+                <window.Card title=" Đổi Mật Khẩu Admin">
                     <form onSubmit={handleChangePassword} className="space-y-4">
                         <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
                             <p className="text-blue-800 text-sm">
@@ -1237,28 +1237,28 @@
                             disabled={isChanging}
                             className="w-full"
                         >
-                            {isChanging ? '⏳ Đang xử lý...' : '🔐 Đổi Mật Khẩu'}
+                            {isChanging ? '⏳ Đang xử lý...' : ' Đổi Mật Khẩu'}
                         </window.Button>
                     </form>
                 </window.Card>
 
                 {/* Security Info */}
-                <window.Card title="🛡️ Bảo Mật">
+                <window.Card title=" Bảo Mật">
                     <div className="space-y-3 text-sm text-gray-600">
                         <div className="flex items-start gap-2">
-                            <span className="text-green-500">✓</span>
+                            <span className="text-green-500"></span>
                             <p>Mật khẩu được mã hóa bằng bcrypt trong database</p>
                         </div>
                         <div className="flex items-start gap-2">
-                            <span className="text-green-500">✓</span>
+                            <span className="text-green-500"></span>
                             <p>Chỉ người có quyền truy cập MySQL/cPanel mới có thể reset mật khẩu</p>
                         </div>
                         <div className="flex items-start gap-2">
-                            <span className="text-green-500">✓</span>
+                            <span className="text-green-500"></span>
                             <p>Không lưu mật khẩu ở localStorage hoặc client-side</p>
                         </div>
                         <div className="flex items-start gap-2">
-                            <span className="text-yellow-500">⚠</span>
+                            <span className="text-yellow-500"></span>
                             <p>Nếu quên mật khẩu, truy cập phpMyAdmin để reset trực tiếp trong database</p>
                         </div>
                     </div>
@@ -1296,7 +1296,7 @@
 
                 if (result.success) {
                     window.GlobalStateManager?.addNotification(
-                        '✅ Đăng nhập thành công',
+                        ' Đăng nhập thành công',
                         'success',
                         'Authentication'
                     );
@@ -1311,7 +1311,7 @@
             } catch (error) {
                 setErrors({ general: error.message || 'Đăng nhập thất bại' });
                 window.GlobalStateManager?.addNotification(
-                    `❌ ${error.message || 'Đăng nhập thất bại'}`,
+                    ` ${error.message || 'Đăng nhập thất bại'}`,
                     'error',
                     'Authentication'
                 );
@@ -1396,7 +1396,7 @@
         useEffect(() => {
             if (!window.GlobalStateManager) return;
 
-            console.log('✅ [MainAdminSystem] Production mode - Authentication via MySQL API');
+            console.log(' [MainAdminSystem] Production mode - Authentication via MySQL API');
 
             // Only initialize admin user in localStorage if no users exist
             // Note: Actual authentication is handled by MySQL database
@@ -1428,7 +1428,7 @@
                 // Initialize only admin user
                 window.GlobalStateManager.updateData('users', [adminUser], 'MainAdminSystem_Init');
 
-                console.log('✅ [MainAdminSystem] Admin user initialized - No sample data');
+                console.log(' [MainAdminSystem] Admin user initialized - No sample data');
             }
         }, []);
         
@@ -1436,7 +1436,7 @@
         const handleLogin = useCallback((userData) => {
             setUser(userData);
             setIsAuthenticated(true);
-            console.log('🔄 [MainAdminSystem] USER_LOGGED_IN', { username: userData.username });
+            console.log(' [MainAdminSystem] USER_LOGGED_IN', { username: userData.username });
         }, []);
         
         // Handle logout
@@ -1445,18 +1445,18 @@
             setIsAuthenticated(false);
             setCurrentPage('dashboard');
             window.GlobalStateManager.addNotification(
-                '✅ Logged out successfully',
+                ' Logged out successfully',
                 'info',
                 'Authentication'
             );
-            console.log('🔄 [MainAdminSystem] USER_LOGGED_OUT');
+            console.log(' [MainAdminSystem] USER_LOGGED_OUT');
         }, []);
         
         // Handle page navigation
         const handlePageChange = useCallback((page) => {
             setCurrentPage(page);
             setSidebarOpen(false); // Close mobile sidebar
-            console.log('🔄 [MainAdminSystem] PAGE_CHANGED', { page });
+            console.log(' [MainAdminSystem] PAGE_CHANGED', { page });
         }, []);
         
         // Render current page content
@@ -1647,8 +1647,8 @@
     // ===== TESTING FUNCTIONS =====
     const TestMainAdmin = {
         testComponentRender: () => {
-            console.assert(window.MainAdminSystem, '❌ MainAdminSystem not exported');
-            console.log('✅ [TEST] MainAdminSystem component exists');
+            console.assert(window.MainAdminSystem, ' MainAdminSystem not exported');
+            console.log(' [TEST] MainAdminSystem component exists');
         },
         
         testSystemIntegration: () => {
@@ -1669,9 +1669,9 @@
             });
             
             if (missingComponents.length > 0) {
-                console.warn('⚠️ [TEST] Missing components:', missingComponents);
+                console.warn(' [TEST] Missing components:', missingComponents);
             } else {
-                console.log('✅ [TEST] All required components available');
+                console.log(' [TEST] All required components available');
             }
         }
     };
@@ -1692,23 +1692,23 @@
     // This will mount the application after all modules are loaded
     setTimeout(() => {
         if (window.GlobalStateManager && document.getElementById('root')) {
-            console.log('🎯 [MainAdmin] MOUNTING_APPLICATION');
+            console.log(' [MainAdmin] MOUNTING_APPLICATION');
             
             try {
                 const container = document.getElementById('root');
                 const root = ReactDOM.createRoot(container);
                 root.render(React.createElement(MainAdminSystem));
                 
-                console.log('✅ [MainAdmin] APPLICATION_MOUNTED_SUCCESSFULLY');
+                console.log(' [MainAdmin] APPLICATION_MOUNTED_SUCCESSFULLY');
                 
                 // Add welcome notification
                 window.GlobalStateManager.addNotification(
-                    '🚀 Admin system loaded successfully!',
+                    ' Admin system loaded successfully!',
                     'success',
                     'System'
                 );
                 
-                // ✅ DEBUG COMMANDS - Only in development mode
+                //  DEBUG COMMANDS - Only in development mode
                 const isDevMode = window.DEBUG_MODE || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
                 if (isDevMode) {
@@ -1716,7 +1716,7 @@
                         // Check current users
                         checkUsers: () => {
                             const users = window.GlobalStateManager.getData('users');
-                            console.log('👥 Current users:', users);
+                            console.log(' Current users:', users);
                             console.table(users);
                             return users;
                         },
@@ -1749,7 +1749,7 @@
                             const updatedUsers = [...currentUsers, newUser];
                             window.GlobalStateManager.updateData('users', updatedUsers, 'DebugTool');
 
-                            console.log('✅ Created test user:', newUser);
+                            console.log(' Created test user:', newUser);
                             return newUser;
                         },
 
@@ -1769,12 +1769,12 @@
                         clearAllUsers: () => {
                             if (confirm('Are you sure you want to clear all user data?')) {
                                 window.GlobalStateManager.updateData('users', [], 'DebugTool');
-                                console.log('🧹 Cleared all user data');
+                                console.log(' Cleared all user data');
                             }
                         }
                     };
 
-                    console.log('🔧 Admin Debug commands available: window.DEBUG_ADMIN_SYSTEM');
+                    console.log(' Admin Debug commands available: window.DEBUG_ADMIN_SYSTEM');
                     console.log('- window.DEBUG_ADMIN_SYSTEM.checkUsers()');
                     console.log('- window.DEBUG_ADMIN_SYSTEM.createTestUser(username, password)');
                     console.log('- window.DEBUG_ADMIN_SYSTEM.checkStorage()');
@@ -1782,13 +1782,13 @@
                 }
                 
             } catch (error) {
-                console.error('❌ [MainAdmin] MOUNT_ERROR', { error });
+                console.error(' [MainAdmin] MOUNT_ERROR', { error });
                 
                 // Show error in DOM
                 document.getElementById('root').innerHTML = `
                     <div style="display: flex; justify-content: center; align-items: center; height: 100vh; background: #f3f4f6;">
                         <div style="text-align: center; background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-                            <h2 style="color: #dc2626; margin-bottom: 1rem;">❌ Application Mount Error</h2>
+                            <h2 style="color: #dc2626; margin-bottom: 1rem;"> Application Mount Error</h2>
                             <p style="color: #6b7280; margin-bottom: 1rem;">${error.message}</p>
                             <button onclick="window.location.reload()" style="background: #3b82f6; color: white; padding: 0.5rem 1rem; border: none; border-radius: 4px; cursor: pointer;">
                                 Reload Page
@@ -1798,7 +1798,7 @@
                 `;
             }
         } else {
-            console.error('❌ [MainAdmin] MOUNT_REQUIREMENTS_NOT_MET', {
+            console.error(' [MainAdmin] MOUNT_REQUIREMENTS_NOT_MET', {
                 hasGlobalStateManager: !!window.GlobalStateManager,
                 hasRootElement: !!document.getElementById('root')
             });

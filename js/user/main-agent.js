@@ -9,7 +9,7 @@
 (function() {
     'use strict';
 
-    console.log('🚀 Main Agent System v10.1 - 5 Pages Rule Compliant');
+    console.log(' Main Agent System v10.1 - 5 Pages Rule Compliant');
 
     // Error Boundary Component
     const ErrorBoundary = React.memo(function ErrorBoundary({ children }) {
@@ -18,7 +18,7 @@
 
         React.useEffect(() => {
             const handleError = (error) => {
-                console.error('❌ Error caught by boundary:', error);
+                console.error(' Error caught by boundary:', error);
                 setHasError(true);
                 setError(error);
             };
@@ -31,7 +31,7 @@
             return (
                 <div className="min-h-screen bg-red-50 flex items-center justify-center p-8">
                     <div className="bg-white rounded-lg shadow-lg p-8 max-w-2xl">
-                        <h2 className="text-2xl font-bold text-red-600 mb-4">❌ Lỗi Hệ Thống</h2>
+                        <h2 className="text-2xl font-bold text-red-600 mb-4"> Lỗi Hệ Thống</h2>
                         <p className="text-[#7B7B7B] mb-4">Đã xảy ra lỗi khi tải trang. Vui lòng thử lại.</p>
                         {error && (
                             <details className="bg-[#F8F7F7] p-4 rounded">
@@ -55,7 +55,7 @@
 
     // Main App Component với 5 trang bắt buộc
     const MainApp = React.memo(function MainApp() {
-        console.log('🔄 Rendering MainApp...');
+        console.log(' Rendering MainApp...');
 
         const [currentPage, setCurrentPage] = React.useState('landing');
         const [user, setUser] = React.useState(null);
@@ -63,26 +63,26 @@
 
         // Check user authentication
         React.useEffect(() => {
-            console.log('🔍 Checking authentication...');
+            console.log(' Checking authentication...');
             const checkAuth = () => {
                 if (window.AuthService) {
                     const currentUser = window.AuthService.getCurrentUser();
-                    console.log('👤 Current user:', currentUser);
+                    console.log(' Current user:', currentUser);
                     if (currentUser) {
                         setUser(currentUser);
                         
                         // Check package status
                         if (currentUser.package_status === 'active') {
-                            console.log('✅ User has active package, going to main page');
+                            console.log(' User has active package, going to main page');
                             setCurrentPage('main'); // Go to main page if active
                         } else if (currentUser.package_status === 'expired' || currentUser.package_status === 'no_package') {
-                            console.log('⚠️ User package expired/no package, going to pricing');
+                            console.log(' User package expired/no package, going to pricing');
                             setCurrentPage('pricing'); // Redirect to pricing if expired/no package
                         }
                     }
                 }
                 else {
-                    console.error('❌ AuthService not available');
+                    console.error(' AuthService not available');
                 }
             };
             
@@ -90,14 +90,14 @@
         }, []);
 
         const handleNavigation = React.useCallback((page) => {
-            console.log(`🔄 Navigating to: ${page}`);
+            console.log(` Navigating to: ${page}`);
             setCurrentPage(page);
         }, []);
 
         // Render current page
         const renderCurrentPage = () => {
-            console.log(`🎯 Rendering page: ${currentPage}`);
-            console.log('📦 Available components:', {
+            console.log(` Rendering page: ${currentPage}`);
+            console.log(' Available components:', {
                 LandingPage: !!window.LandingPage,
                 LoginPage: !!window.LoginPage,
                 FormulaPage: !!window.FormulaPage,
@@ -109,19 +109,19 @@
                 switch (currentPage) {
                     case 'landing':
                         if (!window.LandingPage) {
-                            console.error('❌ LandingPage component not found');
-                            return <div className="p-8 text-center">❌ Landing Page không tải được</div>;
+                            console.error(' LandingPage component not found');
+                            return <div className="p-8 text-center"> Landing Page không tải được</div>;
                         }
                         return React.createElement(window.LandingPage, { onNavigate: handleNavigation });
                     
                     case 'login':
                         if (!window.LoginPage) {
-                            console.error('❌ LoginPage component not found');
-                            return <div className="p-8 text-center">❌ Login Page không tải được</div>;
+                            console.error(' LoginPage component not found');
+                            return <div className="p-8 text-center"> Login Page không tải được</div>;
                         }
                         return React.createElement(window.LoginPage, {
                             onLogin: (userData) => {
-                                console.log('🔐 Login successful:', userData);
+                                console.log(' Login successful:', userData);
                                 // Set user to session storage via AuthService
                                 if (window.AuthService) {
                                     window.AuthService.setCurrentUser(userData);
@@ -138,33 +138,33 @@
                     
                     case 'formula':
                         if (!window.FormulaPage) {
-                            console.error('❌ FormulaPage component not found');
-                            return <div className="p-8 text-center">❌ Formula Page không tải được</div>;
+                            console.error(' FormulaPage component not found');
+                            return <div className="p-8 text-center"> Formula Page không tải được</div>;
                         }
                         return React.createElement(window.FormulaPage, { onNavigate: handleNavigation });
                     
                     case 'main':
                         if (!window.MainReconciliation) {
-                            console.error('❌ MainReconciliation component not found');
-                            return <div className="p-8 text-center">❌ Main Page không tải được</div>;
+                            console.error(' MainReconciliation component not found');
+                            return <div className="p-8 text-center"> Main Page không tải được</div>;
                         }
                         return React.createElement(window.MainReconciliation);
                     
                     case 'pricing':
                         if (!window.PricingPage) {
-                            console.error('❌ PricingPage component not found');
-                            return <div className="p-8 text-center">❌ Pricing Page không tải được</div>;
+                            console.error(' PricingPage component not found');
+                            return <div className="p-8 text-center"> Pricing Page không tải được</div>;
                         }
                         return React.createElement(window.PricingPage, { onNavigate: handleNavigation });
                     
                     default:
-                        return <div className="p-8 text-center">❌ Trang không tồn tại: {currentPage}</div>;
+                        return <div className="p-8 text-center"> Trang không tồn tại: {currentPage}</div>;
                 }
             } catch (error) {
-                console.error('❌ Error rendering page:', error);
+                console.error(' Error rendering page:', error);
                 return (
                     <div className="p-8 text-center">
-                        <div className="text-red-600 text-xl mb-4">❌ Lỗi tải trang</div>
+                        <div className="text-red-600 text-xl mb-4"> Lỗi tải trang</div>
                         <div className="text-[#7B7B7B] mb-4">Trang: {currentPage}</div>
                         <div className="text-sm text-[#7B7B7B]">{error.message}</div>
                     </div>
@@ -194,7 +194,7 @@
                                                 currentPage === 'main' ? 'bg-[#E36323] text-white' : 'text-[#7B7B7B] hover:text-[#E36323]'
                                             }`}
                                         >
-                                            🧮 Đối Soát
+                                             Đối Soát
                                         </button>
                                         <button 
                                             onClick={() => handleNavigation('formula')} 
@@ -202,7 +202,7 @@
                                                 currentPage === 'formula' ? 'bg-[#E36323] text-white' : 'text-[#7B7B7B] hover:text-[#E36323]'
                                             }`}
                                         >
-                                            📖 Công Thức
+                                             Công Thức
                                         </button>
                                     </>
                                 )}
@@ -214,13 +214,13 @@
                                         currentPage === 'pricing' ? 'bg-[#E36323] text-white' : 'text-[#7B7B7B] hover:text-[#E36323]'
                                     }`}
                                 >
-                                    💰 Mua Gói
+                                     Mua Gói
                                 </button>
 
                                 {/* Hiển thị cảnh báo khi package hết hạn */}
                                 {isPackageExpired && (
                                     <div className="flex items-center gap-2 text-orange-600 text-sm">
-                                        <span>⚠️</span>
+                                        <span></span>
                                         <span>Gói dịch vụ đã hết hạn. Vui lòng gia hạn để sử dụng tính năng.</span>
                                     </div>
                                 )}
@@ -273,18 +273,18 @@
     });
 
     const initialize = () => {
-        console.log('🎯 Initializing Main Agent System...');
+        console.log(' Initializing Main Agent System...');
         const rootElement = document.getElementById('root');
         if (rootElement) {
             // Use React 18 createRoot API
             const root = ReactDOM.createRoot(rootElement);
             root.render(React.createElement(MainApp));
-            console.log('✅ Main Agent System initialized successfully');
+            console.log(' Main Agent System initialized successfully');
         } else {
-            console.error('❌ Root element not found');
+            console.error(' Root element not found');
         }
     };
 
     window.MainAgentSystem = { initialize: initialize };
-    console.log('✅ Main Agent System loaded successfully');
+    console.log(' Main Agent System loaded successfully');
 })(); 

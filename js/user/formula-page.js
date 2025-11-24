@@ -3,7 +3,7 @@
     
     const { useState, useCallback, memo } = React;
     
-    console.log('📖 Formula Page v1.0.0 loaded');
+    console.log(' Formula Page v1.0.0 loaded');
     
     // ===== FORMULA PAGE CONTENT THEO RULES =====
     const FORMULA_PAGE_CONTENT = {
@@ -90,7 +90,7 @@
         if (!isPackageActive) {
             return React.createElement('div', { className: 'min-h-screen bg-[#F8F7F7] flex items-center justify-center p-8' },
                 React.createElement('div', { className: 'bg-white rounded-lg shadow-lg p-8 max-w-2xl text-center' },
-                    React.createElement('div', { className: 'text-6xl mb-4' }, '🔒'),
+                    React.createElement('div', { className: 'text-6xl mb-4' }, ''),
                     React.createElement('h2', { className: 'text-2xl font-bold text-[#121212] mb-4' }, 'Tính Năng Bị Khóa'),
                     React.createElement('p', { className: 'text-[#7B7B7B] mb-6' }, 
                         'Trang Công Thức chỉ dành cho tài khoản có gói dịch vụ đang hoạt động. Vui lòng gia hạn để sử dụng tính năng này.'
@@ -99,7 +99,7 @@
                         React.createElement('button', {
                             onClick: handleGoToPricing,
                             className: 'w-full py-3 px-6 bg-[#E36323] text-white rounded-lg hover:bg-[#DF5A18] font-medium'
-                        }, '💳 Gia Hạn Ngay'),
+                        }, ' Gia Hạn Ngay'),
                         React.createElement('button', {
                             onClick: () => onNavigate('main'),
                             className: 'w-full py-2 px-6 text-[#7B7B7B] hover:text-[#121212] font-medium'
@@ -114,7 +114,7 @@
                 // Header
                 React.createElement('div', { className: 'flex items-center gap-3 mb-6' },
                     React.createElement('div', { className: 'text-3xl' }, 
-                        betType === 'lo' ? '🎯' : betType === 'de' ? '🎲' : betType === 'xien' ? '🔗' : '🎰'
+                        betType === 'lo' ? '' : betType === 'de' ? '' : betType === 'xien' ? '' : ''
                     ),
                     React.createElement('h3', { className: 'text-2xl font-bold text-[#121212]' },
                         betType === 'lo' ? 'LÔ' : betType === 'de' ? 'ĐỀ' : betType === 'xien' ? 'XIÊN' : 'BA CÀNG'
@@ -184,7 +184,7 @@
                                 onClick: handleBackToMain
                             }, '← Quay lại'),
                             React.createElement('div', { className: 'flex items-center gap-2' },
-                                React.createElement('div', { className: 'text-2xl' }, '📖'),
+                                React.createElement('div', { className: 'text-2xl' }, ''),
                                 React.createElement('h1', { className: 'text-xl font-bold text-[#121212]' }, 'Hướng Dẫn Sử Dụng')
                             )
                         ),
@@ -234,7 +234,7 @@
                 // Money Units Section
                 React.createElement('div', { className: 'bg-white rounded-lg shadow-md p-6 mb-8' },
                     React.createElement('h3', { className: 'text-2xl font-bold text-[#121212] mb-6 flex items-center gap-3' },
-                        React.createElement('span', { className: 'text-3xl' }, '💰'),
+                        React.createElement('span', { className: 'text-3xl' }, ''),
                         'Đơn Vị Tiền'
                     ),
                     React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-3 gap-4' },
@@ -253,7 +253,7 @@
                 // Default Rates Section
                 React.createElement('div', { className: 'bg-white rounded-lg shadow-md p-6 mb-8' },
                     React.createElement('h3', { className: 'text-2xl font-bold text-[#121212] mb-6 flex items-center gap-3' },
-                        React.createElement('span', { className: 'text-3xl' }, '⚙️'),
+                        React.createElement('span', { className: 'text-3xl' }, ''),
                         'Hệ Số Mặc Định'
                     ),
                     React.createElement('div', { className: 'text-sm text-[#7B7B7B] mb-4' },
@@ -277,7 +277,7 @@
                 // Important Notes
                 React.createElement('div', { className: 'bg-red-50 border border-red-200 rounded-lg p-6' },
                     React.createElement('h3', { className: 'text-xl font-bold text-red-800 mb-4 flex items-center gap-2' },
-                        React.createElement('span', { className: 'text-2xl' }, '⚠️'),
+                        React.createElement('span', { className: 'text-2xl' }, ''),
                         'Lưu Ý Quan Trọng'
                     ),
                     React.createElement('ul', { className: 'space-y-2 text-red-700' },
@@ -295,6 +295,6 @@
     // Export to window
     window.FormulaPage = FormulaPage;
     
-    console.log('✅ Formula Page component loaded successfully');
+    console.log(' Formula Page component loaded successfully');
 
 })(); 

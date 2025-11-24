@@ -1,10 +1,10 @@
-// ⚙️ PAYMENT CONFIG MODULE
+//  PAYMENT CONFIG MODULE
 // Version: 1.1.0 | Created: 2024 | Follows ADMIN SYSTEM DEVELOPMENT GUIDELINES
-// ✅ UPDATED: QR Code UI Simplified for Single QR Logic
+//  UPDATED: QR Code UI Simplified for Single QR Logic
 (function() {
     'use strict';
     
-    console.log('🔄 [PaymentConfig] Loading version 1.1.0 - QR UI Updated');
+    console.log(' [PaymentConfig] Loading version 1.1.0 - QR UI Updated');
     
     const { useState, useEffect, useCallback, memo } = React;
     
@@ -21,7 +21,7 @@
                 enabled: true
             },
             qrCodes: {
-                // ✅ CHUNG MỘT QR CHO TẤT CẢ GÓI
+                //  CHUNG MỘT QR CHO TẤT CẢ GÓI
                 main: { 
                     url: '', 
                     enabled: true,
@@ -36,10 +36,10 @@
                 autoApprove: false
             },
             paymentMethods: {
-                bank_transfer: { enabled: true, name: 'Bank Transfer', icon: '🏦' },
-                qr_code: { enabled: true, name: 'QR Code', icon: '📱' },
-                bank_card: { enabled: true, name: 'Bank Card', icon: '💳' },
-                cash: { enabled: true, name: 'Cash', icon: '💰' }
+                bank_transfer: { enabled: true, name: 'Bank Transfer', icon: '' },
+                qr_code: { enabled: true, name: 'QR Code', icon: '' },
+                bank_card: { enabled: true, name: 'Bank Card', icon: '' },
+                cash: { enabled: true, name: 'Cash', icon: '' }
             }
         });
         
@@ -51,11 +51,11 @@
         // Load config from global state
         useEffect(() => {
             if (!window.GlobalStateManager) {
-                console.error('❌ [PaymentConfig] GlobalStateManager not available');
+                console.error(' [PaymentConfig] GlobalStateManager not available');
                 return;
             }
             
-            console.log('🔄 [PaymentConfig] COMPONENT_MOUNT');
+            console.log(' [PaymentConfig] COMPONENT_MOUNT');
             
             // Load initial config
             const savedConfig = window.GlobalStateManager.getData('paymentConfig');
@@ -66,7 +66,7 @@
             
             // Subscribe to changes
             const unsubscribe = window.GlobalStateManager.subscribe('paymentConfig', (newConfig) => {
-                console.log('🔄 [PaymentConfig] CONFIG_UPDATE');
+                console.log(' [PaymentConfig] CONFIG_UPDATE');
                 if (newConfig && newConfig.length > 0) {
                     setConfig(newConfig[0]);
                 }
@@ -74,7 +74,7 @@
             
             return () => {
                 unsubscribe();
-                console.log('🔄 [PaymentConfig] COMPONENT_UNMOUNT');
+                console.log(' [PaymentConfig] COMPONENT_UNMOUNT');
             };
         }, []);
         
@@ -84,9 +84,9 @@
                 try {
                     window.GlobalStateManager.updateData('paymentConfig', [config], 'PaymentConfig');
                     setHasUnsavedChanges(false);
-                    console.log('🔄 [PaymentConfig] AUTO_SAVED');
+                    console.log(' [PaymentConfig] AUTO_SAVED');
                 } catch (error) {
-                    console.error('❌ [PaymentConfig] AUTO_SAVE_ERROR', { error });
+                    console.error(' [PaymentConfig] AUTO_SAVE_ERROR', { error });
                 }
             }
         }, [config, hasUnsavedChanges]);
@@ -95,7 +95,7 @@
         const saveConfig = useCallback(() => {
             if (!hasUnsavedChanges) {
                 window.GlobalStateManager.addNotification(
-                    'ℹ️ No changes to save',
+                    ' No changes to save',
                     'info',
                     'PaymentConfig'
                 );
@@ -107,15 +107,15 @@
                 window.GlobalStateManager.updateData('paymentConfig', [config], 'PaymentConfig');
                 setHasUnsavedChanges(false);
                 window.GlobalStateManager.addNotification(
-                    '✅ Payment configuration saved successfully!',
+                    ' Payment configuration saved successfully!',
                     'success',
                     'PaymentConfig'
                 );
-                console.log('🔄 [PaymentConfig] CONFIG_SAVED');
+                console.log(' [PaymentConfig] CONFIG_SAVED');
             } catch (error) {
-                console.error('❌ [PaymentConfig] SAVE_ERROR', { error });
+                console.error(' [PaymentConfig] SAVE_ERROR', { error });
                 window.GlobalStateManager.addNotification(
-                    '❌ Failed to save payment configuration',
+                    ' Failed to save payment configuration',
                     'error',
                     'PaymentConfig'
                 );
@@ -206,11 +206,11 @@
             <div className="space-y-6">
                 {/* Header */}
                 <div className="flex justify-between items-center">
-                    <h1 className="text-2xl font-bold">⚙️ Payment Configuration</h1>
+                    <h1 className="text-2xl font-bold"> Payment Configuration</h1>
                     <div className="flex items-center space-x-3">
                         {hasUnsavedChanges && (
                             <span className="text-sm text-orange-600 bg-orange-100 px-2 py-1 rounded">
-                                ⚠️ Unsaved changes
+                                 Unsaved changes
                             </span>
                         )}
                         <window.Button
@@ -218,7 +218,7 @@
                             variant={hasUnsavedChanges ? "primary" : "secondary"}
                             disabled={isSaving}
                         >
-                            {isSaving ? '💾 Saving...' : hasUnsavedChanges ? '💾 Save Changes' : '💾 Save Configuration'}
+                            {isSaving ? ' Saving...' : hasUnsavedChanges ? ' Save Changes' : ' Save Configuration'}
                         </window.Button>
                     </div>
                 </div>
@@ -227,10 +227,10 @@
                 <div className="border-b border-[#ECECEC]">
                     <nav className="-mb-px flex space-x-8">
                         {[
-                            { id: 'bank', label: '🏦 Bank Info', icon: '🏦' },
-                            { id: 'qr', label: '📱 QR Codes', icon: '📱' },
-                            { id: 'methods', label: '💳 Payment Methods', icon: '💳' },
-                            { id: 'rules', label: '📋 Business Rules', icon: '📋' }
+                            { id: 'bank', label: ' Bank Info', icon: '' },
+                            { id: 'qr', label: ' QR Codes', icon: '' },
+                            { id: 'methods', label: ' Payment Methods', icon: '' },
+                            { id: 'rules', label: ' Business Rules', icon: '' }
                         ].map(tab => (
                             <button
                                 key={tab.id}
@@ -312,9 +312,9 @@
                     {activeTab === 'qr' && (
                         <window.Card title="QR Code Configuration">
                             <div className="space-y-6">
-                                {/* ✅ THÔNG TIN ĐƠN GIẢN */}
+                                {/*  THÔNG TIN ĐƠN GIẢN */}
                                 <div className="bg-[#FFF7ED] border border-[#FFEDD5] rounded-lg p-4">
-                                    <h4 className="font-medium text-[#E36323] mb-2">🎯 QR Code Duy Nhất</h4>
+                                    <h4 className="font-medium text-[#E36323] mb-2"> QR Code Duy Nhất</h4>
                                     <p className="text-sm text-[#E36323]">
                                         Chỉ cần upload 1 QR Code duy nhất. Hệ thống sẽ tự động hiển thị QR này cho tất cả gói khi người dùng thanh toán.
                                     </p>
@@ -324,7 +324,7 @@
                                 <div className="border rounded-lg p-6">
                                     <div className="text-center mb-6">
                                         <h4 className="text-lg font-medium text-[#121212] mb-2">
-                                            📱 QR Code Thanh Toán
+                                             QR Code Thanh Toán
                                         </h4>
                                         <p className="text-sm text-[#7B7B7B]">
                                             Upload QR Code của bạn để người dùng có thể thanh toán
@@ -336,7 +336,7 @@
                                         <div className="text-center">
                                             <div className="border-2 border-dashed border-[#E2E2E2] rounded-lg p-8 hover:border-[#E36323] transition-colors">
                                                 <div className="space-y-4">
-                                                    <div className="text-4xl">📱</div>
+                                                    <div className="text-4xl"></div>
                                                     <div>
                                                         <label className="cursor-pointer">
                                                             <input
@@ -368,7 +368,7 @@
                                                         className="w-40 h-40 border-2 border-[#ECECEC] rounded-lg shadow-lg"
                                                     />
                                                     <div className="mt-3 text-sm text-green-600">
-                                                        ✅ QR Code đã sẵn sàng sử dụng
+                                                         QR Code đã sẵn sàng sử dụng
                                                     </div>
                                                 </div>
                                             </div>
@@ -384,16 +384,16 @@
                                                     className="rounded"
                                                 />
                                                 <span className="text-sm font-medium">
-                                                    {config.qrCodes.main.enabled ? '✅ QR Code đang hoạt động' : '❌ QR Code đã tắt'}
+                                                    {config.qrCodes.main.enabled ? ' QR Code đang hoạt động' : ' QR Code đã tắt'}
                                                 </span>
                                             </label>
                                         </div>
                                     </div>
                                 </div>
                                 
-                                {/* ✅ HƯỚNG DẪN SỬ DỤNG */}
+                                {/*  HƯỚNG DẪN SỬ DỤNG */}
                                 <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                                    <h4 className="font-medium text-green-900 mb-3">📋 Cách hoạt động</h4>
+                                    <h4 className="font-medium text-green-900 mb-3"> Cách hoạt động</h4>
                                     <div className="text-sm text-green-700 space-y-2">
                                         <div className="flex items-start space-x-2">
                                             <span className="text-green-600">1.</span>
@@ -511,8 +511,8 @@
     // ===== TESTING FUNCTIONS =====
     const TestPaymentConfig = {
         testComponentRender: () => {
-            console.assert(window.PaymentConfig, '❌ PaymentConfig not exported');
-            console.log('✅ [TEST] PaymentConfig component exists');
+            console.assert(window.PaymentConfig, ' PaymentConfig not exported');
+            console.log(' [TEST] PaymentConfig component exists');
         },
         
         testDataFlow: () => {
@@ -541,19 +541,19 @@
                     autoApprove: false
                 },
                 paymentMethods: {
-                    bank_transfer: { enabled: true, name: 'Bank Transfer', icon: '🏦' },
-                    qr_code: { enabled: true, name: 'QR Code', icon: '📱' },
-                    bank_card: { enabled: true, name: 'Bank Card', icon: '💳' },
-                    cash: { enabled: true, name: 'Cash', icon: '💰' }
+                    bank_transfer: { enabled: true, name: 'Bank Transfer', icon: '' },
+                    qr_code: { enabled: true, name: 'QR Code', icon: '' },
+                    bank_card: { enabled: true, name: 'Bank Card', icon: '' },
+                    cash: { enabled: true, name: 'Cash', icon: '' }
                 }
             };
             
             window.GlobalStateManager.updateData('paymentConfig', [testConfig], 'Test');
             
             const retrieved = window.GlobalStateManager.getData('paymentConfig');
-            console.assert(retrieved.length > 0 && retrieved[0].bankInfo.bankName === 'Test Bank', '❌ Payment config data flow failed');
+            console.assert(retrieved.length > 0 && retrieved[0].bankInfo.bankName === 'Test Bank', ' Payment config data flow failed');
             
-            console.log('✅ [TEST] Payment config data flow works');
+            console.log(' [TEST] Payment config data flow works');
         }
     };
     
