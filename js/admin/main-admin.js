@@ -337,40 +337,31 @@
             }
         }, []);
 
-        // Export all admin data to JSON file
+        // Export all admin data to JSON file - FROM MYSQL (via GlobalStateManager cache)
         const handleExport = useCallback(() => {
             setIsExporting(true);
             try {
-                // Collect all admin data from localStorage
+                // Collect data from GlobalStateManager (synced from MySQL)
+                const users = window.GlobalStateManager?.getData('users') || [];
+                const packages = window.GlobalStateManager?.getData('packages') || [];
+                const payments = window.GlobalStateManager?.getData('payments') || [];
+                const notifications = window.GlobalStateManager?.getData('notifications') || [];
+
                 const exportData = {
-                    version: '1.0',
+                    version: '2.0', // Updated version for MySQL export
                     exportedAt: new Date().toISOString(),
                     exportedFrom: window.location.hostname,
+                    dataSource: 'MySQL', // Indicate data source
 
-                    // Core data
-                    users: window.GlobalStateManager?.getData('users') || [],
-                    packages: window.GlobalStateManager?.getData('packages') || [],
-                    payments: window.GlobalStateManager?.getData('payments') || [],
-                    notifications: window.GlobalStateManager?.getData('notifications') || [],
-
-                    // localStorage data
-                    admin_users: JSON.parse(localStorage.getItem('admin_users') || '[]'),
-                    adminUsers: JSON.parse(localStorage.getItem('adminUsers') || '[]'),
-                    adminPackages: JSON.parse(localStorage.getItem('adminPackages') || '[]'),
-                    adminPayments: JSON.parse(localStorage.getItem('adminPayments') || '[]'),
-                    adminNotifications: JSON.parse(localStorage.getItem('adminNotifications') || '[]'),
-                    registeredUsers: JSON.parse(localStorage.getItem('registeredUsers') || '[]'),
-                    syncedDemoAccounts: JSON.parse(localStorage.getItem('syncedDemoAccounts') || '[]'),
-                    userPackages: JSON.parse(localStorage.getItem('userPackages') || '[]'),
+                    // Core data from GlobalStateManager (synced from MySQL)
+                    users: users,
+                    packages: packages,
+                    payments: payments,
+                    notifications: notifications,
 
                     // Config data
                     adminContactInfo: JSON.parse(localStorage.getItem('adminContactInfo') || 'null'),
-                    admin_paymentConfig: JSON.parse(localStorage.getItem('admin_paymentConfig') || 'null'),
-                    admin_credentials: JSON.parse(localStorage.getItem('admin_credentials') || 'null'),
-
-                    // Auto payment verifier data
-                    autoPaymentVerifier_history: JSON.parse(localStorage.getItem('autoPaymentVerifier_history') || '[]'),
-                    autoPaymentVerifier_lastCheck: localStorage.getItem('autoPaymentVerifier_lastCheck') || null
+                    admin_paymentConfig: JSON.parse(localStorage.getItem('admin_paymentConfig') || 'null')
                 };
 
                 // Create and download JSON file
@@ -389,9 +380,9 @@
                 // Save export info
                 const exportInfo = {
                     date: new Date().toISOString(),
-                    userCount: exportData.users.length || exportData.admin_users.length,
-                    packageCount: exportData.packages.length || exportData.adminPackages.length,
-                    paymentCount: exportData.payments.length || exportData.adminPayments.length
+                    userCount: users.length,
+                    packageCount: packages.length,
+                    paymentCount: payments.length
                 };
                 localStorage.setItem('lastDataExport', JSON.stringify(exportInfo));
                 setLastExport(exportInfo);
@@ -416,7 +407,7 @@
             }
         }, []);
 
-        // Import data from JSON file
+        // Import data from JSON file - SYNC TO MYSQL
         const handleImport = useCallback((event) => {
             const file = event.target.files[0];
             if (!file) return;
@@ -425,7 +416,7 @@
             setImportResult(null);
 
             const reader = new FileReader();
-            reader.onload = (e) => {
+            reader.onload = async (e) => {
                 try {
                     const importData = JSON.parse(e.target.result);
 
@@ -445,23 +436,27 @@
                         warnings: []
                     };
 
-                    // Import users - merge with existing
-                    if (importData.admin_users?.length > 0 || importData.users?.length > 0) {
-                        const importUsers = importData.admin_users?.length > 0 ? importData.admin_users : importData.users;
-                        const existingUsers = JSON.parse(localStorage.getItem('admin_users') || '[]');
+                    // Import users - merge with existing and SYNC TO MYSQL
+                    if (importData.users?.length > 0) {
+                        const importUsers = importData.users;
+                        const existingUsers = window.GlobalStateManager?.getData('users') || [];
 
                         // Merge: add new users, skip existing by username
                         const existingUsernames = new Set(existingUsers.map(u => u.username));
                         const newUsers = importUsers.filter(u => !existingUsernames.has(u.username));
                         const mergedUsers = [...existingUsers, ...newUsers];
 
-                        localStorage.setItem('admin_users', JSON.stringify(mergedUsers));
-                        localStorage.setItem('adminUsers', JSON.stringify(mergedUsers));
-                        localStorage.setItem('registeredUsers', JSON.stringify(mergedUsers));
-
                         // Update GlobalStateManager
                         if (window.GlobalStateManager) {
                             window.GlobalStateManager.updateData('users', mergedUsers, 'DataImport');
+                        }
+
+                        // ✅ SYNC NEW USERS TO MYSQL
+                        if (window.SharedDataService && newUsers.length > 0) {
+                            for (const user of newUsers) {
+                                await window.SharedDataService.saveToMySQL('user', user);
+                            }
+                            console.log(`✅ [DataImport] ${newUsers.length} users synced to MySQL`);
                         }
 
                         result.imported.users = newUsers.length;
@@ -470,43 +465,55 @@
                         }
                     }
 
-                    // Import packages
-                    if (importData.adminPackages?.length > 0 || importData.packages?.length > 0) {
-                        const importPackages = importData.adminPackages?.length > 0 ? importData.adminPackages : importData.packages;
-                        const existingPackages = JSON.parse(localStorage.getItem('adminPackages') || '[]');
+                    // Import packages - SYNC TO MYSQL
+                    if (importData.packages?.length > 0) {
+                        const importPackages = importData.packages;
+                        const existingPackages = window.GlobalStateManager?.getData('packages') || [];
 
                         const existingPackageIds = new Set(existingPackages.map(p => p.id));
                         const newPackages = importPackages.filter(p => !existingPackageIds.has(p.id));
                         const mergedPackages = [...existingPackages, ...newPackages];
 
-                        localStorage.setItem('adminPackages', JSON.stringify(mergedPackages));
-
                         if (window.GlobalStateManager) {
                             window.GlobalStateManager.updateData('packages', mergedPackages, 'DataImport');
+                        }
+
+                        // ✅ SYNC NEW PACKAGES TO MYSQL
+                        if (window.SharedDataService && newPackages.length > 0) {
+                            for (const pkg of newPackages) {
+                                await window.SharedDataService.saveToMySQL('package', pkg);
+                            }
+                            console.log(`✅ [DataImport] ${newPackages.length} packages synced to MySQL`);
                         }
 
                         result.imported.packages = newPackages.length;
                     }
 
-                    // Import payments
-                    if (importData.adminPayments?.length > 0 || importData.payments?.length > 0) {
-                        const importPayments = importData.adminPayments?.length > 0 ? importData.adminPayments : importData.payments;
-                        const existingPayments = JSON.parse(localStorage.getItem('adminPayments') || '[]');
+                    // Import payments - SYNC TO MYSQL
+                    if (importData.payments?.length > 0) {
+                        const importPayments = importData.payments;
+                        const existingPayments = window.GlobalStateManager?.getData('payments') || [];
 
                         const existingPaymentIds = new Set(existingPayments.map(p => p.id));
                         const newPayments = importPayments.filter(p => !existingPaymentIds.has(p.id));
                         const mergedPayments = [...existingPayments, ...newPayments];
 
-                        localStorage.setItem('adminPayments', JSON.stringify(mergedPayments));
-
                         if (window.GlobalStateManager) {
                             window.GlobalStateManager.updateData('payments', mergedPayments, 'DataImport');
+                        }
+
+                        // ✅ SYNC NEW PAYMENTS TO MYSQL
+                        if (window.SharedDataService && newPayments.length > 0) {
+                            for (const payment of newPayments) {
+                                await window.SharedDataService.saveToMySQL('payment', payment);
+                            }
+                            console.log(`✅ [DataImport] ${newPayments.length} payments synced to MySQL`);
                         }
 
                         result.imported.payments = newPayments.length;
                     }
 
-                    // Import configs (overwrite)
+                    // Import configs (overwrite) - SYNC TO MYSQL
                     if (importData.adminContactInfo) {
                         localStorage.setItem('adminContactInfo', JSON.stringify(importData.adminContactInfo));
                         result.imported.configs++;
@@ -515,6 +522,15 @@
                     if (importData.admin_paymentConfig) {
                         localStorage.setItem('admin_paymentConfig', JSON.stringify(importData.admin_paymentConfig));
                         result.imported.configs++;
+                    }
+
+                    // ✅ SYNC CONFIG TO MYSQL
+                    if (window.SharedDataService && (importData.adminContactInfo || importData.admin_paymentConfig)) {
+                        await window.SharedDataService.saveToMySQL('config', {
+                            contactInfo: importData.adminContactInfo,
+                            paymentConfig: importData.admin_paymentConfig
+                        });
+                        console.log('✅ [DataImport] Config synced to MySQL');
                     }
 
                     setImportResult(result);
@@ -557,15 +573,12 @@
             reader.readAsText(file);
         }, []);
 
-        // Get current data stats
+        // Get current data stats - FROM GLOBALSTATEMANAGER (synced from MySQL)
         const currentStats = React.useMemo(() => {
             return {
-                users: window.GlobalStateManager?.getData('users')?.length ||
-                       JSON.parse(localStorage.getItem('admin_users') || '[]').length,
-                packages: window.GlobalStateManager?.getData('packages')?.length ||
-                         JSON.parse(localStorage.getItem('adminPackages') || '[]').length,
-                payments: window.GlobalStateManager?.getData('payments')?.length ||
-                         JSON.parse(localStorage.getItem('adminPayments') || '[]').length
+                users: window.GlobalStateManager?.getData('users')?.length || 0,
+                packages: window.GlobalStateManager?.getData('packages')?.length || 0,
+                payments: window.GlobalStateManager?.getData('payments')?.length || 0
             };
         }, []);
 
@@ -851,14 +864,25 @@
             }
         }, []);
 
-        // Save contact info
-        const handleSave = useCallback(() => {
+        // Save contact info - SYNC TO MYSQL
+        const handleSave = useCallback(async () => {
             setIsSaving(true);
             try {
-                if (window.SharedDataService && window.SharedDataService.saveContactInfo) {
-                    window.SharedDataService.saveContactInfo(contactInfo);
-                } else {
-                    localStorage.setItem('adminContactInfo', JSON.stringify(contactInfo));
+                // Save to localStorage for local cache
+                localStorage.setItem('adminContactInfo', JSON.stringify(contactInfo));
+
+                // ✅ SYNC TO MYSQL
+                if (window.SharedDataService) {
+                    const configData = {
+                        contactInfo: contactInfo,
+                        paymentConfig: JSON.parse(localStorage.getItem('admin_paymentConfig') || 'null')
+                    };
+                    const result = await window.SharedDataService.saveToMySQL('config', configData);
+                    if (result) {
+                        console.log('✅ [ContactSettings] Synced to MySQL');
+                    } else {
+                        console.warn('⚠️ [ContactSettings] MySQL sync failed');
+                    }
                 }
 
                 window.GlobalStateManager?.addNotification(
@@ -867,6 +891,7 @@
                     'ContactSettings'
                 );
             } catch (error) {
+                console.error('❌ [ContactSettings] Save error:', error);
                 window.GlobalStateManager?.addNotification(
                     '❌ Failed to save contact settings',
                     'error',

@@ -1,9 +1,35 @@
 (function() {
     'use strict';
-    
+
     const { useState, useCallback, useEffect, memo } = React;
-    
-    console.log('🏠 Landing Page v2.2.0 - Fixed Data Sync');
+
+    console.log('🏠 Landing Page v2.3.0 - MySQL Sync');
+
+    // ===== API CONFIGURATION =====
+    const API_BASE_URL = window.API_BASE_URL || '/api';
+
+    // ===== MYSQL SYNC HELPER =====
+    const syncPendingToMySQL = async (type, data) => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/sync.php?action=${type}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                console.log(`✅ [LandingPage] Pending ${type} synced to MySQL`);
+                return true;
+            } else {
+                console.error(`❌ [LandingPage] MySQL sync failed:`, result.error);
+                return false;
+            }
+        } catch (error) {
+            console.error('❌ [LandingPage] MySQL sync error:', error);
+            return false;
+        }
+    };
 
     // Landing Page Component
     const LandingPage = memo(({ onNavigate }) => {
@@ -162,15 +188,25 @@
                 paymentId: paymentRecord.id
             };
 
-            // Save to admin system
+            // Save to admin system (localStorage as cache)
             const pendingUsers = JSON.parse(localStorage.getItem('adminPendingUsers') || '[]');
             const pendingPayments = JSON.parse(localStorage.getItem('adminPendingPayments') || '[]');
-            
+
             pendingUsers.unshift(userRequest);
             pendingPayments.unshift(paymentRecord);
-            
+
             localStorage.setItem('adminPendingUsers', JSON.stringify(pendingUsers));
             localStorage.setItem('adminPendingPayments', JSON.stringify(pendingPayments));
+
+            // ✅ SYNC TO MYSQL - User registration with pending status
+            syncPendingToMySQL('user', {
+                ...userRequest,
+                status: 'pending',
+                subscriptionStatus: 'pending'
+            });
+
+            // ✅ SYNC TO MYSQL - Payment record
+            syncPendingToMySQL('payment', paymentRecord);
 
             // Move to confirmation step
             setCurrentStep(3);

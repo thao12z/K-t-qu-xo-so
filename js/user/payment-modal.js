@@ -1,11 +1,37 @@
 // 💳 PAYMENT MODAL - User Payment Flow with Order ID Generation
-// Version: 2.0.0 | Created: 2024
+// Version: 2.1.0 | Created: 2024 | MYSQL SYNC
 (function() {
     'use strict';
 
     const { useState, useEffect, useCallback, memo } = React;
 
-    console.log('💳 PaymentModal v2.0.0 loaded - Order ID Generation');
+    console.log('💳 PaymentModal v2.1.0 loaded - MySQL Sync');
+
+    // ===== API CONFIGURATION =====
+    const API_BASE_URL = window.API_BASE_URL || '/api';
+
+    // ===== MYSQL SYNC HELPER =====
+    const syncPaymentToMySQL = async (paymentData) => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/sync.php?action=payment`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(paymentData)
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                console.log('✅ [PaymentModal] Payment synced to MySQL:', paymentData.id);
+                return true;
+            } else {
+                console.error('❌ [PaymentModal] MySQL sync failed:', result.error);
+                return false;
+            }
+        } catch (error) {
+            console.error('❌ [PaymentModal] MySQL sync error:', error);
+            return false;
+        }
+    };
 
     // Generate unique Order ID
     const generateOrderId = () => {
@@ -115,7 +141,7 @@
                     }
                 };
 
-                // Save to localStorage for admin to see
+                // Save to localStorage for admin to see (cache)
                 const existingPayments = JSON.parse(localStorage.getItem('adminPendingPayments') || '[]');
                 existingPayments.push(paymentRecord);
                 localStorage.setItem('adminPendingPayments', JSON.stringify(existingPayments));
@@ -126,6 +152,9 @@
                     payments.push(paymentRecord);
                     window.GlobalStateManager.updateData('payments', payments, 'PaymentModal');
                 }
+
+                // ✅ SYNC TO MYSQL
+                syncPaymentToMySQL(paymentRecord);
 
                 console.log('✅ Payment record created:', paymentRecord);
                 setPaymentCreated(true);
