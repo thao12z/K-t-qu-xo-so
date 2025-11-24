@@ -964,8 +964,11 @@
             try {
                 // RSS feed chứa 7 ngày gần nhất - luôn dùng RSS trước
                 const rssUrl = 'https://xosodaiphat.com/ket-qua-xo-so-mien-bac-xsmb.rss';
+                const apiBaseUrl = window.API_BASE_URL || '/api';
 
+                // Use local PHP proxy first (no CORS issues), then fallback to public proxies
                 const proxies = [
+                    () => `${apiBaseUrl}/lottery-proxy.php`, // Local PHP proxy - PRIMARY
                     (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
                     (url) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
                     (url) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`
@@ -974,10 +977,11 @@
                 let content = null;
 
                 // Fetch RSS feed
-                for (const getProxyUrl of proxies) {
-                    const proxyUrl = getProxyUrl(rssUrl);
+                for (let i = 0; i < proxies.length; i++) {
+                    const isLocalProxy = i === 0;
+                    const proxyUrl = isLocalProxy ? proxies[i]() : proxies[i](rssUrl);
                     try {
-                        logger.log(`🔗 Trying RSS proxy: ${proxyUrl}`);
+                        logger.log(`🔗 Trying ${isLocalProxy ? 'LOCAL' : 'PUBLIC'} proxy: ${proxyUrl}`);
 
                         const controller = new AbortController();
                         const timeoutId = setTimeout(() => controller.abort(), 15000);
@@ -985,9 +989,10 @@
                         try {
                             const response = await fetch(proxyUrl, {
                                 method: 'GET',
-                                headers: {
-                                    'Accept': 'application/rss+xml, application/xml, text/xml',
-                                    'Cache-Control': 'no-cache'
+                                headers: isLocalProxy ? {
+                                    'Accept': 'application/xml, text/xml'
+                                } : {
+                                    'Accept': 'application/rss+xml, application/xml, text/xml'
                                 },
                                 signal: controller.signal
                             });
@@ -995,7 +1000,7 @@
                             if (response.ok) {
                                 content = await response.text();
                                 if (content && content.includes('DB:')) {
-                                    logger.log(`✅ RSS fetched successfully`);
+                                    logger.log(`✅ RSS fetched successfully via ${isLocalProxy ? 'LOCAL' : 'PUBLIC'} proxy`);
                                     break;
                                 }
                             }

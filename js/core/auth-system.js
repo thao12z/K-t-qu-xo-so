@@ -280,6 +280,7 @@
 
     window.LoginPage = LoginPage;
     window.AuthService = AuthService; // Export AuthService
-    window.DEMO_ACCOUNTS = DEMO_ACCOUNTS_FOR_DISPLAY; // Export for display only
+    // ONLINE MODE: No demo accounts - all users from MySQL
+    window.DEMO_ACCOUNTS = [];
     console.log('✅ Authentication System loaded successfully');
 })(); 
