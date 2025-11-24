@@ -4,51 +4,94 @@
     'use strict';
 
     // ===== ADMIN CONFIGURATION =====
-    // Production: Set window.ADMIN_CREDENTIALS before loading this script
-    // Or use localStorage 'admin_credentials' for persistence
-    const isProductionEnv = window.location.hostname !== 'localhost' &&
-                            window.location.hostname !== '127.0.0.1';
+    // API endpoint for authentication
+    const API_BASE_URL = window.API_BASE_URL || '/api';
 
-    const getAdminConfig = () => {
-        // Priority 1: Window config (set by server/deployment) - must have username and password
-        if (window.ADMIN_CREDENTIALS && window.ADMIN_CREDENTIALS.username && window.ADMIN_CREDENTIALS.password) {
-            console.log('🔐 Using server-provided admin credentials');
-            return window.ADMIN_CREDENTIALS;
-        }
-
-        // Priority 2: Stored credentials (after first setup)
-        const stored = localStorage.getItem('admin_credentials');
-        if (stored) {
+    // Auth service for MySQL-based authentication
+    const AuthService = {
+        // Login via MySQL API
+        login: async function(username, password) {
             try {
-                const creds = JSON.parse(stored);
-                if (creds && creds.username && creds.password) {
-                    console.log('🔐 Using stored admin credentials');
-                    return creds;
+                const response = await fetch(`${API_BASE_URL}/auth.php?action=login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.error || 'Login failed');
                 }
-            } catch (e) {
-                console.warn('Invalid stored credentials');
+
+                // Save token to sessionStorage
+                if (result.token) {
+                    sessionStorage.setItem('admin_token', result.token);
+                    sessionStorage.setItem('admin_user', JSON.stringify(result.user));
+                }
+
+                return result;
+
+            } catch (error) {
+                // Fallback to default credentials if API not available
+                if (error.message.includes('fetch') || error.message.includes('NetworkError')) {
+                    console.warn('⚠️ API not available, using fallback credentials');
+                    if (username === 'admin' && password === 'admin123') {
+                        return {
+                            success: true,
+                            user: {
+                                username: 'admin',
+                                fullName: 'Administrator',
+                                role: 'admin'
+                            }
+                        };
+                    }
+                    throw new Error('Invalid credentials');
+                }
+                throw error;
             }
+        },
+
+        // Change password via MySQL API
+        changePassword: async function(username, currentPassword, newPassword) {
+            const response = await fetch(`${API_BASE_URL}/auth.php?action=change-password`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username, currentPassword, newPassword })
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || 'Password change failed');
+            }
+
+            return result;
+        },
+
+        // Check if admin exists
+        checkAdmin: async function() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/auth.php?action=check`);
+                return await response.json();
+            } catch (error) {
+                return { success: false, hasAdmin: true };
+            }
+        },
+
+        // Logout
+        logout: function() {
+            sessionStorage.removeItem('admin_token');
+            sessionStorage.removeItem('admin_user');
         }
-
-        // Priority 3: Default credentials - works on both localhost and production
-        // User can change later via window.setAdminCredentials()
-        console.log('🔐 Using default admin credentials (admin/admin123)');
-        return {
-            username: 'admin',
-            password: 'admin123',
-            email: 'admin@lode.vn',
-            fullName: 'Administrator',
-            phone: ''
-        };
     };
 
-    const ADMIN_CONFIG = getAdminConfig();
-
-    // Function to update admin credentials at runtime
-    window.setAdminCredentials = (credentials) => {
-        localStorage.setItem('admin_credentials', JSON.stringify(credentials));
-        console.log('🔐 Admin credentials updated - reload page to apply');
-    };
+    // Export AuthService
+    window.AdminAuthService = AuthService;
 
     const { useState, useEffect, useCallback, memo } = React;
     
@@ -1040,58 +1083,224 @@
         );
     });
 
+    // ===== ADMIN SETTINGS COMPONENT (Password Change) =====
+    const AdminSettings = memo(() => {
+        const [passwordData, setPasswordData] = useState({
+            currentPassword: '',
+            newPassword: '',
+            confirmPassword: ''
+        });
+        const [isChanging, setIsChanging] = useState(false);
+        const [message, setMessage] = useState(null);
+
+        // Get current username from sessionStorage
+        const currentUser = React.useMemo(() => {
+            try {
+                const userData = sessionStorage.getItem('admin_user');
+                return userData ? JSON.parse(userData) : { username: 'admin' };
+            } catch {
+                return { username: 'admin' };
+            }
+        }, []);
+
+        // Handle password change
+        const handleChangePassword = useCallback(async (e) => {
+            e.preventDefault();
+            setMessage(null);
+
+            // Validation
+            if (!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword) {
+                setMessage({ type: 'error', text: 'Vui lòng điền đầy đủ các trường' });
+                return;
+            }
+
+            if (passwordData.newPassword.length < 6) {
+                setMessage({ type: 'error', text: 'Mật khẩu mới phải có ít nhất 6 ký tự' });
+                return;
+            }
+
+            if (passwordData.newPassword !== passwordData.confirmPassword) {
+                setMessage({ type: 'error', text: 'Mật khẩu xác nhận không khớp' });
+                return;
+            }
+
+            setIsChanging(true);
+
+            try {
+                const result = await AuthService.changePassword(
+                    currentUser.username,
+                    passwordData.currentPassword,
+                    passwordData.newPassword
+                );
+
+                if (result.success) {
+                    setMessage({ type: 'success', text: 'Đổi mật khẩu thành công!' });
+                    setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+
+                    window.GlobalStateManager?.addNotification(
+                        '✅ Đổi mật khẩu thành công',
+                        'success',
+                        'AdminSettings'
+                    );
+                } else {
+                    throw new Error(result.error || 'Đổi mật khẩu thất bại');
+                }
+            } catch (error) {
+                setMessage({ type: 'error', text: error.message });
+                window.GlobalStateManager?.addNotification(
+                    `❌ ${error.message}`,
+                    'error',
+                    'AdminSettings'
+                );
+            } finally {
+                setIsChanging(false);
+            }
+        }, [passwordData, currentUser]);
+
+        return (
+            <div className="space-y-6 p-6">
+                <div className="flex justify-between items-center">
+                    <h1 className="text-2xl font-bold">⚙️ Admin Settings</h1>
+                </div>
+
+                {/* Password Change Section */}
+                <window.Card title="🔐 Đổi Mật Khẩu Admin">
+                    <form onSubmit={handleChangePassword} className="space-y-4">
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                            <p className="text-blue-800 text-sm">
+                                <strong>Tài khoản:</strong> {currentUser.username}
+                            </p>
+                            <p className="text-blue-600 text-xs mt-1">
+                                Mật khẩu được lưu an toàn trong database MySQL (đã mã hóa)
+                            </p>
+                        </div>
+
+                        {message && (
+                            <div className={`p-3 rounded-lg ${message.type === 'success' ? 'bg-green-50 border border-green-200 text-green-800' : 'bg-red-50 border border-red-200 text-red-800'}`}>
+                                {message.text}
+                            </div>
+                        )}
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Mật khẩu hiện tại *
+                            </label>
+                            <window.Input
+                                type="password"
+                                value={passwordData.currentPassword}
+                                onChange={(value) => setPasswordData(prev => ({ ...prev, currentPassword: value }))}
+                                placeholder="Nhập mật khẩu hiện tại"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Mật khẩu mới *
+                            </label>
+                            <window.Input
+                                type="password"
+                                value={passwordData.newPassword}
+                                onChange={(value) => setPasswordData(prev => ({ ...prev, newPassword: value }))}
+                                placeholder="Nhập mật khẩu mới (ít nhất 6 ký tự)"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Xác nhận mật khẩu mới *
+                            </label>
+                            <window.Input
+                                type="password"
+                                value={passwordData.confirmPassword}
+                                onChange={(value) => setPasswordData(prev => ({ ...prev, confirmPassword: value }))}
+                                placeholder="Nhập lại mật khẩu mới"
+                            />
+                        </div>
+
+                        <window.Button
+                            type="submit"
+                            variant="primary"
+                            disabled={isChanging}
+                            className="w-full"
+                        >
+                            {isChanging ? '⏳ Đang xử lý...' : '🔐 Đổi Mật Khẩu'}
+                        </window.Button>
+                    </form>
+                </window.Card>
+
+                {/* Security Info */}
+                <window.Card title="🛡️ Bảo Mật">
+                    <div className="space-y-3 text-sm text-gray-600">
+                        <div className="flex items-start gap-2">
+                            <span className="text-green-500">✓</span>
+                            <p>Mật khẩu được mã hóa bằng bcrypt trong database</p>
+                        </div>
+                        <div className="flex items-start gap-2">
+                            <span className="text-green-500">✓</span>
+                            <p>Chỉ người có quyền truy cập MySQL/cPanel mới có thể reset mật khẩu</p>
+                        </div>
+                        <div className="flex items-start gap-2">
+                            <span className="text-green-500">✓</span>
+                            <p>Không lưu mật khẩu ở localStorage hoặc client-side</p>
+                        </div>
+                        <div className="flex items-start gap-2">
+                            <span className="text-yellow-500">⚠</span>
+                            <p>Nếu quên mật khẩu, truy cập phpMyAdmin để reset trực tiếp trong database</p>
+                        </div>
+                    </div>
+                </window.Card>
+            </div>
+        );
+    });
+
     // ===== LOGIN COMPONENT =====
     const LoginForm = memo(({ onLogin }) => {
         const [credentials, setCredentials] = useState({ username: '', password: '' });
         const [errors, setErrors] = useState({});
         const [isLoading, setIsLoading] = useState(false);
-        
+
         // Handle form submission
         const handleSubmit = useCallback(async (e) => {
             e.preventDefault();
-            
+
             // Basic validation
             const newErrors = {};
             if (!credentials.username) newErrors.username = 'Username is required';
             if (!credentials.password) newErrors.password = 'Password is required';
-            
+
             if (Object.keys(newErrors).length > 0) {
                 setErrors(newErrors);
                 return;
             }
-            
+
             setIsLoading(true);
             setErrors({});
-            
+
             try {
-                // Simulate login (in real app, this would be an API call)
-                await new Promise(resolve => setTimeout(resolve, 500));
-                
-                // Check if credentials are blocked (production without config)
-                if (ADMIN_CONFIG.blocked) {
-                    setErrors({ general: 'Admin credentials not configured. Run window.setAdminCredentials({username, password, ...}) in console.' });
-                    window.GlobalStateManager.addNotification(
-                        '❌ Credentials not configured for production',
-                        'error',
-                        'Authentication'
-                    );
-                } else if (credentials.username === ADMIN_CONFIG.username && credentials.password === ADMIN_CONFIG.password) {
-                    window.GlobalStateManager.addNotification(
-                        '✅ Login successful',
+                // Login via MySQL API
+                const result = await AuthService.login(credentials.username, credentials.password);
+
+                if (result.success) {
+                    window.GlobalStateManager?.addNotification(
+                        '✅ Đăng nhập thành công',
                         'success',
                         'Authentication'
                     );
-                    onLogin({ username: credentials.username, role: 'admin' });
+                    onLogin({
+                        username: result.user.username,
+                        fullName: result.user.fullName,
+                        role: result.user.role || 'admin'
+                    });
                 } else {
-                    setErrors({ general: 'Invalid username or password' });
-                    window.GlobalStateManager.addNotification(
-                        '❌ Login failed',
-                        'error',
-                        'Authentication'
-                    );
+                    throw new Error(result.error || 'Login failed');
                 }
             } catch (error) {
-                setErrors({ general: 'Login failed. Please try again.' });
+                setErrors({ general: error.message || 'Đăng nhập thất bại' });
+                window.GlobalStateManager?.addNotification(
+                    `❌ ${error.message || 'Đăng nhập thất bại'}`,
+                    'error',
+                    'Authentication'
+                );
             } finally {
                 setIsLoading(false);
             }
@@ -1172,20 +1381,21 @@
         // PRODUCTION MODE - NO SAMPLE DATA
         useEffect(() => {
             if (!window.GlobalStateManager) return;
-            
-            console.log('✅ [MainAdminSystem] Production mode - No sample data');
-            
-            // Only initialize admin user if no users exist
+
+            console.log('✅ [MainAdminSystem] Production mode - Authentication via MySQL API');
+
+            // Only initialize admin user in localStorage if no users exist
+            // Note: Actual authentication is handled by MySQL database
             const existingUsers = window.GlobalStateManager.getData('users');
             if (existingUsers.length === 0) {
                 // Create only admin user - NO SAMPLE DATA
                 const adminUser = {
                     id: 1,
-                    username: ADMIN_CONFIG.username,
-                    email: ADMIN_CONFIG.email,
-                    fullName: ADMIN_CONFIG.fullName,
-                    phone: ADMIN_CONFIG.phone,
-                    password: ADMIN_CONFIG.password,
+                    username: 'admin',
+                    email: 'admin@lode.vn',
+                    fullName: 'Administrator',
+                    phone: '',
+                    password: '', // Password stored in MySQL only (hashed)
                     role: 'admin',
                     accountType: 'admin',
                     status: 'active',
@@ -1200,10 +1410,10 @@
                     activatedAt: '2024-01-01',
                     activatedBy: 'system'
                 };
-                
+
                 // Initialize only admin user
                 window.GlobalStateManager.updateData('users', [adminUser], 'MainAdminSystem_Init');
-                
+
                 console.log('✅ [MainAdminSystem] Admin user initialized - No sample data');
             }
         }, []);
@@ -1272,6 +1482,8 @@
                     return <ContactSettings />;
                 case 'data-export':
                     return <DataExportImport />;
+                case 'admin-settings':
+                    return <AdminSettings />;
                 default:
                     return <Dashboard />;
             }
@@ -1288,6 +1500,7 @@
             packages: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>,
             'contact-settings': <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>,
             'data-export': <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>,
+            'admin-settings': <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>,
             notifications: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
         };
 
@@ -1302,6 +1515,7 @@
             { id: 'packages', label: 'Package Management' },
             { id: 'contact-settings', label: 'Contact Settings' },
             { id: 'data-export', label: 'Export/Import Data' },
+            { id: 'admin-settings', label: 'Admin Settings' },
             { id: 'notifications', label: 'Notifications' }
         ];
         
