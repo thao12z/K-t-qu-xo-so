@@ -115,7 +115,29 @@
             return results;
         }
 
-        // === HANDLER 2: Số 3 chữ số format ===
+        // === HANDLER 2: Đầu X Đít Y format ===
+        // "Đề đầu 5 đít 5 x1000nn" -> Tất cả số bắt đầu 5 và kết thúc 5
+        const dauDitMatch = line.match(/^(de|đề|d)\s+đầu\s+(\d)\s+đít\s+(\d)\s*x\s*([\d.]+)(n{1,2}|k|m)?$/i);
+        if (dauDitMatch) {
+            const firstDigit = dauDitMatch[2];
+            const lastDigit = dauDitMatch[3];
+            const moneyValue = parseFloat(dauDitMatch[4]);
+            const unit = (dauDitMatch[5] || '').toLowerCase();
+            const money = convertToMoney(moneyValue, unit);
+
+            // Generate all numbers from 00-99 that start with firstDigit and end with lastDigit
+            for (let i = 0; i <= 99; i++) {
+                const numStr = i.toString().padStart(2, '0');
+                if (numStr[0] === firstDigit && numStr[1] === lastDigit) {
+                    results.push(`de ${numStr}-${money}`);
+                }
+            }
+
+            console.log(`[PREPROCESS] Đầu ${firstDigit} Đít ${lastDigit}: ${originalLine} -> ${results.length} đề`);
+            return results;
+        }
+
+        // === HANDLER 3: Số 3 chữ số format ===
         // "de 525 535 565 575 595 x1000nn" -> tách thành 52+25, 53+35, etc.
         const de3DigitMatch = line.match(/^(de|đề|d)\s+((?:\d{3}\s*)+)\s*x\s*([\d.]+)(n{1,2}|k|m)?$/i);
         if (de3DigitMatch) {
@@ -136,7 +158,7 @@
             return results;
         }
 
-        // === HANDLER 3: Multi-bet với dấu chấm ===
+        // === HANDLER 4: Multi-bet với dấu chấm ===
         // "De 00 x 1070n. 90 x 735n. 11 x 330n."
         if (/\d+\s*x\s*[\d.]+n{0,2}\s*\./i.test(line)) {
             // Detect bet type from start
@@ -178,7 +200,7 @@
             }
         }
 
-        // === HANDLER 4: Single multi-number format ===
+        // === HANDLER 5: Single multi-number format ===
         // "17,56 x 94n" without type prefix (assume đề in context)
         const multiNumMatch = line.match(/^([\d,]+)\s*x\s*([\d.]+)(n{1,2}|k|m)?$/i);
         if (multiNumMatch) {
@@ -198,7 +220,7 @@
             }
         }
 
-        // === HANDLER 5: Standard format with "x" separator ===
+        // === HANDLER 6: Standard format with "x" separator ===
         // "de 00 x 1070n" -> "de 00 1070k"
         const standardXMatch = line.match(/^(de|đề|d|lo|lô|l)\s+([\d,\s]+)\s*x\s*([\d.]+)(n{1,2}|k|m)?$/i);
         if (standardXMatch) {
@@ -225,7 +247,7 @@
             }
         }
 
-        // === HANDLER 6: Lo format (point-based) ===
+        // === HANDLER 7: Lo format (point-based) ===
         // "lo 32 23k" or "lo 32 23" -> format as "lo 32-23"
         const loMatch = line.match(/^(lo|lô|l)\s+([\d\s]+)\s+([\d.]+)[km]?$/i);
         if (loMatch) {
