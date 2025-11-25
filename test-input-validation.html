@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Input Validation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        textarea {
+            width: 100%;
+            min-height: 200px;
+            font-family: monospace;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+        button {
+            background: #E36323;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #DF5A18;
+        }
+        .output {
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 20px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .success {
+            color: #10b981;
+            font-weight: bold;
+        }
+        .error {
+            color: #dc2626;
+            font-weight: bold;
+        }
+        .step {
+            margin: 10px 0;
+            padding: 10px;
+            background: #e8f5e9;
+            border-left: 3px solid #4caf50;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Test Input Validation & Preprocessor</h1>
+        <p>Nhập dữ liệu cược để test preprocessor và validation</p>
+
+        <textarea id="input" placeholder="Ví dụ:
+Tin 1: De 00 x 1070n. 90 x 735n.
+xien quay 00,07,68,54 x 2000
+de 525 535 x1000nn
+lo 32 23k"></textarea>
+
+        <button onclick="testPreprocessor()">Test Preprocessor</button>
+        <button onclick="testValidation()">Test Validation</button>
+        <button onclick="clearOutput()">Clear</button>
+
+        <div id="output" class="output"></div>
+    </div>
+
+    <script>
+        // Convert money units
+        function convertToMoney(value, unit) {
+            unit = (unit || '').toLowerCase();
+            if (unit === 'n' || unit === 'nn') return Math.round(value);
+            if (unit === 'k') return Math.round(value);
+            if (unit === 'm') return Math.round(value * 1000);
+            return Math.round(value);
+        }
+
+        // Process one complex line
+        function processComplexLine(line) {
+            const originalLine = line;
+            const results = [];
+
+            // Remove Tin prefix
+            const tinPrefixMatch = line.match(/^tin\s*\d+\s*:\s*/i);
+            if (tinPrefixMatch) {
+                line = line.substring(tinPrefixMatch[0].length).trim();
+                if (!line) return results;
+            }
+
+            // Handler 3: Multi-bet với dấu chấm
+            if (/\d+\s*x\s*[\d.]+n{0,2}\s*\./i.test(line)) {
+                const typeMatch = line.match(/^(de|đề|d|lo|lô|l)\s+/i);
+                const betType = typeMatch ? typeMatch[1].toLowerCase() : 'de';
+                const normalizedType = betType.match(/^(de|đề|d)$/i) ? 'de' : 'lo';
+
+                const segments = line.split(/\.\s*/);
+
+                for (const segment of segments) {
+                    if (!segment.trim()) continue;
+
+                    const segMatch = segment.match(/(?:de|đề|d|lo|lô|l)?\s*([\d,\s]+)\s*x\s*([\d.]+)(n{1,2}|k|m)?/i);
+                    if (segMatch) {
+                        const numbersStr = segMatch[1];
+                        const moneyValue = parseFloat(segMatch[2]);
+                        const unit = (segMatch[3] || '').toLowerCase();
+                        const money = convertToMoney(moneyValue, unit);
+
+                        const numbers = numbersStr.split(/[,\s]+/).filter(n => n && /^\d{1,2}$/.test(n));
+
+                        for (const num of numbers) {
+                            if (normalizedType === 'de') {
+                                results.push(`de ${num.padStart(2, '0')}-${money}`);
+                            } else {
+                                results.push(`lo ${num.padStart(2, '0')}-${money}`);
+                            }
+                        }
+                    }
+                }
+
+                if (results.length > 0) {
+                    return results;
+                }
+            }
+
+            // Fallback: return original line
+            results.push(line);
+            return results;
+        }
+
+        function testPreprocessor() {
+            const input = document.getElementById('input').value;
+            const lines = input.split('\n').filter(l => l.trim());
+
+            let output = '<div class="step">PREPROCESSOR TEST RESULTS:</div>\n\n';
+
+            lines.forEach((line, i) => {
+                const processed = processComplexLine(line);
+                output += `<div style="margin: 10px 0; padding: 10px; background: #fff; border: 1px solid #ddd;">`;
+                output += `<strong>Input ${i+1}:</strong> ${line}\n`;
+                output += `<strong class="success">Output:</strong>\n`;
+                processed.forEach(p => {
+                    output += `  - ${p}\n`;
+                });
+                output += `</div>`;
+            });
+
+            document.getElementById('output').innerHTML = output;
+        }
+
+        function testValidation() {
+            const input = document.getElementById('input').value;
+            const lines = input.split('\n').filter(l => l.trim());
+
+            let output = '<div class="step">VALIDATION TEST RESULTS:</div>\n\n';
+
+            // Process through preprocessor first
+            const allProcessed = [];
+            lines.forEach(line => {
+                const processed = processComplexLine(line);
+                allProcessed.push(...processed);
+            });
+
+            // Validate each processed line
+            allProcessed.forEach((line, i) => {
+                // Simple validation
+                const parts = line.trim().split(/\s+/);
+                let isValid = true;
+                let error = '';
+
+                if (parts.length < 2) {
+                    isValid = false;
+                    error = 'Thiếu thông tin';
+                }
+
+                const betType = parts[0]?.toLowerCase();
+                if (!['de', 'lo', 'xien', 'bc'].some(t => betType?.includes(t))) {
+                    isValid = false;
+                    error = 'Loại cược không hợp lệ';
+                }
+
+                output += `<div style="margin: 10px 0; padding: 10px; background: ${isValid ? '#e8f5e9' : '#fee'}; border: 1px solid ${isValid ? '#4caf50' : '#f44336'};">`;
+                output += `<strong>Line ${i+1}:</strong> ${line}\n`;
+                if (isValid) {
+                    output += `<span class="success">✓ HỢP LỆ</span>\n`;
+                } else {
+                    output += `<span class="error">✗ LỖI: ${error}</span>\n`;
+                }
+                output += `</div>`;
+            });
+
+            document.getElementById('output').innerHTML = output;
+        }
+
+        function clearOutput() {
+            document.getElementById('output').innerHTML = '';
+        }
+    </script>
+</body>
+</html>
