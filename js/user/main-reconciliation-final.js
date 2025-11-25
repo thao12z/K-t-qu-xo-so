@@ -81,6 +81,27 @@
         const results = [];
         const originalLine = line;
 
+        // Helper function: Generate all combinations of size k from array
+        function getCombinations(arr, k) {
+            const result = [];
+
+            function combine(start, combo) {
+                if (combo.length === k) {
+                    result.push([...combo]);
+                    return;
+                }
+
+                for (let i = start; i < arr.length; i++) {
+                    combo.push(arr[i]);
+                    combine(i + 1, combo);
+                    combo.pop();
+                }
+            }
+
+            combine(0, []);
+            return result;
+        }
+
         // Normalize: remove extra spaces, lowercase
         line = line.trim();
 
@@ -98,7 +119,8 @@
         }
 
         // === HANDLER 1: Lô xiên quay / XQ format ===
-        // "xien quay 00,07,68,54 x 2000" or "xq 00,07,54,66 x 1000"
+        // "xien quay 00,07,68,54 x 2000" -> TẤT CẢ tổ hợp xiên 2, 3, 4
+        // Generates ALL combinations: C(n,2) + C(n,3) + C(n,4)
         const xienQuayMatch = line.match(/^(xien\s*quay|xiên\s*quây|xq)\s+([\d,\s]+)\s*x\s*([\d.]+)(n{1,2}|k|m)?$/i);
         if (xienQuayMatch) {
             const numbersStr = xienQuayMatch[2];
@@ -109,8 +131,16 @@
             const money = convertToMoney(moneyValue, unit);
 
             if (numbers.length >= 2 && numbers.length <= 4) {
-                results.push(`xien quay ${numbers.join(' ')}-${money}`);
-                console.log(`[PREPROCESS] Lô xiên quay: ${originalLine} -> xien quay ${numbers.join(' ')}-${money}`);
+                // Generate ALL combinations: xiên 2, xiên 3, xiên 4
+                let totalCombos = 0;
+                for (let k = 2; k <= numbers.length; k++) {
+                    const combinations = getCombinations(numbers, k);
+                    for (const combo of combinations) {
+                        results.push(`xien ${combo.join(' ')}-${money}`);
+                        totalCombos++;
+                    }
+                }
+                console.log(`[PREPROCESS] Lô xiên quay: ${originalLine} -> ${totalCombos} tổ hợp (${numbers.length} số × ${money}đ)`);
             }
             return results;
         }
@@ -579,16 +609,16 @@
 
             // === HANDLE DASH FORMAT ===
             // Convert "de 00-1043" or "lo 32-23" to "de 00 1043k" or "lo 32 23"
-            // Also handle "xien quay 00 07 68 54-2000" format
-            const dashFormatMatch = line.match(/^(xien\s+quay|xiên\s+quây|xq|de|đề|d|lo|lô|l)\s+([\d\s]+)-(\d+)$/i);
+            // Also handle "xien 00 07-2000" format (from preprocessor)
+            const dashFormatMatch = line.match(/^(xien\s+quay|xiên\s+quây|xq|xien|xiên|de|đề|d|lo|lô|l)\s+([\d\s]+)-(\d+)$/i);
             if (dashFormatMatch) {
                 const betType = dashFormatMatch[1].trim().toLowerCase();
                 const numbersStr = dashFormatMatch[2].trim();
                 const moneyValue = dashFormatMatch[3];
 
-                // Check if this is lô xiên quay format
-                if (betType.match(/^(xien\s*quay|xiên\s*quây|xq)$/i)) {
-                    // Lô xiên quay: convert to standard xiên format
+                // Check if this is lô xiên format (from preprocessor or user input)
+                if (betType.match(/^(xien\s*quay|xiên\s*quây|xq|xien|xiên)$/i)) {
+                    // Lô xiên: convert to standard format with k suffix
                     line = `xien ${numbersStr} ${moneyValue}k`;
                 } else if (betType.match(/^(l|lo|lô)$/i)) {
                     // Lô: points-based, no k needed
