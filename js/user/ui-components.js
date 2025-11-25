@@ -423,17 +423,6 @@
         );
     });
 
-    // ===== TESTING FUNCTIONS =====
-    const TestUIComponents = {
-        testComponentsExist: () => {
-            const components = ['LoadingSpinner', 'Button', 'Modal', 'Input', 'Select', 'Badge', 'Card', 'Textarea'];
-            components.forEach(componentName => {
-                console.assert(window[componentName], ` ${componentName} not exported`);
-            });
-            console.log(' [TEST] All UI components exist - New Design System v2.0');
-        }
-    };
-
     // ===== EXPORT TO GLOBAL SCOPE =====
     window.LoadingSpinner = LoadingSpinner;
     window.Button = Button;
@@ -443,14 +432,8 @@
     window.Badge = Badge;
     window.Card = Card;
     window.Textarea = Textarea;
-    window.TestUIComponents = TestUIComponents;
     window.DESIGN_COLORS = COLORS;
 
-    // Auto-run tests
-    setTimeout(() => {
-        TestUIComponents.testComponentsExist();
-    }, 50);
-
-    console.log(' UI Components v2.0 loaded - Modern Design System');
+    console.log('UI Components v2.0 loaded - Modern Design System');
 
 })();

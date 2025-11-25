@@ -507,66 +507,8 @@
             </div>
         );
     });
-    
-    // ===== TESTING FUNCTIONS =====
-    const TestPaymentConfig = {
-        testComponentRender: () => {
-            console.assert(window.PaymentConfig, ' PaymentConfig not exported');
-            console.log(' [TEST] PaymentConfig component exists');
-        },
-        
-        testDataFlow: () => {
-            // Test payment config operations
-            const testConfig = {
-                bankInfo: {
-                    bankName: 'Test Bank',
-                    accountNumber: '1234567890',
-                    accountName: 'Test Account',
-                    branch: 'Test Branch',
-                    swiftCode: 'TESTUS33',
-                    enabled: true
-                },
-                qrCodes: {
-                    main: { 
-                        url: 'data:image/png;base64,test', 
-                        enabled: true,
-                        description: 'QR Code chung cho tất cả gói'
-                    }
-                },
-                businessRules: {
-                    minAmount: 10000,
-                    maxAmount: 10000000,
-                    processingFee: 0,
-                    processingTime: 'instant',
-                    autoApprove: false
-                },
-                paymentMethods: {
-                    bank_transfer: { enabled: true, name: 'Bank Transfer', icon: '' },
-                    qr_code: { enabled: true, name: 'QR Code', icon: '' },
-                    bank_card: { enabled: true, name: 'Bank Card', icon: '' },
-                    cash: { enabled: true, name: 'Cash', icon: '' }
-                }
-            };
-            
-            window.GlobalStateManager.updateData('paymentConfig', [testConfig], 'Test');
-            
-            const retrieved = window.GlobalStateManager.getData('paymentConfig');
-            console.assert(retrieved.length > 0 && retrieved[0].bankInfo.bankName === 'Test Bank', ' Payment config data flow failed');
-            
-            console.log(' [TEST] Payment config data flow works');
-        }
-    };
-    
+
     // ===== EXPORT TO GLOBAL SCOPE =====
     window.PaymentConfig = PaymentConfig;
-    window.TestPaymentConfig = TestPaymentConfig;
-    
-    // Auto-run tests
-    setTimeout(() => {
-        TestPaymentConfig.testComponentRender();
-        if (window.GlobalStateManager) {
-            TestPaymentConfig.testDataFlow();
-        }
-    }, 140);
     
 })(); 
