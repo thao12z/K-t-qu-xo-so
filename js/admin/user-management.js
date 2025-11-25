@@ -815,18 +815,6 @@
                     <h1 className="text-2xl font-bold"> User Management</h1>
                     
                     <div className="flex items-center space-x-4">
-                        {/* Test User Creation Button */}
-                        <window.Button
-                            variant="secondary"
-                            onClick={() => {
-                                console.log(' [UserManagement] Running test user creation...');
-                                TestUserManagement.testUserCreation();
-                            }}
-                            className="bg-[#E36323] hover:bg-[#DF5A18] text-white"
-                        >
-                             Test User Creation
-                        </window.Button>
-                        
                         {/* Add User Button */}
                         <window.Button
                             variant="primary"
