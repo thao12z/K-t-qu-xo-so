@@ -9,43 +9,41 @@
         return today.toISOString().split('T')[0];
     };
     
-    // DEFAULT_PARAMETERS - THAM SỐ CHÍNH XÁC THEO RULES
+    // DEFAULT_PARAMETERS - 18 THAM SỐ CHÍNH XÁC THEO RULES
     window.DEFAULT_PARAMETERS = {
         // Cơ bản (2 fields)
         mien: 'bac',
         ngay: getLatestAvailableDate(),
 
-        // Lô (2 fields) - Tính theo điểm
-        tien1DiemLo: 23000,          // User nhập - dùng cho cả tính điểm và thua
-        tienTra1DiemLo: 80000,       // Cố định - trả 80k cho 1 điểm thắng
+        // Lô (3 tham số)
+        loGoc: 16000,            // Tiền thu đã chiết khấu (1 điểm)
+        loDanh: 23000,           // Tiền mặc định thu (1 điểm)
+        loTraThuong: 80000,      // Thắng trả 80k/điểm (cố định)
 
-        // Đề (3 fields) - Tính theo điểm + hệ số
-        tien1DiemDe: 1000,           // VD: 1k cho 1 điểm đề
-        heSoDeTra: 70,               // VD: 70 (1 ăn 70)
-        tyLeDeThu: 100,              // VD: thu 100% khi thua
+        // Đề (3 tham số)
+        deGoc: 720,              // Tiền thu đã chiết khấu (1 điểm = 1k)
+        deDanh: 1000,            // Tiền mặc định thu (1 điểm = 1k)
+        deTraThuong: 70,         // Hệ số thắng (1 ăn 70)
 
-        // Lô xiên 2 (2 fields) - Hệ số nhân
-        heSoXien2Tra: 10,            // VD: 10 (nhân 10 lần)
-        tyLeXien2Thu: 100,           // VD: thu 100% khi thua
+        // Lô xiên 2 (3 tham số)
+        xien2Goc: 600,           // Tiền thu đã chiết khấu (1k)
+        xien2Danh: 1000,         // Tiền mặc định (1k)
+        xien2TraThuong: 10,      // Hệ số thắng (1 ăn 10)
 
-        // Lô xiên 3 (2 fields) - Hệ số nhân
-        heSoXien3Tra: 40,            // VD: 40 (nhân 40 lần)
-        tyLeXien3Thu: 100,           // VD: thu 100% khi thua
+        // Lô xiên 3 (3 tham số)
+        xien3Goc: 600,           // Tiền thu đã chiết khấu (1k)
+        xien3Danh: 1000,         // Tiền mặc định (1k)
+        xien3TraThuong: 40,      // Hệ số thắng (1 ăn 40)
 
-        // Lô xiên 4 (2 fields) - Hệ số nhân
-        heSoXien4Tra: 100,           // VD: 100 (nhân 100 lần)
-        tyLeXien4Thu: 100,           // VD: thu 100% khi thua
+        // Lô xiên 4 (3 tham số)
+        xien4Goc: 600,           // Tiền thu đã chiết khấu (1k)
+        xien4Danh: 1000,         // Tiền mặc định (1k)
+        xien4TraThuong: 100,     // Hệ số thắng (1 ăn 100)
 
-        // Ba càng (2 fields) - Hệ số nhân
-        heSoBaCangTra: 400,          // VD: 400 (nhân 400 lần)
-        tyLeBaCangThu: 100,          // VD: thu 100% khi thua
-
-        // Chiết khấu - % tiền thực thu (sau khi trừ chiết khấu)
-        chiKhauLo: 72,               // % tiền thu thực từ Lô (default 72%)
-        chiKhauDe: 72,               // % tiền thu thực từ Đề (default 72%)
-        chiKhauXien2: 60,            // % tiền thu thực từ Xiên 2 (default 60%)
-        chiKhauXien3: 60,            // % tiền thu thực từ Xiên 3 (default 60%)
-        chiKhauXien4: 60,            // % tiền thu thực từ Xiên 4 (default 60%)
+        // Ba càng (3 tham số)
+        baCangGoc: 600,          // Tiền thu đã chiết khấu (1k)
+        baCangDanh: 1000,        // Tiền mặc định (1k)
+        baCangTraThuong: 400,    // Hệ số thắng (1 ăn 400)
 
         // Tùy chọn (2 fields)
         lamTronTien: false,              // Làm tròn hàng nghìn
@@ -2489,198 +2487,200 @@
                 ),
                 
                 // 16 Parameters Section - SECTION B
-                React.createElement('h3', {className: 'text-md font-medium text-[#7B7B7B] mb-3'}, ' 16 Tham Số Tính Toán'),
+                React.createElement('h3', {className: 'text-md font-medium text-[#7B7B7B] mb-3'}, '⚙️ 18 Tham Số Tính Toán'),
                 React.createElement('div', {className: 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4'},
                     // Lô parameters
                     React.createElement('div', {className: 'space-y-3'},
-                        React.createElement('h3', {className: 'font-semibold text-[#E36323]'}, 'Lô (4 tham số)'),
+                        React.createElement('h3', {className: 'font-semibold text-[#E36323]'}, 'Lô (3 tham số)'),
                         React.createElement('div', {},
-                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Tiền 1 điểm lô'),
+                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Lô gốc (thu đã CK)'),
                             React.createElement('input', {
                                 type: 'number',
-                                value: parameters.tien1DiemLo,
-                                onChange: (e) => handleParameterChange('tien1DiemLo', parseInt(e.target.value) || 0),
+                                value: parameters.loGoc,
+                                onChange: (e) => handleParameterChange('loGoc', parseInt(e.target.value) || 0),
                                 className: 'mt-1 block w-full border rounded-md px-3 py-2 text-sm'
                             })
                         ),
                         React.createElement('div', {},
-                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Tiền thắng 1 điểm lô (cố định)'),
+                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Lô đánh (mặc định/điểm)'),
                             React.createElement('input', {
                                 type: 'number',
-                                value: 80000,
+                                value: parameters.loDanh,
+                                onChange: (e) => handleParameterChange('loDanh', parseInt(e.target.value) || 0),
+                                className: 'mt-1 block w-full border rounded-md px-3 py-2 text-sm'
+                            })
+                        ),
+                        React.createElement('div', {},
+                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Lô trả thưởng (cố định)'),
+                            React.createElement('input', {
+                                type: 'number',
+                                value: parameters.loTraThuong,
                                 disabled: true,
                                 className: 'mt-1 block w-full border rounded-md px-3 py-2 text-sm bg-gray-100'
-                            })
-                        ),
-                        React.createElement('div', {},
-                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Chiết khấu lô (%)'),
-                            React.createElement('input', {
-                                type: 'number',
-                                value: parameters.chiKhauLo,
-                                onChange: (e) => handleParameterChange('chiKhauLo', parseInt(e.target.value) || 0),
-                                className: 'mt-1 block w-full border rounded-md px-3 py-2 text-sm'
                             })
                         )
                     ),
                     
                     // Đề parameters
                     React.createElement('div', {className: 'space-y-3'},
-                        React.createElement('h3', {className: 'font-semibold text-green-600'}, 'Đề (4 tham số)'),
+                        React.createElement('h3', {className: 'font-semibold text-green-600'}, 'Đề (3 tham số)'),
                         React.createElement('div', {},
-                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Tiền 1 điểm đề'),
+                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Đề gốc (thu đã CK)'),
                             React.createElement('input', {
                                 type: 'number',
-                                value: parameters.tien1DiemDe,
-                                onChange: (e) => handleParameterChange('tien1DiemDe', parseInt(e.target.value) || 0),
+                                value: parameters.deGoc,
+                                onChange: (e) => handleParameterChange('deGoc', parseInt(e.target.value) || 0),
                                 className: 'mt-1 block w-full border rounded-md px-3 py-2 text-sm'
                             })
                         ),
                         React.createElement('div', {},
-                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Hệ số đề trả'),
+                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Đề đánh (mặc định/điểm)'),
                             React.createElement('input', {
                                 type: 'number',
-                                value: parameters.heSoDeTra,
-                                onChange: (e) => handleParameterChange('heSoDeTra', parseInt(e.target.value) || 0),
+                                value: parameters.deDanh,
+                                onChange: (e) => handleParameterChange('deDanh', parseInt(e.target.value) || 0),
                                 className: 'mt-1 block w-full border rounded-md px-3 py-2 text-sm'
                             })
                         ),
                         React.createElement('div', {},
-                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Tỷ lệ đề thu (%)'),
+                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Đề trả thưởng (1 ăn X)'),
                             React.createElement('input', {
                                 type: 'number',
-                                value: parameters.tyLeDeThu,
-                                onChange: (e) => handleParameterChange('tyLeDeThu', parseInt(e.target.value) || 0),
-                                className: 'mt-1 block w-full border rounded-md px-3 py-2 text-sm'
-                            })
-                        ),
-                        React.createElement('div', {},
-                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Chiết khấu đề (%)'),
-                            React.createElement('input', {
-                                type: 'number',
-                                value: parameters.chiKhauDe,
-                                onChange: (e) => handleParameterChange('chiKhauDe', parseInt(e.target.value) || 0),
+                                value: parameters.deTraThuong,
+                                onChange: (e) => handleParameterChange('deTraThuong', parseInt(e.target.value) || 0),
                                 className: 'mt-1 block w-full border rounded-md px-3 py-2 text-sm'
                             })
                         )
                     ),
 
-                    // Lô xiên parameters
+                    // Lô xiên 2 parameters
                     React.createElement('div', {className: 'space-y-3'},
-                        React.createElement('h3', {className: 'font-semibold text-purple-600'}, 'Lô xiên (9 tham số)'),
+                        React.createElement('h3', {className: 'font-semibold text-purple-600'}, 'Lô xiên 2 (3 tham số)'),
                         React.createElement('div', {},
-                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Hệ số lô xiên 2'),
+                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Xiên 2 gốc (thu đã CK)'),
                             React.createElement('input', {
                                 type: 'number',
-                                value: parameters.heSoXien2Tra,
-                                onChange: (e) => handleParameterChange('heSoXien2Tra', parseInt(e.target.value) || 0),
+                                value: parameters.xien2Goc,
+                                onChange: (e) => handleParameterChange('xien2Goc', parseInt(e.target.value) || 0),
                                 className: 'mt-1 block w-full border rounded-md px-3 py-2 text-sm'
                             })
                         ),
                         React.createElement('div', {},
-                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Tỷ lệ lô xiên 2 thu (%)'),
+                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Xiên 2 đánh (mặc định/1k)'),
                             React.createElement('input', {
                                 type: 'number',
-                                value: parameters.tyLeXien2Thu,
-                                onChange: (e) => handleParameterChange('tyLeXien2Thu', parseInt(e.target.value) || 0),
+                                value: parameters.xien2Danh,
+                                onChange: (e) => handleParameterChange('xien2Danh', parseInt(e.target.value) || 0),
                                 className: 'mt-1 block w-full border rounded-md px-3 py-2 text-sm'
                             })
                         ),
                         React.createElement('div', {},
-                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Chiết khấu xiên 2 (%)'),
+                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Xiên 2 trả thưởng (1 ăn X)'),
                             React.createElement('input', {
                                 type: 'number',
-                                value: parameters.chiKhauXien2,
-                                onChange: (e) => handleParameterChange('chiKhauXien2', parseInt(e.target.value) || 0),
-                                className: 'mt-1 block w-full border rounded-md px-3 py-2 text-sm'
-                            })
-                        ),
-                        React.createElement('div', {},
-                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Hệ số lô xiên 3'),
-                            React.createElement('input', {
-                                type: 'number',
-                                value: parameters.heSoXien3Tra,
-                                onChange: (e) => handleParameterChange('heSoXien3Tra', parseInt(e.target.value) || 0),
-                                className: 'mt-1 block w-full border rounded-md px-3 py-2 text-sm'
-                            })
-                        ),
-                        React.createElement('div', {},
-                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Tỷ lệ lô xiên 3 thu (%)'),
-                            React.createElement('input', {
-                                type: 'number',
-                                value: parameters.tyLeXien3Thu,
-                                onChange: (e) => handleParameterChange('tyLeXien3Thu', parseInt(e.target.value) || 0),
-                                className: 'mt-1 block w-full border rounded-md px-3 py-2 text-sm'
-                            })
-                        ),
-                        React.createElement('div', {},
-                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Chiết khấu xiên 3 (%)'),
-                            React.createElement('input', {
-                                type: 'number',
-                                value: parameters.chiKhauXien3,
-                                onChange: (e) => handleParameterChange('chiKhauXien3', parseInt(e.target.value) || 0),
-                                className: 'mt-1 block w-full border rounded-md px-3 py-2 text-sm'
-                            })
-                        ),
-                        React.createElement('div', {},
-                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Hệ số lô xiên 4'),
-                            React.createElement('input', {
-                                type: 'number',
-                                value: parameters.heSoXien4Tra,
-                                onChange: (e) => handleParameterChange('heSoXien4Tra', parseInt(e.target.value) || 0),
-                                className: 'mt-1 block w-full border rounded-md px-3 py-2 text-sm'
-                            })
-                        ),
-                        React.createElement('div', {},
-                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Tỷ lệ lô xiên 4 thu (%)'),
-                            React.createElement('input', {
-                                type: 'number',
-                                value: parameters.tyLeXien4Thu,
-                                onChange: (e) => handleParameterChange('tyLeXien4Thu', parseInt(e.target.value) || 0),
-                                className: 'mt-1 block w-full border rounded-md px-3 py-2 text-sm'
-                            })
-                        ),
-                        React.createElement('div', {},
-                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Chiết khấu xiên 4 (%)'),
-                            React.createElement('input', {
-                                type: 'number',
-                                value: parameters.chiKhauXien4,
-                                onChange: (e) => handleParameterChange('chiKhauXien4', parseInt(e.target.value) || 0),
+                                value: parameters.xien2TraThuong,
+                                onChange: (e) => handleParameterChange('xien2TraThuong', parseInt(e.target.value) || 0),
                                 className: 'mt-1 block w-full border rounded-md px-3 py-2 text-sm'
                             })
                         )
                     ),
 
-                    // Ba càng & other parameters
+                    // Lô xiên 3 parameters
                     React.createElement('div', {className: 'space-y-3'},
-                        React.createElement('h3', {className: 'font-semibold text-red-600'}, 'Ba Càng & Khác (3 tham số)'),
+                        React.createElement('h3', {className: 'font-semibold text-purple-600'}, 'Lô xiên 3 (3 tham số)'),
                         React.createElement('div', {},
-                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Hệ số ba càng'),
+                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Xiên 3 gốc (thu đã CK)'),
                             React.createElement('input', {
                                 type: 'number',
-                                value: parameters.heSoBaCangTra,
-                                onChange: (e) => handleParameterChange('heSoBaCangTra', parseInt(e.target.value) || 0),
+                                value: parameters.xien3Goc,
+                                onChange: (e) => handleParameterChange('xien3Goc', parseInt(e.target.value) || 0),
                                 className: 'mt-1 block w-full border rounded-md px-3 py-2 text-sm'
                             })
                         ),
                         React.createElement('div', {},
-                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Tỷ lệ ba càng thu (%)'),
+                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Xiên 3 đánh (mặc định/1k)'),
                             React.createElement('input', {
                                 type: 'number',
-                                value: parameters.tyLeBaCangThu,
-                                onChange: (e) => handleParameterChange('tyLeBaCangThu', parseInt(e.target.value) || 0),
+                                value: parameters.xien3Danh,
+                                onChange: (e) => handleParameterChange('xien3Danh', parseInt(e.target.value) || 0),
                                 className: 'mt-1 block w-full border rounded-md px-3 py-2 text-sm'
                             })
                         ),
                         React.createElement('div', {},
-                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Làm tròn tiền'),
+                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Xiên 3 trả thưởng (1 ăn X)'),
                             React.createElement('input', {
-                                type: 'checkbox',
-                                checked: parameters.lamTronTien,
-                                onChange: (e) => handleParameterChange('lamTronTien', e.target.checked),
-                                className: 'mt-2'
+                                type: 'number',
+                                value: parameters.xien3TraThuong,
+                                onChange: (e) => handleParameterChange('xien3TraThuong', parseInt(e.target.value) || 0),
+                                className: 'mt-1 block w-full border rounded-md px-3 py-2 text-sm'
+                            })
+                        )
+                    ),
+
+                    // Lô xiên 4 parameters
+                    React.createElement('div', {className: 'space-y-3'},
+                        React.createElement('h3', {className: 'font-semibold text-purple-600'}, 'Lô xiên 4 (3 tham số)'),
+                        React.createElement('div', {},
+                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Xiên 4 gốc (thu đã CK)'),
+                            React.createElement('input', {
+                                type: 'number',
+                                value: parameters.xien4Goc,
+                                onChange: (e) => handleParameterChange('xien4Goc', parseInt(e.target.value) || 0),
+                                className: 'mt-1 block w-full border rounded-md px-3 py-2 text-sm'
+                            })
+                        ),
+                        React.createElement('div', {},
+                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Xiên 4 đánh (mặc định/1k)'),
+                            React.createElement('input', {
+                                type: 'number',
+                                value: parameters.xien4Danh,
+                                onChange: (e) => handleParameterChange('xien4Danh', parseInt(e.target.value) || 0),
+                                className: 'mt-1 block w-full border rounded-md px-3 py-2 text-sm'
+                            })
+                        ),
+                        React.createElement('div', {},
+                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Xiên 4 trả thưởng (1 ăn X)'),
+                            React.createElement('input', {
+                                type: 'number',
+                                value: parameters.xien4TraThuong,
+                                onChange: (e) => handleParameterChange('xien4TraThuong', parseInt(e.target.value) || 0),
+                                className: 'mt-1 block w-full border rounded-md px-3 py-2 text-sm'
+                            })
+                        )
+                    ),
+
+                    // Ba càng parameters
+                    React.createElement('div', {className: 'space-y-3'},
+                        React.createElement('h3', {className: 'font-semibold text-red-600'}, 'Ba Càng (3 tham số)'),
+                        React.createElement('div', {},
+                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Ba càng gốc (thu đã CK)'),
+                            React.createElement('input', {
+                                type: 'number',
+                                value: parameters.baCangGoc,
+                                onChange: (e) => handleParameterChange('baCangGoc', parseInt(e.target.value) || 0),
+                                className: 'mt-1 block w-full border rounded-md px-3 py-2 text-sm'
+                            })
+                        ),
+                        React.createElement('div', {},
+                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Ba càng đánh (mặc định/1k)'),
+                            React.createElement('input', {
+                                type: 'number',
+                                value: parameters.baCangDanh,
+                                onChange: (e) => handleParameterChange('baCangDanh', parseInt(e.target.value) || 0),
+                                className: 'mt-1 block w-full border rounded-md px-3 py-2 text-sm'
+                            })
+                        ),
+                        React.createElement('div', {},
+                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Ba càng trả thưởng (1 ăn X)'),
+                            React.createElement('input', {
+                                type: 'number',
+                                value: parameters.baCangTraThuong,
+                                onChange: (e) => handleParameterChange('baCangTraThuong', parseInt(e.target.value) || 0),
+                                className: 'mt-1 block w-full border rounded-md px-3 py-2 text-sm'
                             })
                         )
                     )
+                )
                 )
             ),
             
