@@ -1248,33 +1248,16 @@
         return config.lamTronTien ? Math.round(amount / 1000) * 1000 : amount;
     };
 
-    // Calculate lose amount using BetParser rules
+    // Calculate lose amount - FIXED LOGIC
+    // When you LOSE, you ALWAYS lose 100% of your bet amount
+    // This is universal for ALL bet types: Lô, Đề, Xiên, Ba Càng
     const calculateLoseAmount = (bet, config) => {
-        const { type, money, numbers } = bet;
-        let amount = 0;
+        // CRITICAL FIX: Khi thua → mất toàn bộ tiền cược
+        // Không cần tính toán phức tạp, chỉ trả về số tiền đã đặt
+        const loseAmount = bet.money;
 
-        if (type === 'lô') {
-            // Lô - Dùng điểm trực tiếp từ input × tiền 1 điểm lô (user cấu hình)
-            // VD: "L 12 20" → 20 điểm × 21700 = 434,000
-            const diem = bet.points || Math.floor(money / config.tien1DiemLo);
-            amount = diem * config.tien1DiemLo;
-        } else if (type === 'đề') {
-            // Đề - Thua theo điểm × tiền 1 điểm đề
-            // VD: 100k / 1k = 100 điểm × 1k × 100% = 100k
-            const diem = Math.floor(money / config.tien1DiemDe);
-            amount = diem * config.tien1DiemDe * (config.tyLeDeThu / 100);
-        } else if (type === 'xiên') {
-            const count = numbers.length;
-            let rate = 0;
-            if (count === 2) rate = config.tyLeXien2Thu;
-            else if (count === 3) rate = config.tyLeXien3Thu;
-            else if (count === 4) rate = config.tyLeXien4Thu;
-            amount = money * (rate / 100);
-        } else if (type === 'ba càng') {
-            amount = money * (config.tyLeBaCangThu / 100);
-        }
-
-        return config.lamTronTien ? Math.round(amount / 1000) * 1000 : amount;
+        // Apply rounding if enabled
+        return config.lamTronTien ? Math.round(loseAmount / 1000) * 1000 : loseAmount;
     };
 
     // Fallback simple check
