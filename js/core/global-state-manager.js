@@ -378,123 +378,13 @@
             console.log(' [GlobalStateManager] Initialized successfully');
         },
     };
-    
-    // ===== TESTING FUNCTIONS =====
-    const TestGlobalState = {
-        testComponentExists: () => {
-            console.assert(window.GlobalStateManager, ' GlobalStateManager not exported to global scope');
-            console.log(' [TEST] GlobalStateManager exists');
-        },
-        
-        testBasicOperations: () => {
-                    // NO TEST DATA - Production mode only
-        console.log(' [GlobalStateManager] No test data loaded');
-            const retrieved = window.GlobalStateManager.getData('users');
-            console.assert(retrieved.length === 1, ' Basic operations failed');
-            console.log(' [TEST] Basic operations work');
-        },
-        
-        testSubscription: () => {
-            let callbackExecuted = false;
-            const unsubscribe = window.GlobalStateManager.subscribe('users', () => {
-                callbackExecuted = true;
-            }, 'TestComponent');
-            
-            window.GlobalStateManager.updateData('users', [{ id: 1 }], 'Test');
-            
-            console.assert(callbackExecuted, ' Subscription failed');
-            unsubscribe();
-            console.log(' [TEST] Subscription works');
-        },
-        
-        testAtomicUpdate: () => {
-            // Setup test data
-            window.GlobalStateManager.updateData('users', [{ id: 2, status: 'pending' }], 'Test');
-            window.GlobalStateManager.updateData('payments', [{ id: 1, userId: 2, status: 'pending' }], 'Test');
-            
-            const result = window.GlobalStateManager.updatePaymentAndUser(
-                1, 
-                2, 
-                { packageId: 'test', packageName: 'Test Package', expiryDate: '2024-12-31', userName: 'Test User' }
-            );
-            
-            console.assert(result === true, ' Atomic update failed');
-            
-            const user = window.GlobalStateManager.findUser(2);
-            console.assert(user.status === 'active', ' User not activated');
-            
-            console.log(' [TEST] Atomic update works');
-        },
-        
-        testErrorHandling: () => {
-            const result = window.GlobalStateManager.updateData('invalidKey', [], 'Test');
-            console.assert(result === false, ' Error handling failed');
-            console.log(' [TEST] Error handling works');
-        }
-    };
-    
-    // ===== DEBUG CONSOLE COMMANDS =====
-    const AdminDebug = {
-        viewState: () => {
-            console.table(window.GlobalStateManager._state);
-        },
-        
-        viewSubscribers: () => {
-            console.log(' Active Subscribers:', window.GlobalStateManager._subscribers);
-        },
-        
-        testPaymentApproval: (paymentId = 2, userId = 3) => {
-            return window.GlobalStateManager.updatePaymentAndUser(
-                paymentId, 
-                userId, 
-                { 
-                    packageId: 'package_30_days', 
-                    packageName: 'Test Package',
-                    expiryDate: '2024-12-31',
-                    userName: 'Test User'
-                }
-            );
-        },
-        
-        clearData: () => {
-            ['users', 'payments', 'packages', 'notifications'].forEach(key => {
-                window.GlobalStateManager.updateData(key, [], 'Debug');
-            });
-            console.log(' All data cleared');
-        },
-        
-        runAllTests: () => {
-            console.log(' Running all tests...');
-            Object.values(TestGlobalState).forEach(test => {
-                try {
-                    test();
-                } catch (error) {
-                    console.error(' Test failed:', error);
-                }
-            });
-            console.log(' All tests completed');
-        }
-    };
-    
+
     // ===== EXPORT TO GLOBAL SCOPE =====
     window.GlobalStateManager = GlobalStateManager;
-    window.TestGlobalState = TestGlobalState;
-    window.AdminDebug = AdminDebug;
-    
+
     // Initialize immediately
     GlobalStateManager.init();
-    
-    // Auto-run tests in development
-    if (GlobalStateManager._debug) {
-        setTimeout(() => {
-            TestGlobalState.testComponentExists();
-            TestGlobalState.testBasicOperations();
-            TestGlobalState.testSubscription();
-            TestGlobalState.testErrorHandling();
-        }, 100);
-    }
-    
-    // NO TEST DATA - Production mode only
-    console.log(' [GlobalStateManager] Running in production mode - No test data');
+
+    console.log('[GlobalStateManager] Running in production mode - No test data');
     
 })(); 
