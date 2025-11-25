@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Test Specific Input</title>
+    <style>
+        body { font-family: monospace; padding: 20px; }
+        .result { margin: 10px 0; padding: 10px; }
+        .error { background: #fee; border-left: 4px solid #f00; }
+        .success { background: #efe; border-left: 4px solid #0f0; }
+        pre { background: #f5f5f5; padding: 10px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>Test Input: "Tin 1: De 00 x 1070n. 90 x 735n..."</h1>
+
+    <h2>Input:</h2>
+    <pre id="input"></pre>
+
+    <h2>Step-by-step Processing:</h2>
+    <div id="steps"></div>
+
+    <h2>Final Output:</h2>
+    <pre id="output"></pre>
+
+    <script>
+        // Helper functions
+        function convertToMoney(value, unit) {
+            unit = (unit || '').toLowerCase();
+            if (unit === 'nn' || unit === 'n') return value * 1000;
+            if (unit === 'k') return value * 1000;
+            if (unit === 'm') return value * 1000000;
+            return value;
+        }
+
+        function log(message, isError = false) {
+            const div = document.createElement('div');
+            div.className = 'result ' + (isError ? 'error' : 'success');
+            div.textContent = message;
+            document.getElementById('steps').appendChild(div);
+        }
+
+        // Process complex line
+        function processComplexLine(line) {
+            const results = [];
+            const originalLine = line;
+
+            log(`Original line: "${originalLine}"`);
+
+            line = line.trim();
+            log(`After trim: "${line}"`);
+
+            // Remove "Tin X:" prefix
+            const tinPrefixMatch = line.match(/^tin\s*\d+\s*:\s*/i);
+            if (tinPrefixMatch) {
+                log(`Found Tin prefix: "${tinPrefixMatch[0]}"`);
+                line = line.substring(tinPrefixMatch[0].length).trim();
+                log(`After removing Tin prefix: "${line}"`);
+                if (!line) {
+                    log('Line is empty after removing Tin prefix, skipping', true);
+                    return results;
+                }
+            }
+
+            // Check if it's multi-bet with periods
+            if (/\d+\s*x\s*[\d.]+n{0,2}\s*\./i.test(line)) {
+                log('Detected multi-bet with periods format');
+
+                // Detect bet type from start
+                const typeMatch = line.match(/^(de|đề|d|lo|lô|l)\s+/i);
+                log(`Type match: ${typeMatch ? typeMatch[0] : 'none'}`);
+
+                const betType = typeMatch ? typeMatch[1].toLowerCase() : 'de';
+                const normalizedType = betType.match(/^(de|đề|d)$/i) ? 'de' : 'lo';
+                log(`Bet type: ${betType}, Normalized: ${normalizedType}`);
+
+                // Split by "."
+                const segments = line.split(/\.\s*/);
+                log(`Split into ${segments.length} segments: ${JSON.stringify(segments)}`);
+
+                for (let i = 0; i < segments.length; i++) {
+                    const segment = segments[i];
+                    if (!segment.trim()) {
+                        log(`Segment ${i}: empty, skipping`);
+                        continue;
+                    }
+
+                    log(`\nProcessing segment ${i}: "${segment}"`);
+
+                    // Match: "00 x 1070n" or "De 00 x 1070n"
+                    const segMatch = segment.match(/(?:de|đề|d|lo|lô|l)?\s*([\d,\s]+)\s*x\s*([\d.]+)(n{1,2}|k|m)?/i);
+
+                    if (segMatch) {
+                        log(`  ✓ Matched! Numbers: "${segMatch[1]}", Money: "${segMatch[2]}", Unit: "${segMatch[3] || 'none'}"`);
+
+                        const numbersStr = segMatch[1];
+                        const moneyValue = parseFloat(segMatch[2]);
+                        const unit = (segMatch[3] || '').toLowerCase();
+                        const money = convertToMoney(moneyValue, unit);
+
+                        log(`  Money calculation: ${moneyValue} ${unit} = ${money}`);
+
+                        // Split numbers by comma or space
+                        const numbers = numbersStr.split(/[,\s]+/).filter(n => n && /^\d{1,2}$/.test(n));
+                        log(`  Extracted numbers: ${JSON.stringify(numbers)}`);
+
+                        for (const num of numbers) {
+                            const paddedNum = num.padStart(2, '0');
+                            const result = `${normalizedType} ${paddedNum}-${money}`;
+                            results.push(result);
+                            log(`  → Created bet: "${result}"`, false);
+                        }
+                    } else {
+                        log(`  ✗ No match for segment: "${segment}"`, true);
+                    }
+                }
+
+                if (results.length > 0) {
+                    log(`\n✓ Total bets created: ${results.length}`);
+                    return results;
+                } else {
+                    log('\n✗ No bets created from segments', true);
+                }
+            } else {
+                log('Not a multi-bet with periods format', true);
+            }
+
+            // If no handler matched, return original line
+            if (results.length === 0) {
+                log('No handler matched, returning original line', true);
+                results.push(line);
+            }
+
+            return results;
+        }
+
+        // Test input
+        const testInput = 'Tin 1: De 00 x 1070n. 90 x 735n. 11 x 330n. 16 x 310n. 25 x 195n. 55 x 84n. 50 x 10n.';
+        document.getElementById('input').textContent = testInput;
+
+        // Process
+        const results = processComplexLine(testInput);
+
+        // Display output
+        document.getElementById('output').textContent = results.join('\n');
+
+        log(`\n==============================`);
+        log(`FINAL RESULTS: ${results.length} bets`);
+        log(`==============================`);
+    </script>
+</body>
+</html>
