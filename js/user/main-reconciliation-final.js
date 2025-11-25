@@ -746,7 +746,7 @@
                     return { success: false, error: `Ba càng cần số 3 chữ số (000-999) - Bạn nhập "${numbers[0]}"` };
                 }
             }
-            
+
             // Return bet object with points for Lô
             return {
                 success: true,
@@ -1022,6 +1022,9 @@
                 
             case 'xien':
             case 'xiên':
+            case 'xiên 2':
+            case 'xiên 3':
+            case 'xiên 4':
                 // Xiên check trong xienArray - TẤT CẢ số phải có
                 matchedNumbers = numbers.filter(num => xienArray.includes(String(num)));
                 won = matchedNumbers.length === numbers.length; // Tất cả số phải trúng
@@ -1258,7 +1261,8 @@
             // VD: 100k / 1500 = 66 điểm × 1000 × 70 = 4,620,000
             const diem = Math.floor(money / config.tien1DiemDe);
             amount = diem * 1000 * config.heSoDeTra;
-        } else if (type === 'xiên') {
+        } else if (type === 'xiên' || type === 'xiên 2' || type === 'xiên 3' || type === 'xiên 4') {
+            // Xiên 2, 3, 4 - Nhân với hệ số tương ứng
             const count = numbers.length;
             if (count === 2) amount = money * config.heSoXien2Tra;
             else if (count === 3) amount = money * config.heSoXien3Tra;
@@ -1310,6 +1314,9 @@
                 
             case 'xien':
             case 'xiên':
+            case 'xiên 2':
+            case 'xiên 3':
+            case 'xiên 4':
                 matchedNumbers = numbers.filter(num => xienArray.includes(num));
                 won = matchedNumbers.length === numbers.length; // Tất cả số phải trúng
                 break;
@@ -3078,10 +3085,13 @@
                         React.createElement('div', {className: 'grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm'},
                             Object.entries(statistics.byType).map(([type, data]) => 
                                 React.createElement('div', {key: type, className: 'bg-white rounded p-2 border'},
-                                    React.createElement('div', {className: 'font-semibold capitalize'}, 
-                                        type === 'lô' ? 'Lô' : 
-                                        type === 'đề' ? 'Đề' : 
-                                        type === 'xiên' ? 'Xiên' : 
+                                    React.createElement('div', {className: 'font-semibold capitalize'},
+                                        type === 'lô' ? 'Lô' :
+                                        type === 'đề' ? 'Đề' :
+                                        type === 'xiên' ? 'Xiên' :
+                                        type === 'xiên 2' ? 'Xiên 2' :
+                                        type === 'xiên 3' ? 'Xiên 3' :
+                                        type === 'xiên 4' ? 'Xiên 4' :
                                         type === 'ba càng' ? 'Ba Càng' : type
                                     ),
                                     React.createElement('div', {}, `${data.count} bet (${data.won}T/${data.lost}H)`),
