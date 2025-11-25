@@ -260,6 +260,9 @@
         return (
             <ErrorBoundary>
                 <div className="min-h-screen bg-[#F8F7F7]">
+                    {/* Version Bar */}
+                    {window.VersionBar && React.createElement(window.VersionBar)}
+
                     {/* Navigation */}
                     <Navigation />
                     

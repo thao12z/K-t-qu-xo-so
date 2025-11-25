@@ -151,6 +151,9 @@
         
         return (
             <div className="space-y-6">
+                {/* Version Bar */}
+                {window.VersionBar && React.createElement(window.VersionBar)}
+
                 <h1 className="text-2xl font-bold"> Dashboard</h1>
                 
                 {/* Stats Cards */}
