@@ -1284,30 +1284,31 @@
     };
 
     // Calculate win amount using BetParser rules
+    // Calculate win amount - KHÁCH THẮNG (đại lý phải trả)
     const calculateWinAmount = (bet, config) => {
         const { type, money, numbers } = bet;
         let amount = 0;
 
         if (type === 'lô') {
-            // Lô - Dùng điểm trực tiếp từ input
-            // VD: "L 12 20" → 20 điểm × 80000 = 1,600,000
-            const diem = bet.points || Math.floor(money / config.tien1DiemLo);
-            amount = diem * config.tienTra1DiemLo;
+            // Lô - Tính theo ĐIỂM
+            // VD: "L 12 20" → 20 điểm × loTraThuong(80k) = 1,600,000đ
+            const diem = bet.points || 0;
+            amount = diem * config.loTraThuong;
         } else if (type === 'đề') {
-            // Đề - Thắng theo điểm × giá trị cố định
-            // Điểm = tiền / tien1DiemDe (user cấu hình)
-            // Thắng = điểm × 1000 × heSoDeTra (1000đ là gốc cố định, 70 là hệ số)
-            // VD: 100k / 1500 = 66 điểm × 1000 × 70 = 4,620,000
-            const diem = Math.floor(money / config.tien1DiemDe);
-            amount = diem * 1000 * config.heSoDeTra;
+            // Đề - Công thức: điểm × 1000 × deTraThuong
+            // Điểm = tiền / deDanh (user cấu hình)
+            // Thắng = điểm × 1000 × deTraThuong (70)
+            // VD: 100k / 1000 = 100 điểm × 1000 × 70 = 7,000,000đ
+            const diem = Math.floor(money / config.deDanh);
+            amount = diem * 1000 * config.deTraThuong;
         } else if (type === 'xiên' || type === 'xiên 2' || type === 'xiên 3' || type === 'xiên 4') {
             // Lô xiên 2, 3, 4 - Nhân với hệ số tương ứng
             const count = numbers.length;
-            if (count === 2) amount = money * config.heSoXien2Tra;
-            else if (count === 3) amount = money * config.heSoXien3Tra;
-            else if (count === 4) amount = money * config.heSoXien4Tra;
+            if (count === 2) amount = money * config.xien2TraThuong;
+            else if (count === 3) amount = money * config.xien3TraThuong;
+            else if (count === 4) amount = money * config.xien4TraThuong;
         } else if (type === 'ba càng') {
-            amount = money * config.heSoBaCangTra;
+            amount = money * config.baCangTraThuong;
         }
 
         return config.lamTronTien ? Math.round(amount / 1000) * 1000 : amount;
@@ -1323,6 +1324,40 @@
 
         // Apply rounding if enabled
         return config.lamTronTien ? Math.round(loseAmount / 1000) * 1000 : loseAmount;
+    };
+
+    // Calculate discounted amount (tiền gốc = tiền thu đã chiết khấu)
+    // This is used for statistics to show agency's actual collected amount
+    const calculateDiscountedAmount = (bet, config) => {
+        const { type, money } = bet;
+        let discounted = 0;
+
+        if (type === 'lô') {
+            // Lô - Tính theo ĐIỂM
+            // VD: "L 12 20" → 20 điểm × loGoc(16k) = 320,000đ (đã CK)
+            const diem = bet.points || 0;
+            discounted = diem * config.loGoc;
+        } else if (type === 'đề') {
+            // Đề - Công thức: (tiền / deDanh) × deGoc
+            // VD: 100k / 1000 = 100 điểm × 720 = 72,000đ (đã CK)
+            const diem = Math.floor(money / config.deDanh);
+            discounted = diem * config.deGoc;
+        } else if (type === 'xiên' || type === 'xiên 2') {
+            // Lô xiên 2 - Công thức: (tiền / xien2Danh) × xien2Goc
+            // VD: 10k / 1000 × 600 = 6,000đ (đã CK)
+            discounted = (money / config.xien2Danh) * config.xien2Goc;
+        } else if (type === 'xiên 3') {
+            // Lô xiên 3
+            discounted = (money / config.xien3Danh) * config.xien3Goc;
+        } else if (type === 'xiên 4') {
+            // Lô xiên 4
+            discounted = (money / config.xien4Danh) * config.xien4Goc;
+        } else if (type === 'ba càng') {
+            // Ba càng
+            discounted = (money / config.baCangDanh) * config.baCangGoc;
+        }
+
+        return config.lamTronTien ? Math.round(discounted / 1000) * 1000 : discounted;
     };
 
     // Fallback simple check
@@ -2016,23 +2051,39 @@
                 lost: 0,
                 totalWinAmount: 0,
                 totalLoseAmount: 0,
-                totalBetAmount: 0,
+                totalBetAmount: 0,              // Tổng tiền chưa chiết khấu (original)
+                totalBetAmountDiscounted: 0,    // Tổng tiền đã chiết khấu (discounted)
+                totalDiscount: 0,                // Chênh lệch (commission)
                 netProfit: 0,
                 byType: {}
             };
 
             bets.forEach(item => {
                 if (item.bet && item.bet.money) {
+                    // Original bet amount (chưa chiết khấu)
                     stats.totalBetAmount += item.bet.money;
-                    
+
+                    // Discounted bet amount (đã chiết khấu) using new function
+                    const discountedAmount = calculateDiscountedAmount(item.bet, parameters);
+                    stats.totalBetAmountDiscounted += discountedAmount;
+
                     const betType = item.bet.type;
                     if (!stats.byType[betType]) {
-                        stats.byType[betType] = { count: 0, won: 0, lost: 0, winAmount: 0, loseAmount: 0, betAmount: 0 };
+                        stats.byType[betType] = {
+                            count: 0,
+                            won: 0,
+                            lost: 0,
+                            winAmount: 0,
+                            loseAmount: 0,
+                            betAmount: 0,
+                            betAmountDiscounted: 0
+                        };
                     }
-                    
+
                     stats.byType[betType].count++;
                     stats.byType[betType].betAmount += item.bet.money;
-                    
+                    stats.byType[betType].betAmountDiscounted += discountedAmount;
+
                     if (item.result.won) {
                         stats.won++;
                         stats.totalWinAmount += item.result.amount;
@@ -2048,9 +2099,13 @@
                 }
             });
 
+            // Calculate total discount (commission)
+            stats.totalDiscount = stats.totalBetAmount - stats.totalBetAmountDiscounted;
+
+            // Net profit calculation (agency perspective)
             stats.netProfit = stats.totalWinAmount - stats.totalLoseAmount;
             return stats;
-        }, []);
+        }, [parameters]);
 
         // Handle parameter changes - REAL-TIME UPDATE
         const handleParameterChange = React.useCallback((key, value) => {
@@ -2993,8 +3048,8 @@
                             className: 'border rounded-lg px-3 py-2 text-sm'
                         },
                             React.createElement('option', {value: 'all'}, 'Tất cả'),
-                            React.createElement('option', {value: 'win'}, 'Chỉ thắng'),
-                            React.createElement('option', {value: 'lose'}, 'Chỉ thua'),
+                            React.createElement('option', {value: 'win'}, 'Khách thắng'),
+                            React.createElement('option', {value: 'lose'}, 'Khách thua'),
                             React.createElement('option', {value: 'error'}, 'Chỉ lỗi')
                         )
                     ),
@@ -3009,7 +3064,7 @@
                                     React.createElement('th', {className: 'text-left p-3 border'}, 'Số cược'),
                                     React.createElement('th', {className: 'text-left p-3 border'}, 'Tiền cược'),
                                     React.createElement('th', {className: 'text-left p-3 border'}, 'Trạng thái'),
-                                    React.createElement('th', {className: 'text-left p-3 border'}, 'Tiền thắng/thua')
+                                    React.createElement('th', {className: 'text-left p-3 border'}, 'Kết quả (đ)')
                                 )
                             ),
                             React.createElement('tbody', {},
@@ -3058,9 +3113,9 @@
                                             (item.bet?.money || item.money || 0).toLocaleString() + 'đ'
                                         ),
                                         // Trạng thái với màu
-                                        React.createElement('td', {className: `p-3 border ${statusClass}`}, 
+                                        React.createElement('td', {className: `p-3 border ${statusClass}`},
                                             isError ? 'LỖI' :
-                                            isWin ? 'THẮNG' : 'THUA'
+                                            isWin ? 'KHÁCH THẮNG' : 'KHÁCH THUA'
                                         ),
                                         // Tiền thắng/thua
                                         React.createElement('td', {className: 'p-3 border font-semibold'}, 
@@ -3116,10 +3171,10 @@
                                 React.createElement('span', {className: 'font-semibold'}, getPaginatedResults().data.length)
                             ),
                             React.createElement('div', {},
-                                React.createElement('span', {className: 'text-[#7B7B7B]'}, 'Thắng/Thua: '),
-                                React.createElement('span', {className: 'text-green-600 font-semibold'}, getFilteredResults().filter(r => (r.result?.won || r.result?.status === 'win')).length),
+                                React.createElement('span', {className: 'text-[#7B7B7B]'}, 'Khách thua/thắng: '),
+                                React.createElement('span', {className: 'text-green-600 font-semibold'}, getFilteredResults().filter(r => !(r.result?.won || r.result?.status === 'win') && !r.result?.error).length),
                                 React.createElement('span', {className: 'text-[#7B7B7B]'}, ' / '),
-                                React.createElement('span', {className: 'text-red-600 font-semibold'}, getFilteredResults().filter(r => !(r.result?.won || r.result?.status === 'win') && !r.result?.error).length)
+                                React.createElement('span', {className: 'text-red-600 font-semibold'}, getFilteredResults().filter(r => (r.result?.won || r.result?.status === 'win')).length)
                             ),
                             React.createElement('div', {},
                                 React.createElement('span', {className: 'text-[#7B7B7B]'}, 'Lãi/Lỗ: '),
@@ -3144,22 +3199,24 @@
                         React.createElement('h3', {className: 'font-semibold text-[#E36323] mb-2'}, 'Tổng Quan'),
                         React.createElement('div', {className: 'space-y-1 text-sm'},
                             React.createElement('div', {}, `Tổng bet: ${statistics.total}`),
-                            React.createElement('div', {className: 'text-green-600'}, `Thắng: ${statistics.won}`),
-                            React.createElement('div', {className: 'text-red-600'}, `Thua: ${statistics.lost}`),
-                            React.createElement('div', {className: 'font-bold'}, 
-                                `Tỷ lệ thắng: ${statistics.total > 0 ? Math.round((statistics.won / statistics.total) * 100) : 0}%`
+                            React.createElement('div', {className: 'text-green-600'}, `Khách thua: ${statistics.lost}`),
+                            React.createElement('div', {className: 'text-red-600'}, `Khách thắng: ${statistics.won}`),
+                            React.createElement('div', {className: 'font-bold'},
+                                `Tỷ lệ khách thua: ${statistics.total > 0 ? Math.round((statistics.lost / statistics.total) * 100) : 0}%`
                             )
                         )
                     ),
                     
-                    // Money stats
+                    // Money stats - Agency perspective
                     React.createElement('div', {className: 'bg-green-50 rounded-lg p-4'},
-                        React.createElement('h3', {className: 'font-semibold text-green-800 mb-2'}, 'Tiền Cược'),
+                        React.createElement('h3', {className: 'font-semibold text-green-800 mb-2'}, 'Tiền Thu/Trả'),
                         React.createElement('div', {className: 'space-y-1 text-sm'},
-                            React.createElement('div', {}, `Tổng cược: ${statistics.totalBetAmount.toLocaleString()}đ`),
-                            React.createElement('div', {className: 'text-green-600'}, `Thắng: +${statistics.totalWinAmount.toLocaleString()}đ`),
-                            React.createElement('div', {className: 'text-red-600'}, `Thua: -${statistics.totalLoseAmount.toLocaleString()}đ`),
-                            React.createElement('div', {className: `font-bold ${statistics.netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}, 
+                            React.createElement('div', {}, `Thu chưa CK: ${statistics.totalBetAmount.toLocaleString()}đ`),
+                            React.createElement('div', {}, `Thu đã CK: ${statistics.totalBetAmountDiscounted.toLocaleString()}đ`),
+                            React.createElement('div', {className: 'text-blue-600'}, `Chênh lệch: ${statistics.totalDiscount.toLocaleString()}đ`),
+                            React.createElement('div', {className: 'text-red-600'}, `Khách thắng: -${statistics.totalWinAmount.toLocaleString()}đ`),
+                            React.createElement('div', {className: 'text-green-600'}, `Khách thua: +${statistics.totalLoseAmount.toLocaleString()}đ`),
+                            React.createElement('div', {className: `font-bold ${statistics.netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`},
                                 `Lãi/Lỗ: ${statistics.netProfit >= 0 ? '+' : ''}${statistics.netProfit.toLocaleString()}đ`
                             )
                         )
