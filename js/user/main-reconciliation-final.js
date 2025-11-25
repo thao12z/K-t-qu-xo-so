@@ -24,15 +24,15 @@
         heSoDeTra: 70,               // VD: 70 (1 ăn 70)
         tyLeDeThu: 100,              // VD: thu 100% khi thua
         
-        // Xiên 2 (2 fields) - Hệ số nhân
+        // Lô xiên 2 (2 fields) - Hệ số nhân
         heSoXien2Tra: 10,            // VD: 10 (nhân 10 lần)
         tyLeXien2Thu: 100,           // VD: thu 100% khi thua
-        
-        // Xiên 3 (2 fields) - Hệ số nhân
+
+        // Lô xiên 3 (2 fields) - Hệ số nhân
         heSoXien3Tra: 40,            // VD: 40 (nhân 40 lần)
         tyLeXien3Thu: 100,           // VD: thu 100% khi thua
-        
-        // Xiên 4 (2 fields) - Hệ số nhân
+
+        // Lô xiên 4 (2 fields) - Hệ số nhân
         heSoXien4Tra: 100,           // VD: 100 (nhân 100 lần)
         tyLeXien4Thu: 100,           // VD: thu 100% khi thua
         
@@ -97,7 +97,7 @@
             }
         }
 
-        // === HANDLER 1: Xiên quay / XQ format ===
+        // === HANDLER 1: Lô xiên quay / XQ format ===
         // "xien quay 00,07,68,54 x 2000" or "xq 00,07,54,66 x 1000"
         const xienQuayMatch = line.match(/^(xien\s*quay|xiên\s*quây|xq)\s+([\d,\s]+)\s*x\s*([\d.]+)(n{1,2}|k|m)?$/i);
         if (xienQuayMatch) {
@@ -110,7 +110,7 @@
 
             if (numbers.length >= 2 && numbers.length <= 4) {
                 results.push(`xien quay ${numbers.join(' ')}-${money}`);
-                console.log(`[PREPROCESS] Xiên quay: ${originalLine} -> xien quay ${numbers.join(' ')}-${money}`);
+                console.log(`[PREPROCESS] Lô xiên quay: ${originalLine} -> xien quay ${numbers.join(' ')}-${money}`);
             }
             return results;
         }
@@ -465,7 +465,7 @@
         // Remove duplicates and create final arrays
         const uniqueDeArray = [...new Set(deArray)];
         const uniqueLoArray = [...new Set(loArray)];
-        const uniqueXienArray = [...new Set(loArray)]; // Xiên uses same as lô
+        const uniqueXienArray = [...new Set(loArray)]; // Lô xiên uses same as lô
         const uniqueBaCangArray = [...new Set(baCangArray)];
 
         const result = {
@@ -478,7 +478,7 @@
         console.log('Final extracted arrays:', {
             'Đề (từ ĐB)': result.deArray.length + ' số',
             'Lô (tất cả giải)': result.loArray.length + ' số', 
-            'Xiên (như lô)': result.xienArray.length + ' số',
+            'Lô xiên (như lô)': result.xienArray.length + ' số',
             'Ba càng (ĐB→G6)': result.baCangArray.length + ' số'
         });
         
@@ -586,9 +586,9 @@
                 const numbersStr = dashFormatMatch[2].trim();
                 const moneyValue = dashFormatMatch[3];
 
-                // Check if this is xiên quay format
+                // Check if this is lô xiên quay format
                 if (betType.match(/^(xien\s*quay|xiên\s*quây|xq)$/i)) {
-                    // Xiên quay: convert to standard xiên format
+                    // Lô xiên quay: convert to standard xiên format
                     line = `xien ${numbersStr} ${moneyValue}k`;
                 } else if (betType.match(/^(l|lo|lô)$/i)) {
                     // Lô: points-based, no k needed
@@ -706,7 +706,7 @@
                 'bc': 'ba càng', 'bacang': 'ba càng', 'bacàng': 'ba càng'
             }[typeKey] || type;
 
-            // Auto-detect xiên type based on number count
+            // Auto-detect lô xiên type based on number count
             // Lô xiên MUST have 2, 3, or 4 numbers - auto-detect type
             if (mappedType === 'xiên') {
                 if (numbers.length === 2) {
@@ -727,15 +727,15 @@
             if (mappedType === 'lô' && numbers.length < 1) {
                 return { success: false, error: 'Lô cần ít nhất 1 số' };
             }
-            // Validate xiên types - if user specified explicit type (lx2, x3, etc.), check exact count
+            // Validate lô xiên types - if user specified explicit type (lx2, x3, etc.), check exact count
             if (mappedType === 'xiên 2' && numbers.length !== 2) {
-                return { success: false, error: `Xiên 2 cần đúng 2 số - Bạn nhập ${numbers.length} số` };
+                return { success: false, error: `Lô xiên 2 cần đúng 2 số - Bạn nhập ${numbers.length} số` };
             }
             if (mappedType === 'xiên 3' && numbers.length !== 3) {
-                return { success: false, error: `Xiên 3 cần đúng 3 số - Bạn nhập ${numbers.length} số` };
+                return { success: false, error: `Lô xiên 3 cần đúng 3 số - Bạn nhập ${numbers.length} số` };
             }
             if (mappedType === 'xiên 4' && numbers.length !== 4) {
-                return { success: false, error: `Xiên 4 cần đúng 4 số - Bạn nhập ${numbers.length} số` };
+                return { success: false, error: `Lô xiên 4 cần đúng 4 số - Bạn nhập ${numbers.length} số` };
             }
             if (mappedType === 'ba càng') {
                 if (numbers.length !== 1) {
@@ -1025,13 +1025,13 @@
             case 'xiên 2':
             case 'xiên 3':
             case 'xiên 4':
-                // Xiên check trong xienArray - TẤT CẢ số phải có
+                // Lô xiên check trong xienArray - TẤT CẢ số phải có
                 matchedNumbers = numbers.filter(num => xienArray.includes(String(num)));
                 won = matchedNumbers.length === numbers.length; // Tất cả số phải trúng
                 const missingNumbers = numbers.filter(num => !xienArray.includes(String(num)));
                 note = won ?
-                    `Xiên ${numbers.length} [${numbers.join(',')}] - tất cả đều có` :
-                    `Xiên ${numbers.length} [${numbers.join(',')}] - thiếu: ${missingNumbers.join(',')}`;
+                    `Lô xiên ${numbers.length} [${numbers.join(',')}] - tất cả đều có` :
+                    `Lô xiên ${numbers.length} [${numbers.join(',')}] - thiếu: ${missingNumbers.join(',')}`;
                 break;
                 
             case 'ba càng':
@@ -1136,7 +1136,7 @@
                 specialPrize: rawResults.results?.giai_dac_biet?.[0] || null,
                 loNumbers: rawResults.loArray,
                 loNumbersArray: rawResults.loArray, // Alias for compatibility
-                xienNumbers: rawResults.loArray, // Xiên uses same pool as Lô
+                xienNumbers: rawResults.loArray, // Lô xiên uses same pool as Lô
                 xienNumbersArray: rawResults.loArray, // Alias for compatibility
                 baCangNumbers: rawResults.baCangArray,
                 baCangNumbersArray: rawResults.baCangArray, // Alias for compatibility
@@ -1211,7 +1211,7 @@
                 for (let i = 0; i < prizeArray.length; i++) {
                     const number = prizeArray[i];
                     if (number) {
-                        // Lô/Xiên: 2 số cuối (KEEP DUPLICATES!)
+                        // Lô/Lô xiên: 2 số cuối (KEEP DUPLICATES!)
                         const last2 = number.toString().slice(-2).padStart(2, '0');
                         loArray.push(last2);
 
@@ -1233,7 +1233,7 @@
             specialPrize: specialFull,
             loNumbers: loArray,
             loNumbersArray: loArray,
-            xienNumbers: loArray, // Xiên uses same pool
+            xienNumbers: loArray, // Lô xiên uses same pool
             xienNumbersArray: loArray,
             baCangNumbers: baCangArray,
             baCangNumbersArray: baCangArray,
@@ -1262,7 +1262,7 @@
             const diem = Math.floor(money / config.tien1DiemDe);
             amount = diem * 1000 * config.heSoDeTra;
         } else if (type === 'xiên' || type === 'xiên 2' || type === 'xiên 3' || type === 'xiên 4') {
-            // Xiên 2, 3, 4 - Nhân với hệ số tương ứng
+            // Lô xiên 2, 3, 4 - Nhân với hệ số tương ứng
             const count = numbers.length;
             if (count === 2) amount = money * config.heSoXien2Tra;
             else if (count === 3) amount = money * config.heSoXien3Tra;
@@ -1276,7 +1276,7 @@
 
     // Calculate lose amount - FIXED LOGIC
     // When you LOSE, you ALWAYS lose 100% of your bet amount
-    // This is universal for ALL bet types: Lô, Đề, Xiên, Ba Càng
+    // This is universal for ALL bet types: Lô, Đề, Lô xiên, Ba Càng
     const calculateLoseAmount = (bet, config) => {
         // CRITICAL FIX: Khi thua → mất toàn bộ tiền cược
         // Không cần tính toán phức tạp, chỉ trả về số tiền đã đặt
@@ -2505,11 +2505,11 @@
                         )
                     ),
 
-                    // Xiên parameters  
+                    // Lô xiên parameters
                     React.createElement('div', {className: 'space-y-3'},
-                        React.createElement('h3', {className: 'font-semibold text-purple-600'}, 'Xiên (6 tham số)'),
+                        React.createElement('h3', {className: 'font-semibold text-purple-600'}, 'Lô xiên (6 tham số)'),
                         React.createElement('div', {},
-                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Hệ số xiên 2'),
+                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Hệ số lô xiên 2'),
                             React.createElement('input', {
                                 type: 'number',
                                 value: parameters.heSoXien2Tra,
@@ -2518,7 +2518,7 @@
                             })
                         ),
                         React.createElement('div', {},
-                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Tỷ lệ xiên 2 thu (%)'),
+                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Tỷ lệ lô xiên 2 thu (%)'),
                             React.createElement('input', {
                                 type: 'number',
                                 value: parameters.tyLeXien2Thu,
@@ -2527,7 +2527,7 @@
                             })
                         ),
                         React.createElement('div', {},
-                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Hệ số xiên 3'),
+                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Hệ số lô xiên 3'),
                             React.createElement('input', {
                                 type: 'number',
                                 value: parameters.heSoXien3Tra,
@@ -2536,7 +2536,7 @@
                             })
                         ),
                         React.createElement('div', {},
-                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Tỷ lệ xiên 3 thu (%)'),
+                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Tỷ lệ lô xiên 3 thu (%)'),
                             React.createElement('input', {
                                 type: 'number',
                                 value: parameters.tyLeXien3Thu,
@@ -2545,7 +2545,7 @@
                             })
                         ),
                         React.createElement('div', {},
-                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Hệ số xiên 4'),
+                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Hệ số lô xiên 4'),
                             React.createElement('input', {
                                 type: 'number',
                                 value: parameters.heSoXien4Tra,
@@ -2554,7 +2554,7 @@
                             })
                         ),
                         React.createElement('div', {},
-                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Tỷ lệ xiên 4 thu (%)'),
+                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Tỷ lệ lô xiên 4 thu (%)'),
                             React.createElement('input', {
                                 type: 'number',
                                 value: parameters.tyLeXien4Thu,
@@ -3088,10 +3088,10 @@
                                     React.createElement('div', {className: 'font-semibold capitalize'},
                                         type === 'lô' ? 'Lô' :
                                         type === 'đề' ? 'Đề' :
-                                        type === 'xiên' ? 'Xiên' :
-                                        type === 'xiên 2' ? 'Xiên 2' :
-                                        type === 'xiên 3' ? 'Xiên 3' :
-                                        type === 'xiên 4' ? 'Xiên 4' :
+                                        type === 'xiên' ? 'Lô xiên' :
+                                        type === 'xiên 2' ? 'Lô xiên 2' :
+                                        type === 'xiên 3' ? 'Lô xiên 3' :
+                                        type === 'xiên 4' ? 'Lô xiên 4' :
                                         type === 'ba càng' ? 'Ba Càng' : type
                                     ),
                                     React.createElement('div', {}, `${data.count} bet (${data.won}T/${data.lost}H)`),
