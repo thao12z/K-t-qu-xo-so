@@ -3246,7 +3246,6 @@
                         )
                     )
                 )
-            )
         );
     };
     console.log('FINAL: Component created successfully');
