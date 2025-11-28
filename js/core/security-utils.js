@@ -8,8 +8,14 @@
 
     // ===== PRODUCTION LOGGER =====
     // Silences verbose logs in production, only shows errors
-    // Production mode: Enabled by default unless DEBUG_MODE is explicitly set
-    const isProduction = !window.DEBUG_MODE;
+    // Development mode: localhost, 127.0.0.1, or DEBUG_MODE enabled
+    // Production mode: Any other hostname (hosting)
+    const isDevelopment = window.DEBUG_MODE ||
+                         window.location.hostname === 'localhost' ||
+                         window.location.hostname === '127.0.0.1' ||
+                         window.location.hostname === '' ||
+                         window.location.protocol === 'file:';
+    const isProduction = !isDevelopment;
 
     const ProductionLogger = {
         log: (...args) => {
