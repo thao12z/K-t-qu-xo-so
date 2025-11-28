@@ -276,6 +276,10 @@
     window.SecurityUtils = SecurityUtils;
 
     // ===== PRODUCTION PROTECTION =====
+    // ⚠️ TEMPORARILY DISABLED FOR DEBUGGING
+    // TODO: Re-enable after fixing blank screen issue
+
+    /*
     // Enhanced console protection and DevTools detection
 
     if (isProduction) {
@@ -442,10 +446,14 @@
             return false;
         };
     }
+    */
+
+    // PRODUCTION PROTECTION DISABLED - Console and DevTools are now accessible
+    console.log('⚠️ SECURITY: Production protection DISABLED for debugging');
 
     if (!isProduction) {
-        console.log(' SecurityUtils loaded successfully');
-        console.log('  Production mode: Console disabled, DevTools detection enabled');
+        console.log('✅ SecurityUtils loaded successfully');
+        console.log('📊 Mode:', isProduction ? 'PRODUCTION (security disabled)' : 'DEVELOPMENT');
     }
 
 })(); 
