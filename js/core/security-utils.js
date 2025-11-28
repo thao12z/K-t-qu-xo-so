@@ -10,12 +10,22 @@
     // Silences verbose logs in production, only shows errors
     // Development mode: localhost, 127.0.0.1, or DEBUG_MODE enabled
     // Production mode: Any other hostname (hosting)
+
+    // 🔓 DEBUG MODE BYPASS: Add ?debug=1 to URL to enable debugging on production
+    const urlParams = new URLSearchParams(window.location.search);
+    const debugParam = urlParams.get('debug') === '1';
+
     const isDevelopment = window.DEBUG_MODE ||
+                         debugParam ||
                          window.location.hostname === 'localhost' ||
                          window.location.hostname === '127.0.0.1' ||
                          window.location.hostname === '' ||
                          window.location.protocol === 'file:';
     const isProduction = !isDevelopment;
+
+    if (debugParam) {
+        console.log('🔓 DEBUG MODE ENABLED via URL parameter');
+    }
 
     const ProductionLogger = {
         log: (...args) => {
