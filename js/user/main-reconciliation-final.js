@@ -1418,11 +1418,31 @@
     
     // Main component with core functionality
     const MainReconciliation = () => {
-        console.log(' FINAL: Rendering MainReconciliation...');
-        
+        console.log('═══════════════════════════════════════════════════════');
+        console.log('🎯 FINAL: Rendering MainReconciliation...');
+        console.log('🔍 [DEBUG] Checking dependencies...');
+        console.log('  - React:', !!React);
+        console.log('  - AuthService:', !!window.AuthService);
+        console.log('  - DEFAULT_PARAMETERS:', !!window.DEFAULT_PARAMETERS);
+
+        // Validate DEFAULT_PARAMETERS exists
+        if (!window.DEFAULT_PARAMETERS) {
+            console.error('❌ CRITICAL: DEFAULT_PARAMETERS not defined!');
+            return React.createElement('div', {className: 'p-8 text-center bg-red-50'},
+                React.createElement('h2', {className: 'text-xl font-bold text-red-600 mb-4'}, '❌ Lỗi Khởi Tạo'),
+                React.createElement('p', {className: 'text-gray-700'}, 'DEFAULT_PARAMETERS chưa được định nghĩa. Vui lòng reload trang.')
+            );
+        }
+
         // Package status check - CRITICAL SECURITY
         const currentUser = window.AuthService?.getCurrentUser();
         const isPackageActive = currentUser?.package_status === 'active';
+
+        console.log('👤 [USER] Current user:', currentUser ? {
+            username: currentUser.username,
+            package_status: currentUser.package_status,
+            package_name: currentUser.package_name
+        } : 'null');
         
         // ENFORCE PACKAGE ACCESS CONTROL
         const checkPackageAccess = () => {
@@ -1453,10 +1473,12 @@
         
         // State management - Load saved parameters
         const [parameters, setParameters] = React.useState(() => {
+            console.log('🔧 [PARAMS] Initializing parameters...');
             try {
                 const savedParams = localStorage.getItem('lottery_parameters');
                 if (savedParams) {
                     const parsed = JSON.parse(savedParams);
+                    console.log('📦 [PARAMS] Found saved params in localStorage:', Object.keys(parsed).length, 'keys');
 
                     // ⚠️ MIGRATION: Detect old parameter format and clear it
                     const isOldFormat = parsed.hasOwnProperty('tien1DiemLo') ||
@@ -1465,18 +1487,29 @@
                                        parsed.hasOwnProperty('chiKhauDe');
 
                     if (isOldFormat) {
-                        console.warn('⚠️ Detected OLD parameter format - clearing and using defaults');
+                        console.warn('⚠️ [MIGRATION] Detected OLD parameter format - clearing and using defaults');
                         console.warn('Old parameters:', Object.keys(parsed));
                         localStorage.removeItem('lottery_parameters');
+                        console.log('✅ [MIGRATION] Using DEFAULT_PARAMETERS');
                         return window.DEFAULT_PARAMETERS;
                     }
 
-                    console.log(' Loaded saved parameters from localStorage');
-                    return { ...window.DEFAULT_PARAMETERS, ...parsed };
+                    console.log('✅ [PARAMS] Loaded saved parameters from localStorage');
+                    const merged = { ...window.DEFAULT_PARAMETERS, ...parsed };
+                    console.log('✅ [PARAMS] Final params:', {
+                        loGoc: merged.loGoc,
+                        loDanh: merged.loDanh,
+                        loTraThuong: merged.loTraThuong,
+                        deGoc: merged.deGoc,
+                        deDanh: merged.deDanh,
+                        deTraThuong: merged.deTraThuong
+                    });
+                    return merged;
                 }
             } catch (error) {
-                console.warn('Could not load saved parameters:', error);
+                console.error('❌ [PARAMS] Error loading saved parameters:', error);
             }
+            console.log('✅ [PARAMS] No saved params - using DEFAULT_PARAMETERS');
             return window.DEFAULT_PARAMETERS;
         });
         const [betText, setBetText] = React.useState('');
@@ -2464,8 +2497,16 @@
                 )
             );
         }
-        
-        return React.createElement('div', {className: 'max-w-7xl mx-auto p-2 md:p-4 overflow-x-hidden'}, 
+
+        console.log('✅ [RENDER] Access granted - rendering main reconciliation UI');
+        console.log('📊 [STATE] Current state:', {
+            betText: betText?.length || 0,
+            results: results?.length || 0,
+            parameters: Object.keys(parameters).length,
+            showConfig: showConfig
+        });
+
+        return React.createElement('div', {className: 'max-w-7xl mx-auto p-2 md:p-4 overflow-x-hidden'},
             // Header with controls
             React.createElement('div', {className: 'mb-6'},
                 React.createElement('div', {className: 'flex items-center justify-between'},
