@@ -1457,6 +1457,20 @@
                 const savedParams = localStorage.getItem('lottery_parameters');
                 if (savedParams) {
                     const parsed = JSON.parse(savedParams);
+
+                    // ⚠️ MIGRATION: Detect old parameter format and clear it
+                    const isOldFormat = parsed.hasOwnProperty('tien1DiemLo') ||
+                                       parsed.hasOwnProperty('chiKhauLo') ||
+                                       parsed.hasOwnProperty('tien1DiemDe') ||
+                                       parsed.hasOwnProperty('chiKhauDe');
+
+                    if (isOldFormat) {
+                        console.warn('⚠️ Detected OLD parameter format - clearing and using defaults');
+                        console.warn('Old parameters:', Object.keys(parsed));
+                        localStorage.removeItem('lottery_parameters');
+                        return window.DEFAULT_PARAMETERS;
+                    }
+
                     console.log(' Loaded saved parameters from localStorage');
                     return { ...window.DEFAULT_PARAMETERS, ...parsed };
                 }
@@ -2483,7 +2497,19 @@
             // ============ SECTION A: THAM SỐ HỆ THỐNG (16 FIELDS) ============
             // Configuration Panel
             showConfig && React.createElement('div', {className: 'bg-white rounded-lg shadow-md p-4 mb-6'},
-                React.createElement('h2', {className: 'text-lg font-semibold text-[#121212] mb-4'}, ' Cấu Hình Tham Số'),
+                React.createElement('div', {className: 'flex items-center justify-between mb-4'},
+                    React.createElement('h2', {className: 'text-lg font-semibold text-[#121212]'}, ' Cấu Hình Tham Số'),
+                    React.createElement('button', {
+                        onClick: () => {
+                            if (confirm('⚠️ Reset tất cả tham số về mặc định?\n\nThao tác này sẽ xóa tất cả cài đặt đã lưu.')) {
+                                localStorage.removeItem('lottery_parameters');
+                                setParameters(window.DEFAULT_PARAMETERS);
+                                alert('✅ Đã reset tất cả tham số về mặc định!');
+                            }
+                        },
+                        className: 'px-3 py-1.5 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 text-sm font-medium transition-colors'
+                    }, '🔄 Reset Tham Số')
+                ),
                 
                 // Date and Region Selection - SECTION A
                 React.createElement('div', {className: 'mb-6'},
