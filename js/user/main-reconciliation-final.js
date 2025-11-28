@@ -973,31 +973,31 @@
         
         // This function will be called from component with parameters state
         const buildCorrectParameters = (parametersState) => {
-            const getUIParameter = createGetUIParameter(parametersState);
-            
+            // ✅ SIMPLIFIED: Calculation functions already use NEW format (18 params)
+            // No mapping needed - just pass through with additions
+
+            console.log('✅ [PARAMS] Using NEW format (18 parameters):', {
+                loGoc: parametersState.loGoc,
+                loDanh: parametersState.loDanh,
+                loTraThuong: parametersState.loTraThuong,
+                deGoc: parametersState.deGoc,
+                deDanh: parametersState.deDanh,
+                deTraThuong: parametersState.deTraThuong,
+                xien2TraThuong: parametersState.xien2TraThuong,
+                xien3TraThuong: parametersState.xien3TraThuong,
+                xien4TraThuong: parametersState.xien4TraThuong,
+                baCangTraThuong: parametersState.baCangTraThuong
+            });
+
             return {
                 ...parametersState,
                 multipliers: {
                     'lô': 80000,      // 80k return per 23k bet = 3.48x
-                    'đề': 8000000,    // 8M return per 100k bet = 80x  
+                    'đề': 8000000,    // 8M return per 100k bet = 80x
                     'xiên': 13000,    // 13k per k bet
                     'ba càng': 500000 // 500k per k bet
                 },
-                // Config for calculateWinAmount function - USE ACTUAL PARAMETERS
-                tien1DiemLo: getUIParameter('tien1DiemLo', 23000),
-                tienTra1DiemLo: getUIParameter('tienTra1DiemLo', 80000),
-                tien1DiemDe: getUIParameter('tien1DiemDe', 1000),
-                heSoDeTra: getUIParameter('heSoDeTra', 70),
-                heSoXien2Tra: getUIParameter('heSoXien2Tra', 10),        // From UI: 10
-                heSoXien3Tra: getUIParameter('heSoXien3Tra', 40),        // From UI: 40  
-                heSoXien4Tra: getUIParameter('heSoXien4Tra', 100),       // From UI: 100
-                heSoBaCangTra: getUIParameter('heSoBaCangTra', 500),
-                lamTronTien: true,
-                tyLeDeThu: getUIParameter('tyLeDeThu', 100) / 100,
-                tyLeXien2Thu: getUIParameter('tyLeXien2Thu', 100) / 100, // From UI: 100%
-                tyLeXien3Thu: getUIParameter('tyLeXien3Thu', 100) / 100, // From UI: 100%
-                tyLeXien4Thu: getUIParameter('tyLeXien4Thu', 100) / 100, // From UI: 100%
-                tyLeBaCangThu: getUIParameter('tyLeBaCangThu', 100) / 100
+                lamTronTien: parametersState.lamTronTien !== undefined ? parametersState.lamTronTien : false
             };
         };
         
