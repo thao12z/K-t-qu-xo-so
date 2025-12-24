@@ -1,9 +1,57 @@
-// 📋 PENDING REQUESTS MODULE - Handle User Registrations & Payments
-// Version: 1.0.0 | Created: 2024 | Integration with User System
+//  PENDING REQUESTS MODULE - Handle User Registrations & Payments
+// Version: 1.1.0 | Created: 2024 | ONLINE SYNC MODE
 (function() {
     'use strict';
-    
+
     const { useState, useEffect, useCallback, memo } = React;
+
+    // ===== API CONFIGURATION =====
+    const API_BASE_URL = window.API_BASE_URL || '/api';
+
+    // ===== MYSQL SYNC HELPERS =====
+    const syncUserToMySQL = async (userData, action = 'save') => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/sync.php?action=user`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(userData)
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                console.log(` [PendingRequests] User MySQL sync ${action}:`, userData.id);
+                return true;
+            } else {
+                console.error(` [PendingRequests] User MySQL sync failed:`, result.error);
+                return false;
+            }
+        } catch (error) {
+            console.error(' [PendingRequests] User MySQL sync error:', error);
+            return false;
+        }
+    };
+
+    const syncPaymentToMySQL = async (paymentData, action = 'save') => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/sync.php?action=payment`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(paymentData)
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                console.log(` [PendingRequests] Payment MySQL sync ${action}:`, paymentData.id);
+                return true;
+            } else {
+                console.error(` [PendingRequests] Payment MySQL sync failed:`, result.error);
+                return false;
+            }
+        } catch (error) {
+            console.error(' [PendingRequests] Payment MySQL sync error:', error);
+            return false;
+        }
+    };
     
     // ===== PENDING REQUESTS COMPONENT =====
     const PendingRequests = memo(() => {
@@ -73,12 +121,19 @@
                 const currentUsers = window.GlobalStateManager.getData('users');
                 currentUsers.push(newUser);
                 window.GlobalStateManager.updateData('users', currentUsers, 'PendingRequests');
-                
+
+                //  SYNC USER TO MYSQL
+                syncUserToMySQL(newUser, 'approve').then(success => {
+                    if (success) {
+                        console.log(' [PendingRequests] New user synced to MySQL');
+                    }
+                });
+
                 // Remove from pending
                 const updatedPending = pendingUsers.filter(u => u.id !== userData.id);
                 setPendingUsers(updatedPending);
                 localStorage.setItem('adminPendingUsers', JSON.stringify(updatedPending));
-                
+
                 // Create payment record if exists
                 if (userData.paymentId) {
                     const paymentData = pendingPayments.find(p => p.id === userData.paymentId);
@@ -94,20 +149,27 @@
                             approvedAt: new Date().toISOString(),
                             approvedBy: 'admin'
                         };
-                        
+
                         const currentPayments = window.GlobalStateManager.getData('payments');
                         currentPayments.push(paymentRecord);
                         window.GlobalStateManager.updateData('payments', currentPayments, 'PendingRequests');
-                        
+
+                        //  SYNC PAYMENT TO MYSQL
+                        syncPaymentToMySQL(paymentRecord, 'approve').then(success => {
+                            if (success) {
+                                console.log(' [PendingRequests] Payment synced to MySQL');
+                            }
+                        });
+
                         // Remove from pending payments
                         const updatedPendingPayments = pendingPayments.filter(p => p.id !== paymentData.id);
                         setPendingPayments(updatedPendingPayments);
                         localStorage.setItem('adminPendingPayments', JSON.stringify(updatedPendingPayments));
                     }
                 }
-                
+
                 window.GlobalStateManager.addNotification(
-                    `✅ User ${userData.fullName} approved and activated`,
+                    ` User ${userData.fullName} approved and activated`,
                     'success',
                     'PendingRequests'
                 );
@@ -115,7 +177,7 @@
             } catch (error) {
                 console.error('Error approving user:', error);
                 window.GlobalStateManager.addNotification(
-                    '❌ Error approving user',
+                    ' Error approving user',
                     'error',
                     'PendingRequests'
                 );
@@ -137,7 +199,7 @@
                 }
                 
                 window.GlobalStateManager.addNotification(
-                    `❌ Registration rejected for ${userData.fullName}`,
+                    ` Registration rejected for ${userData.fullName}`,
                     'warning',
                     'PendingRequests'
                 );
@@ -186,7 +248,7 @@
         return React.createElement('div', { className: 'space-y-6' },
             // Header
             React.createElement('div', { className: 'flex justify-between items-center' },
-                React.createElement('h1', { className: 'text-2xl font-bold' }, '📋 Pending Requests'),
+                React.createElement('h1', { className: 'text-2xl font-bold' }, ' Pending Requests'),
                 React.createElement('div', { className: 'flex gap-2' },
                     React.createElement(window.Badge, { variant: 'warning' }, `${pendingUsers.length} Users`),
                     React.createElement(window.Badge, { variant: 'info' }, `${pendingPayments.length} Payments`)
@@ -197,8 +259,8 @@
             React.createElement('div', { className: 'border-b border-[#ECECEC]' },
                 React.createElement('nav', { className: '-mb-px flex space-x-8' },
                     [
-                        { id: 'users', label: '👥 Pending Users', count: pendingUsers.length },
-                        { id: 'payments', label: '💳 Pending Payments', count: pendingPayments.length }
+                        { id: 'users', label: ' Pending Users', count: pendingUsers.length },
+                        { id: 'payments', label: ' Pending Payments', count: pendingPayments.length }
                     ].map(tab => 
                         React.createElement('button', {
                             key: tab.id,
@@ -257,12 +319,12 @@
                                                     size: 'small',
                                                     variant: 'success',
                                                     onClick: () => handleApproveUser(user)
-                                                }, '✅ Approve'),
+                                                }, ' Approve'),
                                                 React.createElement(window.Button, {
                                                     size: 'small',
                                                     variant: 'danger',
                                                     onClick: () => handleRejectUser(user)
-                                                }, '❌ Reject')
+                                                }, ' Reject')
                                             )
                                         )
                                     )
@@ -324,6 +386,6 @@
     // ===== EXPORT TO GLOBAL SCOPE =====
     window.PendingRequests = PendingRequests;
     
-    console.log('✅ PendingRequests module loaded successfully');
+    console.log(' PendingRequests module loaded successfully');
     
 })(); 

@@ -622,7 +622,7 @@
                 className: 'w-full p-3 text-left flex items-center justify-between bg-[#F8F7F7] hover:bg-[#ECECEC]',
                 onClick: () => setIsExpanded(!isExpanded)
             },
-                React.createElement('span', { className: 'font-medium' }, '⚙️ Tham Số Hệ Thống (16 fields)'),
+                React.createElement('span', { className: 'font-medium' }, ' Tham Số Hệ Thống (16 fields)'),
                 React.createElement('span', {}, isExpanded ? '▼' : '▶')
             ),
             
@@ -712,7 +712,7 @@ L 01,02,03 150k`,
                 React.createElement('button', {
                     className: 'px-4 py-2 bg-[#7B7B7B] text-white rounded hover:bg-[#121212]',
                     onClick: onClear
-                }, '🗑️ Xóa')
+                }, ' Xóa')
             )
         );
     });
@@ -734,7 +734,7 @@ L 01,02,03 150k`,
 
         return React.createElement('div', { className: 'border rounded-lg p-4 bg-[#FFF7ED] mb-6' },
             React.createElement('h3', { className: 'font-bold mb-3' }, 
-                `🎲 Kết Quả XSMB - ${lotteryData.date}`
+                ` Kết Quả XSMB - ${lotteryData.date}`
             ),
             React.createElement('p', { className: 'text-sm text-[#7B7B7B] mb-4' },
                 'Nguồn: RSS xosodaiphat.com - Cập nhật lúc 18h15'
@@ -902,7 +902,7 @@ L 01,02,03 150k`,
             // Summary Cards
             React.createElement('div', { className: 'grid grid-cols-2 md:grid-cols-4 gap-4' },
                 React.createElement('div', { className: 'p-4 bg-[#FFEDD5] text-[#E36323] rounded-lg text-center' },
-                    React.createElement('div', { className: 'text-2xl mb-1' }, '📊'),
+                    React.createElement('div', { className: 'text-2xl mb-1' }, ''),
                     React.createElement('div', { className: 'text-lg font-bold' }, summary.totalBets),
                     React.createElement('div', { className: 'text-sm' }, 'Tổng số cược')
                 ),
@@ -941,7 +941,7 @@ L 01,02,03 150k`,
                 ),
                 React.createElement('div', { className: 'p-6 bg-red-50 border-2 border-red-200 rounded-lg' },
                     React.createElement('div', { className: 'flex items-center gap-3 mb-2' },
-                        React.createElement('div', { className: 'text-3xl' }, '💸'),
+                        React.createElement('div', { className: 'text-3xl' }, ''),
                         React.createElement('div', {},
                             React.createElement('div', { className: 'text-lg font-bold text-red-700' }, 'Tổng tiền thua'),
                             React.createElement('div', { className: 'text-2xl font-bold text-red-600' }, 
@@ -964,7 +964,7 @@ L 01,02,03 150k`,
                 }`
             },
                 React.createElement('div', { className: 'text-4xl mb-2' }, 
-                    summary.netResult > 0 ? '🎉' : summary.netResult < 0 ? '😞' : '🤝'
+                    summary.netResult > 0 ? '' : summary.netResult < 0 ? '' : ''
                 ),
                 React.createElement('div', {}, 
                     `Kết quả cuối cùng: ${summary.netResult > 0 ? 'THẮNG' : summary.netResult < 0 ? 'THUA' : 'HÒA'}`

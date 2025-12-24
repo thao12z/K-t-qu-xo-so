@@ -1,4 +1,4 @@
-// 👥 USER MANAGEMENT MODULE
+//  USER MANAGEMENT MODULE
 // Version: 1.0.0 | Created: 2024 | Follows ADMIN SYSTEM DEVELOPMENT GUIDELINES
 (function() {
     'use strict';
@@ -113,7 +113,7 @@
                 
                 // Create user object
                 const newUserId = window.GlobalStateManager.getNextUserId();
-                console.log('🔄 [UserManagement] Creating user with ID:', newUserId, 'Type:', typeof newUserId);
+                console.log(' [UserManagement] Creating user with ID:', newUserId, 'Type:', typeof newUserId);
                 
                 const newUser = {
                     id: newUserId,
@@ -141,7 +141,7 @@
                     activatedBy: formData.status === 'active' ? 'admin_manual' : null
                 };
                 
-                console.log('✅ [UserManagement] New user object created:', {
+                console.log(' [UserManagement] New user object created:', {
                     id: newUser.id,
                     username: newUser.username,
                     password: newUser.password ? '***' : 'NO_PASSWORD',
@@ -153,33 +153,47 @@
                 
                 // Update global state
                 const currentUsers = window.GlobalStateManager.getData('users');
-                console.log('📊 [UserManagement] Current users count:', currentUsers.length);
-                
+                console.log(' [UserManagement] Current users count:', currentUsers.length);
+
                 const updatedUsers = [...currentUsers, newUser];
                 window.GlobalStateManager.updateData('users', updatedUsers, 'UserManagement');
-                
-                console.log('✅ [UserManagement] User added to global state. New count:', updatedUsers.length);
-                
+
+                console.log(' [UserManagement] User added to global state. New count:', updatedUsers.length);
+
+                // Sync to MySQL API - REQUIRED for online-only mode
+                if (window.SharedDataService) {
+                    try {
+                        const mysqlResult = await window.SharedDataService.saveToMySQL('user', newUser);
+                        if (mysqlResult) {
+                            console.log(' [UserManagement] User synced to MySQL');
+                        } else {
+                            console.warn(' [UserManagement] MySQL sync failed, user saved locally only');
+                        }
+                    } catch (mysqlError) {
+                        console.error(' [UserManagement] MySQL sync error:', mysqlError);
+                    }
+                }
+
                 // Success notification
                 window.GlobalStateManager.addNotification(
-                    `✅ Created ${formData.role} ${newUser.fullName}${packageInfo ? ` with ${packageInfo.name}` : ''}`,
+                    ` Created ${formData.role} ${newUser.fullName}${packageInfo ? ` with ${packageInfo.name}` : ''}`,
                     'success',
                     'UserManagement'
                 );
-                
-                console.log('🔄 [UserManagement] USER_CREATED', {
+
+                console.log(' [UserManagement] USER_CREATED', {
                     userId: newUser.id,
                     userName: newUser.fullName,
                     role: newUser.role,
                     package: packageInfo?.name
                 });
-                
+
                 onUserAdded(newUser);
                 onClose();
                 
             } catch (error) {
-                console.error('❌ [UserManagement] CREATE_USER_ERROR', { error });
-                window.GlobalStateManager.addNotification('❌ Failed to create user', 'error', 'UserManagement');
+                console.error(' [UserManagement] CREATE_USER_ERROR', { error });
+                window.GlobalStateManager.addNotification(' Failed to create user', 'error', 'UserManagement');
             } finally {
                 setIsSubmitting(false);
             }
@@ -270,7 +284,7 @@
                     {/* Conditional Package Selection for Users */}
                     {formData.role === 'user' && (
                         <div className="border-t pt-4">
-                            <h4 className="font-medium text-[#121212] mb-3">📦 Subscription Settings</h4>
+                            <h4 className="font-medium text-[#121212] mb-3"> Subscription Settings</h4>
                             
                             <window.Select
                                 label="Subscription Package"
@@ -316,7 +330,7 @@
                     {formData.role === 'admin' && (
                         <div className="border-t pt-4">
                             <div className="bg-[#FFF3EE] border border-[#E36323]/20 rounded-lg p-4">
-                                <h4 className="font-medium text-[#E36323] mb-2">👑 Admin Privileges</h4>
+                                <h4 className="font-medium text-[#E36323] mb-2"> Admin Privileges</h4>
                                 <ul className="text-sm text-[#E36323] space-y-1">
                                     <li>• Full user management access</li>
                                     <li>• Payment approval capabilities</li>
@@ -493,8 +507,19 @@
                 const updatedUsers = currentUsers.map(u => u.id === user.id ? updatedUser : u);
 
                 window.GlobalStateManager.updateData('users', updatedUsers, 'UserManagement');
+
+                // Sync to MySQL API
+                if (window.SharedDataService) {
+                    try {
+                        await window.SharedDataService.saveToMySQL('user', updatedUser);
+                        console.log(' [UserManagement] User update synced to MySQL');
+                    } catch (mysqlError) {
+                        console.error(' [UserManagement] MySQL sync error:', mysqlError);
+                    }
+                }
+
                 window.GlobalStateManager.addNotification(
-                    `✅ Updated user: ${updatedUser.fullName}`,
+                    ` Updated user: ${updatedUser.fullName}`,
                     'success',
                     'UserManagement'
                 );
@@ -502,7 +527,7 @@
                 if (onUserUpdated) onUserUpdated(updatedUser);
                 onClose();
 
-                console.log('🔄 [UserManagement] USER_UPDATED', { userId: user.id, userName: updatedUser.fullName });
+                console.log(' [UserManagement] USER_UPDATED', { userId: user.id, userName: updatedUser.fullName });
 
             } catch (error) {
                 console.error('Error updating user:', error);
@@ -661,11 +686,11 @@
         // Subscribe to global state
         useEffect(() => {
             if (!window.GlobalStateManager) {
-                console.error('❌ [UserManagement] GlobalStateManager not available');
+                console.error(' [UserManagement] GlobalStateManager not available');
                 return;
             }
             
-            console.log('🔄 [UserManagement] COMPONENT_MOUNT');
+            console.log(' [UserManagement] COMPONENT_MOUNT');
             
             // Load initial data
             const initialUsers = window.GlobalStateManager.getData('users');
@@ -674,42 +699,56 @@
             
             // Subscribe to changes
             const unsubscribe = window.GlobalStateManager.subscribe('users', (newUsers) => {
-                console.log('🔄 [UserManagement] DATA_UPDATE', { count: newUsers.length });
+                console.log(' [UserManagement] DATA_UPDATE', { count: newUsers.length });
                 setUsers(newUsers);
             }, 'UserManagement');
             
             return () => {
                 unsubscribe();
-                console.log('🔄 [UserManagement] COMPONENT_UNMOUNT');
+                console.log(' [UserManagement] COMPONENT_UNMOUNT');
             };
         }, []);
         
         // Handle user status toggle
-        const handleStatusToggle = useCallback((userId, newStatus) => {
+        const handleStatusToggle = useCallback(async (userId, newStatus) => {
             const currentUsers = window.GlobalStateManager.getData('users');
-            const updatedUsers = currentUsers.map(u => 
-                u.id === userId ? {
-                    ...u,
-                    status: newStatus,
-                    ...(newStatus === 'active' && {
-                        activatedAt: new Date().toISOString(),
-                        activatedBy: 'admin_manual'
-                    })
-                } : u
-            );
-            
+            const updatedUser = currentUsers.find(u => u.id === userId);
+            if (!updatedUser) return;
+
+            const updatedUserData = {
+                ...updatedUser,
+                status: newStatus,
+                ...(newStatus === 'active' && {
+                    activatedAt: new Date().toISOString(),
+                    activatedBy: 'admin_manual'
+                })
+            };
+
+            const updatedUsers = currentUsers.map(u => u.id === userId ? updatedUserData : u);
+
             window.GlobalStateManager.updateData('users', updatedUsers, 'UserManagement');
+
+            // Sync to MySQL API
+            if (window.SharedDataService) {
+                try {
+                    await window.SharedDataService.saveToMySQL('user', updatedUserData);
+                    console.log(' [UserManagement] Status change synced to MySQL');
+                } catch (mysqlError) {
+                    console.error(' [UserManagement] MySQL sync error:', mysqlError);
+                }
+            }
+
             window.GlobalStateManager.addNotification(
-                `✅ User ${newStatus === 'active' ? 'activated' : 'deactivated'}`,
+                ` User ${newStatus === 'active' ? 'activated' : 'deactivated'}`,
                 'success',
                 'UserManagement'
             );
-            
-            console.log('🔄 [UserManagement] STATUS_TOGGLE', { userId, newStatus });
+
+            console.log(' [UserManagement] STATUS_TOGGLE', { userId, newStatus });
         }, []);
         
         // Handle user deletion
-        const handleDeleteUser = useCallback((userId) => {
+        const handleDeleteUser = useCallback(async (userId) => {
             const user = window.GlobalStateManager.findUser(userId);
             if (!user) return;
 
@@ -718,13 +757,27 @@
                 const updatedUsers = currentUsers.filter(u => u.id !== userId);
 
                 window.GlobalStateManager.updateData('users', updatedUsers, 'UserManagement');
+
+                // Sync deletion to MySQL (mark as deleted)
+                if (window.SharedDataService) {
+                    try {
+                        await window.SharedDataService.saveToMySQL('user', {
+                            ...user,
+                            status: 'deleted'
+                        });
+                        console.log(' [UserManagement] User deletion synced to MySQL');
+                    } catch (mysqlError) {
+                        console.error(' [UserManagement] MySQL sync error:', mysqlError);
+                    }
+                }
+
                 window.GlobalStateManager.addNotification(
-                    `✅ Deleted user ${user.fullName}`,
+                    ` Deleted user ${user.fullName}`,
                     'success',
                     'UserManagement'
                 );
 
-                console.log('🔄 [UserManagement] USER_DELETED', { userId, userName: user.fullName });
+                console.log(' [UserManagement] USER_DELETED', { userId, userName: user.fullName });
             }
         }, []);
 
@@ -732,7 +785,7 @@
         const handleEditUser = useCallback((user) => {
             setEditingUser(user);
             setShowEditUser(true);
-            console.log('🔄 [UserManagement] EDIT_USER_OPEN', { userId: user.id, userName: user.fullName });
+            console.log(' [UserManagement] EDIT_USER_OPEN', { userId: user.id, userName: user.fullName });
         }, []);
         
         // Format date
@@ -759,27 +812,15 @@
             <div className="space-y-6">
                 {/* Header */}
                 <div className="flex justify-between items-center">
-                    <h1 className="text-2xl font-bold">👥 User Management</h1>
+                    <h1 className="text-2xl font-bold"> User Management</h1>
                     
                     <div className="flex items-center space-x-4">
-                        {/* Test User Creation Button */}
-                        <window.Button
-                            variant="secondary"
-                            onClick={() => {
-                                console.log('🧪 [UserManagement] Running test user creation...');
-                                TestUserManagement.testUserCreation();
-                            }}
-                            className="bg-[#E36323] hover:bg-[#DF5A18] text-white"
-                        >
-                            🧪 Test User Creation
-                        </window.Button>
-                        
                         {/* Add User Button */}
                         <window.Button
                             variant="primary"
                             onClick={() => setShowAddUser(true)}
                         >
-                            ➕ Add User
+                             Add User
                         </window.Button>
                     </div>
                 </div>
@@ -812,7 +853,7 @@
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-[#121212]">
-                                            {user.role === 'admin' ? '👑 Admin' : '👤 User'}
+                                            {user.role === 'admin' ? ' Admin' : ' User'}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <window.Badge variant={getStatusVariant(user.status)}>
@@ -832,7 +873,7 @@
                                                 variant="primary"
                                                 onClick={() => handleEditUser(user)}
                                             >
-                                                ✏️ Edit
+                                                 Edit
                                             </window.Button>
 
                                             {/* Status Toggle */}
@@ -842,7 +883,7 @@
                                                     variant="success"
                                                     onClick={() => handleStatusToggle(user.id, 'active')}
                                                 >
-                                                    ✅ Activate
+                                                     Activate
                                                 </window.Button>
                                             )}
 
@@ -852,7 +893,7 @@
                                                     variant="warning"
                                                     onClick={() => handleStatusToggle(user.id, 'pending')}
                                                 >
-                                                    ⏸️ Suspend
+                                                    ⏸ Suspend
                                                 </window.Button>
                                             )}
 
@@ -863,7 +904,7 @@
                                                     variant="danger"
                                                     onClick={() => handleDeleteUser(user.id)}
                                                 >
-                                                    🗑️ Delete
+                                                     Delete
                                                 </window.Button>
                                             )}
                                         </td>
@@ -885,7 +926,7 @@
                     isOpen={showAddUser}
                     onClose={() => setShowAddUser(false)}
                     onUserAdded={() => {
-                        console.log('🔄 [UserManagement] USER_ADDED_CALLBACK');
+                        console.log(' [UserManagement] USER_ADDED_CALLBACK');
                     }}
                 />
 
@@ -898,95 +939,15 @@
                     }}
                     user={editingUser}
                     onUserUpdated={() => {
-                        console.log('🔄 [UserManagement] USER_UPDATED_CALLBACK');
+                        console.log(' [UserManagement] USER_UPDATED_CALLBACK');
                     }}
                 />
             </div>
         );
     });
-    
-    // ===== TESTING FUNCTIONS =====
-    const TestUserManagement = {
-        testComponentRender: () => {
-            console.assert(window.UserManagement, '❌ UserManagement not exported');
-            console.log('✅ [TEST] UserManagement component exists');
-        },
-        
-        testUserCreation: () => {
-            // Test user creation flow
-            const testUser = {
-                id: window.GlobalStateManager.getNextUserId(),
-                username: 'test_user_' + Date.now(),
-                email: 'test@example.com',
-                fullName: 'Test User',
-                phone: '+84987654321',
-                password: 'test123',
-                role: 'user',
-                accountType: 'user',
-                status: 'active',
-                hasAdminAccess: false,
-                subscriptionType: 'package_30_days',
-                subscriptionPackage: '30 Days Premium',
-                subscriptionExpiry: '2024-12-31',
-                subscriptionStatus: 'active',
-                createdAt: new Date().toISOString().split('T')[0],
-                createdBy: 'test',
-                lastLogin: null,
-                activatedAt: new Date().toISOString(),
-                activatedBy: 'test'
-            };
-            
-            const currentUsers = window.GlobalStateManager.getData('users');
-            const updatedUsers = [...currentUsers, testUser];
-            window.GlobalStateManager.updateData('users', updatedUsers, 'Test');
-            
-            console.log('✅ [TEST] Test user created:', {
-                username: testUser.username,
-                password: testUser.password,
-                status: testUser.status,
-                subscriptionStatus: testUser.subscriptionStatus
-            });
-            
-            // Test if user can be found in localStorage
-            setTimeout(() => {
-                const adminUsersData = localStorage.getItem('adminUsers');
-                if (adminUsersData) {
-                    const users = JSON.parse(adminUsersData);
-                    const foundUser = users.find(u => u.username === testUser.username);
-                    if (foundUser) {
-                        console.log('✅ [TEST] User found in localStorage:', foundUser.username);
-                    } else {
-                        console.error('❌ [TEST] User not found in localStorage');
-                    }
-                }
-            }, 1000);
-            
-            // Cleanup after test
-            setTimeout(() => {
-                window.GlobalStateManager.updateData('users', currentUsers, 'Test');
-                console.log('🧹 [TEST] Test user cleaned up');
-            }, 5000);
-        },
-        
-        testDataFlow: () => {
-            const currentUsers = window.GlobalStateManager.getData('users');
-            const retrieved = window.GlobalStateManager.findUser(1);
-            console.assert(retrieved && retrieved.username, '❌ User data flow failed');
-            console.log('✅ [TEST] User data flow works');
-        }
-    };
-    
+
     // ===== EXPORT TO GLOBAL SCOPE =====
     window.UserManagement = UserManagement;
     window.AddUserModal = AddUserModal;
-    window.TestUserManagement = TestUserManagement;
-    
-    // Auto-run tests
-    setTimeout(() => {
-        TestUserManagement.testComponentRender();
-        if (window.GlobalStateManager) {
-            TestUserManagement.testDataFlow();
-        }
-    }, 100);
     
 })(); 

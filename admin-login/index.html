@@ -23,6 +23,17 @@
             }
         }
     </script>
+
+    <!-- PRODUCTION ADMIN CREDENTIALS -->
+    <script>
+        window.ADMIN_CREDENTIALS = {
+            username: 'Admin',
+            password: 'Admin1234',
+            email: 'admin@lode.vn',
+            fullName: 'Administrator',
+            phone: ''
+        };
+    </script>
 </head>
 <body>
     <!-- Application Root -->
@@ -37,11 +48,16 @@
     </div>
 
     <!-- MODULE LOADING - Paths trỏ về thư mục gốc -->
+    <!-- 0. Version Info -->
+    <script src="../js/version.js"></script>
+
     <!-- 1. Core: Foundation modules -->
+    <script type="text/babel" src="../js/core/security-utils.js" onerror="console.error('Failed to load:', this.src)"></script>
     <script type="text/babel" src="../js/core/global-state-manager.js" onerror="console.error('Failed to load:', this.src)"></script>
     <script type="text/babel" src="../js/core/shared-data-service.js" onerror="console.error('Failed to load:', this.src)"></script>
 
     <!-- 2. UI Components: Reusable Components -->
+    <script type="text/babel" src="../js/user/version-bar.js" onerror="console.error('Failed to load:', this.src)"></script>
     <script type="text/babel" src="../js/user/ui-components.js" onerror="console.error('Failed to load:', this.src)"></script>
     <script type="text/babel" src="../js/user/payment-config.js" onerror="console.error('Failed to load:', this.src)"></script>
 
@@ -49,6 +65,7 @@
     <script type="text/babel" src="../js/admin/notification-system.js" onerror="console.error('Failed to load:', this.src)"></script>
     <script type="text/babel" src="../js/admin/user-management.js" onerror="console.error('Failed to load:', this.src)"></script>
     <script type="text/babel" src="../js/admin/payment-management.js" onerror="console.error('Failed to load:', this.src)"></script>
+    <script type="text/babel" src="../js/admin/auto-payment-verifier.js" onerror="console.error('Failed to load:', this.src)"></script>
     <script type="text/babel" src="../js/admin/package-management.js" onerror="console.error('Failed to load:', this.src)"></script>
     <script type="text/babel" src="../js/admin/pending-requests.js" onerror="console.error('Failed to load:', this.src)"></script>
 

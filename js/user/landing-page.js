@@ -1,9 +1,35 @@
 (function() {
     'use strict';
-    
+
     const { useState, useCallback, useEffect, memo } = React;
-    
-    console.log('🏠 Landing Page v2.2.0 - Fixed Data Sync');
+
+    console.log(' Landing Page v2.3.0 - MySQL Sync');
+
+    // ===== API CONFIGURATION =====
+    const API_BASE_URL = window.API_BASE_URL || '/api';
+
+    // ===== MYSQL SYNC HELPER =====
+    const syncPendingToMySQL = async (type, data) => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/sync.php?action=${type}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                console.log(` [LandingPage] Pending ${type} synced to MySQL`);
+                return true;
+            } else {
+                console.error(` [LandingPage] MySQL sync failed:`, result.error);
+                return false;
+            }
+        } catch (error) {
+            console.error(' [LandingPage] MySQL sync error:', error);
+            return false;
+        }
+    };
 
     // Landing Page Component
     const LandingPage = memo(({ onNavigate }) => {
@@ -33,7 +59,7 @@
                         const parsedPackages = JSON.parse(adminPackages);
                         const activePackages = parsedPackages.filter(pkg => pkg.active);
                         setPackages(activePackages);
-                        console.log('📦 Loaded', activePackages.length, 'packages from admin');
+                        console.log(' Loaded', activePackages.length, 'packages from admin');
                     } catch (error) {
                         console.error('Error parsing packages:', error);
                     }
@@ -46,7 +72,7 @@
                         const parsedConfig = JSON.parse(adminPaymentConfig);
                         if (parsedConfig.length > 0) {
                             setPaymentConfig(parsedConfig[0]);
-                            console.log('💳 Loaded payment config');
+                            console.log(' Loaded payment config');
                         }
                     } catch (error) {
                         console.error('Error parsing payment config:', error);
@@ -72,13 +98,13 @@
             // Listen for admin data changes
             const handleStorageChange = (e) => {
                 if (e.key === 'adminPackages' || e.key === 'admin_paymentConfig' || e.key === 'admin_packages') {
-                    console.log('📦 [LandingPage] Storage change detected:', e.key);
+                    console.log(' [LandingPage] Storage change detected:', e.key);
                     loadAdminData();
                 }
             };
 
             const handleAdminDataChange = (e) => {
-                console.log('📡 [LandingPage] Admin data change event:', e.detail);
+                console.log(' [LandingPage] Admin data change event:', e.detail);
                 if (e.detail && (e.detail.type === 'packages' || e.detail.type === 'paymentConfig')) {
                     loadAdminData();
                 }
@@ -162,15 +188,25 @@
                 paymentId: paymentRecord.id
             };
 
-            // Save to admin system
+            // Save to admin system (localStorage as cache)
             const pendingUsers = JSON.parse(localStorage.getItem('adminPendingUsers') || '[]');
             const pendingPayments = JSON.parse(localStorage.getItem('adminPendingPayments') || '[]');
-            
+
             pendingUsers.unshift(userRequest);
             pendingPayments.unshift(paymentRecord);
-            
+
             localStorage.setItem('adminPendingUsers', JSON.stringify(pendingUsers));
             localStorage.setItem('adminPendingPayments', JSON.stringify(pendingPayments));
+
+            //  SYNC TO MYSQL - User registration with pending status
+            syncPendingToMySQL('user', {
+                ...userRequest,
+                status: 'pending',
+                subscriptionStatus: 'pending'
+            });
+
+            //  SYNC TO MYSQL - Payment record
+            syncPendingToMySQL('payment', paymentRecord);
 
             // Move to confirmation step
             setCurrentStep(3);
@@ -232,7 +268,7 @@
                 methods.push({
                     id: 'bank_transfer',
                     name: 'Chuyển khoản ngân hàng',
-                    icon: '🏦',
+                    icon: '',
                     type: 'bank',
                     config: paymentConfig.bankInfo
                 });
@@ -246,7 +282,7 @@
                         methods.push({
                             id: `qr_${packageType}`,
                             name: `QR Code (${packageType})`,
-                            icon: '📱',
+                            icon: '',
                             type: 'qr',
                             config: qrConfig
                         });
@@ -263,7 +299,7 @@
                 React.createElement('div', { className: 'max-w-7xl mx-auto px-4 py-4' },
                     React.createElement('div', { className: 'flex items-center justify-between' },
                         React.createElement('div', { className: 'flex items-center gap-2' },
-                            React.createElement('div', { className: 'text-2xl' }, '🎯'),
+                            React.createElement('div', { className: 'text-2xl' }, ''),
                             React.createElement('h1', { className: 'text-xl font-bold text-[#121212]' }, 'Hệ Thống Đối Soát Lô Đề')
                         ),
                         React.createElement('button', {
@@ -288,7 +324,7 @@
                                 className: 'px-4 py-2 bg-[#E36323] text-white rounded-lg hover:bg-[#DF5A18] font-medium inline-flex items-center gap-2',
                                 onClick: openTelegram
                             }, 
-                                React.createElement('span', {}, '📱'),
+                                React.createElement('span', {}, ''),
                                 `@${paymentConfig.telegramId || paymentConfig.bankInfo?.telegramId || 'admin'}`
                             )
                         ),
@@ -336,7 +372,7 @@
                                                 key: idx,
                                                 className: 'flex items-center gap-2 text-sm text-[#121212]'
                                             },
-                                                React.createElement('span', { className: 'text-[#10B981]' }, '✓'),
+                                                React.createElement('span', { className: 'text-[#10B981]' }, ''),
                                                 feature
                                             )
                                         )
@@ -355,7 +391,7 @@
                             )
                         ) :
                         React.createElement('div', { className: 'text-center py-16' },
-                            React.createElement('div', { className: 'text-6xl mb-4' }, '📦'),
+                            React.createElement('div', { className: 'text-6xl mb-4' }, ''),
                             React.createElement('h3', { className: 'text-xl font-semibold text-[#121212] mb-2' }, 'Chưa có gói dịch vụ'),
                             React.createElement('p', { className: 'text-[#7B7B7B] mb-4' }, 'Admin chưa tạo gói dịch vụ nào.'),
                             paymentConfig && React.createElement('p', { className: 'text-[#E36323]' }, 'Vui lòng liên hệ Admin qua Telegram để được tư vấn.')
@@ -595,7 +631,7 @@
 
                         // Step 3: Confirmation
                         currentStep === 3 && React.createElement('div', { className: 'text-center py-8' },
-                            React.createElement('div', { className: 'text-6xl mb-4' }, '✅'),
+                            React.createElement('div', { className: 'text-6xl mb-4' }, ''),
                             React.createElement('h3', { className: 'text-xl font-bold text-[#10B981] mb-4' }, 'Đăng ký thành công!'),
                             React.createElement('div', { className: 'bg-[#ECFDF5] p-4 rounded-md mb-6' },
                                 React.createElement('p', { className: 'text-sm text-[#059669] mb-2' }, 
@@ -629,6 +665,6 @@
 
     // Export to window
     window.LandingPage = LandingPage;
-    console.log('✅ Landing Page v2.2.0 loaded successfully');
+    console.log(' Landing Page v2.2.0 loaded successfully');
 
 })(); 

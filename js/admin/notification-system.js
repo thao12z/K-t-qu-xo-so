@@ -1,4 +1,4 @@
-// 🔔 NOTIFICATION SYSTEM MODULE
+//  NOTIFICATION SYSTEM MODULE
 // Version: 1.0.0 | Created: 2024 | Follows ADMIN SYSTEM DEVELOPMENT GUIDELINES
 (function() {
     'use strict';
@@ -15,11 +15,11 @@
         // Subscribe to global notifications
         useEffect(() => {
             if (!window.GlobalStateManager) {
-                console.error('❌ [NotificationSystem] GlobalStateManager not available');
+                console.error(' [NotificationSystem] GlobalStateManager not available');
                 return;
             }
             
-            console.log('🔄 [NotificationSystem] COMPONENT_MOUNT');
+            console.log(' [NotificationSystem] COMPONENT_MOUNT');
             
             // Load initial data
             const initialNotifications = window.GlobalStateManager.getData('notifications');
@@ -28,13 +28,13 @@
             
             // Subscribe to changes
             const unsubscribe = window.GlobalStateManager.subscribe('notifications', (newNotifications) => {
-                console.log('🔄 [NotificationSystem] NOTIFICATIONS_UPDATE', { count: newNotifications.length });
+                console.log(' [NotificationSystem] NOTIFICATIONS_UPDATE', { count: newNotifications.length });
                 setNotifications(newNotifications);
             }, 'NotificationSystem');
             
             return () => {
                 unsubscribe();
-                console.log('🔄 [NotificationSystem] COMPONENT_UNMOUNT');
+                console.log(' [NotificationSystem] COMPONENT_UNMOUNT');
             };
         }, []);
         
@@ -45,7 +45,7 @@
             );
             window.GlobalStateManager.updateData('notifications', updatedNotifications, 'NotificationSystem');
             
-            console.log('🔄 [NotificationSystem] NOTIFICATION_MARKED_READ', { notificationId });
+            console.log(' [NotificationSystem] NOTIFICATION_MARKED_READ', { notificationId });
         }, [notifications]);
         
         // Mark all as read
@@ -54,12 +54,12 @@
             window.GlobalStateManager.updateData('notifications', updatedNotifications, 'NotificationSystem');
             
             window.GlobalStateManager.addNotification(
-                '✅ All notifications marked as read',
+                ' All notifications marked as read',
                 'success',
                 'NotificationSystem'
             );
             
-            console.log('🔄 [NotificationSystem] ALL_NOTIFICATIONS_MARKED_READ');
+            console.log(' [NotificationSystem] ALL_NOTIFICATIONS_MARKED_READ');
         }, [notifications]);
         
         // Clear old notifications (older than 7 days)
@@ -74,12 +74,12 @@
             window.GlobalStateManager.updateData('notifications', filteredNotifications, 'NotificationSystem');
             
             window.GlobalStateManager.addNotification(
-                '🧹 Old notifications cleared',
+                ' Old notifications cleared',
                 'info',
                 'NotificationSystem'
             );
             
-            console.log('🔄 [NotificationSystem] OLD_NOTIFICATIONS_CLEARED', { 
+            console.log(' [NotificationSystem] OLD_NOTIFICATIONS_CLEARED', { 
                 removed: notifications.length - filteredNotifications.length 
             });
         }, [notifications]);
@@ -90,12 +90,12 @@
                 window.GlobalStateManager.updateData('notifications', [], 'NotificationSystem');
                 
                 window.GlobalStateManager.addNotification(
-                    '🧹 All notifications cleared',
+                    ' All notifications cleared',
                     'info',
                     'NotificationSystem'
                 );
                 
-                console.log('🔄 [NotificationSystem] ALL_NOTIFICATIONS_CLEARED');
+                console.log(' [NotificationSystem] ALL_NOTIFICATIONS_CLEARED');
             }
         }, []);
         
@@ -111,11 +111,11 @@
         // Get notification icon
         const getNotificationIcon = useCallback((type) => {
             switch (type) {
-                case 'success': return '✅';
-                case 'error': return '❌';
-                case 'warning': return '⚠️';
-                case 'info': return 'ℹ️';
-                default: return '📢';
+                case 'success': return '';
+                case 'error': return '';
+                case 'warning': return '';
+                case 'info': return '';
+                default: return '';
             }
         }, []);
         
@@ -142,7 +142,7 @@
             <div className="space-y-6">
                 {/* Header */}
                 <div className="flex justify-between items-center">
-                    <h1 className="text-2xl font-bold">🔔 Notification System</h1>
+                    <h1 className="text-2xl font-bold"> Notification System</h1>
                     <div className="flex space-x-3">
                         {unreadCount > 0 && (
                             <window.Button
@@ -150,7 +150,7 @@
                                 variant="secondary"
                                 size="small"
                             >
-                                ✅ Mark All Read
+                                 Mark All Read
                             </window.Button>
                         )}
                         <window.Button
@@ -158,14 +158,14 @@
                             variant="warning"
                             size="small"
                         >
-                            🧹 Clear Old
+                             Clear Old
                         </window.Button>
                         <window.Button
                             onClick={clearAllNotifications}
                             variant="danger"
                             size="small"
                         >
-                            🗑️ Clear All
+                             Clear All
                         </window.Button>
                     </div>
                 </div>
@@ -174,7 +174,7 @@
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <window.Card padding="small">
                         <div className="flex items-center">
-                            <span className="text-2xl">📊</span>
+                            <span className="text-2xl"></span>
                             <div className="ml-3">
                                 <p className="text-sm font-medium text-gray-600">Total</p>
                                 <p className="text-xl font-bold text-gray-900">{notifications.length}</p>
@@ -184,7 +184,7 @@
                     
                     <window.Card padding="small">
                         <div className="flex items-center">
-                            <span className="text-2xl">📬</span>
+                            <span className="text-2xl"></span>
                             <div className="ml-3">
                                 <p className="text-sm font-medium text-gray-600">Unread</p>
                                 <p className="text-xl font-bold text-blue-900">{unreadCount}</p>
@@ -194,7 +194,7 @@
                     
                     <window.Card padding="small">
                         <div className="flex items-center">
-                            <span className="text-2xl">✅</span>
+                            <span className="text-2xl"></span>
                             <div className="ml-3">
                                 <p className="text-sm font-medium text-gray-600">Success</p>
                                 <p className="text-xl font-bold text-green-900">
@@ -206,7 +206,7 @@
                     
                     <window.Card padding="small">
                         <div className="flex items-center">
-                            <span className="text-2xl">❌</span>
+                            <span className="text-2xl"></span>
                             <div className="ml-3">
                                 <p className="text-sm font-medium text-gray-600">Errors</p>
                                 <p className="text-xl font-bold text-red-900">
@@ -299,48 +299,8 @@
             </div>
         );
     });
-    
-    // ===== TESTING FUNCTIONS =====
-    const TestNotificationSystem = {
-        testComponentRender: () => {
-            console.assert(window.NotificationSystem, '❌ NotificationSystem not exported');
-            console.log('✅ [TEST] NotificationSystem component exists');
-        },
-        
-        testDataFlow: () => {
-            // Test notification operations
-            const testNotification = {
-                id: Date.now(),
-                message: 'Test notification',
-                type: 'info',
-                timestamp: new Date().toISOString(),
-                read: false,
-                source: 'Test'
-            };
-            
-            const currentNotifications = window.GlobalStateManager.getData('notifications');
-            const updatedNotifications = [testNotification, ...currentNotifications];
-            window.GlobalStateManager.updateData('notifications', updatedNotifications, 'Test');
-            
-            const retrieved = window.GlobalStateManager.getData('notifications');
-            console.assert(retrieved.length > currentNotifications.length, '❌ Notification data flow failed');
-            
-            // Cleanup
-            window.GlobalStateManager.updateData('notifications', currentNotifications, 'Test');
-            console.log('✅ [TEST] Notification data flow works');
-        }
-    };
-    
+
     // ===== EXPORT TO GLOBAL SCOPE =====
     window.NotificationSystem = NotificationSystem;
-    window.TestNotificationSystem = TestNotificationSystem;
-    
-    // Auto-run tests
-    setTimeout(() => {
-        TestNotificationSystem.testComponentRender();
-        if (window.GlobalStateManager) {
-            TestNotificationSystem.testDataFlow();
-        }
-    }, 130);
     
 })(); 

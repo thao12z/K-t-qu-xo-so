@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clear Demo Data - Admin Tool</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f3f4f6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            max-width: 600px;
+            width: 100%;
+        }
+        h1 {
+            color: #1f2937;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+        .info {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            border-radius: 4px;
+        }
+        .info p {
+            margin: 0;
+            color: #92400e;
+            font-size: 0.875rem;
+        }
+        .section {
+            margin-bottom: 1.5rem;
+        }
+        .section h3 {
+            color: #374151;
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+        }
+        .key-list {
+            background: #f9fafb;
+            padding: 1rem;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.875rem;
+        }
+        .key-list div {
+            padding: 0.25rem 0;
+        }
+        button {
+            width: 100%;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        .btn-danger {
+            background: #dc2626;
+            color: white;
+        }
+        .btn-danger:hover {
+            background: #b91c1c;
+        }
+        .btn-secondary {
+            background: #6b7280;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+        .result {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 4px;
+            display: none;
+        }
+        .result.success {
+            background: #d1fae5;
+            border: 1px solid #10b981;
+            color: #065f46;
+        }
+        .result.error {
+            background: #fee2e2;
+            border: 1px solid #dc2626;
+            color: #991b1b;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Clear Demo Data</h1>
+
+        <div class="info">
+            <p><strong>Lưu ý:</strong> Tool này sẽ xóa TẤT CẢ demo packages khỏi localStorage. Admin sẽ bắt đầu với danh sách packages trống.</p>
+        </div>
+
+        <div class="section">
+            <h3>Các localStorage keys sẽ bị xóa:</h3>
+            <div class="key-list">
+                <div>- adminPackages</div>
+                <div>- userPackages</div>
+                <div>- packages_last_sync</div>
+                <div>- Tất cả demo package data</div>
+            </div>
+        </div>
+
+        <button class="btn-danger" onclick="clearDemoPackages()">
+            Xóa Tất Cả Demo Packages
+        </button>
+
+        <button class="btn-secondary" onclick="showCurrentData()">
+            Xem Dữ Liệu Hiện Tại
+        </button>
+
+        <button class="btn-secondary" onclick="location.href='index.html'">
+            Quay Lại Admin
+        </button>
+
+        <div id="result" class="result"></div>
+    </div>
+
+    <script>
+        function clearDemoPackages() {
+            if (!confirm('Bạn có chắc muốn xóa TẤT CẢ demo packages?\n\nHành động này KHÔNG THỂ hoàn tác!')) {
+                return;
+            }
+
+            try {
+                // Clear all package-related localStorage keys
+                const keysToRemove = [
+                    'adminPackages',
+                    'userPackages',
+                    'packages_last_sync'
+                ];
+
+                keysToRemove.forEach(key => {
+                    localStorage.removeItem(key);
+                    console.log(`Removed: ${key}`);
+                });
+
+                // Also clear from GlobalStateManager if loaded
+                if (window.GlobalStateManager) {
+                    window.GlobalStateManager.updateData('packages', [], 'ClearDemo');
+                    console.log('Cleared GlobalStateManager packages');
+                }
+
+                showResult(true, `Đã xóa thành công ${keysToRemove.length} localStorage keys!\n\nAdmin giờ sẽ bắt đầu với packages trống.\n\nVui lòng reload trang Admin.`);
+
+            } catch (error) {
+                showResult(false, `Lỗi: ${error.message}`);
+            }
+        }
+
+        function showCurrentData() {
+            try {
+                const adminPackages = JSON.parse(localStorage.getItem('adminPackages') || '[]');
+                const userPackages = JSON.parse(localStorage.getItem('userPackages') || '{}');
+
+                const info = `
+Packages hiện tại:
+- Admin Packages: ${adminPackages.length} packages
+- User Packages: ${Object.keys(userPackages).length} packages
+
+Chi tiết Admin Packages:
+${adminPackages.map((p, i) => `${i + 1}. ${p.name} - ${p.price} (ID: ${p.id})`).join('\n') || 'Không có'}
+                `.trim();
+
+                alert(info);
+
+            } catch (error) {
+                alert(`Lỗi: ${error.message}`);
+            }
+        }
+
+        function showResult(success, message) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.className = 'result ' + (success ? 'success' : 'error');
+            resultDiv.textContent = message;
+            resultDiv.style.display = 'block';
+
+            if (success) {
+                setTimeout(() => {
+                    if (confirm('Packages đã được xóa!\n\nReload Admin page ngay?')) {
+                        window.location.href = 'index.html';
+                    }
+                }, 1500);
+            }
+        }
+
+        // Show current count on load
+        window.addEventListener('load', () => {
+            try {
+                const adminPackages = JSON.parse(localStorage.getItem('adminPackages') || '[]');
+                if (adminPackages.length > 0) {
+                    console.log(`Found ${adminPackages.length} demo packages in localStorage`);
+                }
+            } catch (e) {}
+        });
+    </script>
+</body>
+</html>

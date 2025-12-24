@@ -1,7 +1,7 @@
   (function() {
     'use strict';
     
-    console.log('🧮 FINAL VERSION: Starting with working foundation...');
+    console.log(' FINAL VERSION: Starting with working foundation...');
     
     // Helper function - DEFAULT TO TODAY for current data
     const getLatestAvailableDate = () => {
@@ -9,87 +9,393 @@
         return today.toISOString().split('T')[0];
     };
     
-    // DEFAULT_PARAMETERS - 16 THAM SỐ CHÍNH XÁC THEO RULES
+    // DEFAULT_PARAMETERS - 18 THAM SỐ CHÍNH XÁC THEO RULES
     window.DEFAULT_PARAMETERS = {
         // Cơ bản (2 fields)
         mien: 'bac',
         ngay: getLatestAvailableDate(),
-        
-        // Lô (3 fields) - Tính theo điểm
-        tien1DiemLo: 23000,          // VD: 23k cho 1 điểm
-        tienTra1DiemLo: 80000,       // VD: trả 80k cho 1 điểm thắng
-        tyLeLoThu: 100,              // VD: thu 100% khi thua
-        
-        // Đề (2 fields) - Hệ số nhân
-        heSoDeTra: 70,               // VD: 70 (1 ăn 70)
-        tyLeDeThu: 100,              // VD: thu 100% khi thua
-        
-        // Xiên 2 (2 fields) - Hệ số nhân
-        heSoXien2Tra: 10,            // VD: 10 (nhân 10 lần)
-        tyLeXien2Thu: 100,           // VD: thu 100% khi thua
-        
-        // Xiên 3 (2 fields) - Hệ số nhân
-        heSoXien3Tra: 40,            // VD: 40 (nhân 40 lần)
-        tyLeXien3Thu: 100,           // VD: thu 100% khi thua
-        
-        // Xiên 4 (2 fields) - Hệ số nhân
-        heSoXien4Tra: 100,           // VD: 100 (nhân 100 lần)
-        tyLeXien4Thu: 100,           // VD: thu 100% khi thua
-        
-        // Ba càng (2 fields) - Hệ số nhân
-        heSoBaCangTra: 400,          // VD: 400 (nhân 400 lần)
-        tyLeBaCangThu: 100,          // VD: thu 100% khi thua
-        
+
+        // Lô (3 tham số)
+        loGoc: 16000,            // Tiền thu đã chiết khấu (1 điểm)
+        loDanh: 23000,           // Tiền mặc định thu (1 điểm)
+        loTraThuong: 80000,      // Thắng trả 80k/điểm (cố định)
+
+        // Đề (3 tham số)
+        deGoc: 720,              // Tiền thu đã chiết khấu (1 điểm = 1k)
+        deDanh: 1000,            // Tiền mặc định thu (1 điểm = 1k)
+        deTraThuong: 70,         // Hệ số thắng (1 ăn 70)
+
+        // Lô xiên 2 (3 tham số)
+        xien2Goc: 600,           // Tiền thu đã chiết khấu (1k)
+        xien2Danh: 1000,         // Tiền mặc định (1k)
+        xien2TraThuong: 10,      // Hệ số thắng (1 ăn 10)
+
+        // Lô xiên 3 (3 tham số)
+        xien3Goc: 600,           // Tiền thu đã chiết khấu (1k)
+        xien3Danh: 1000,         // Tiền mặc định (1k)
+        xien3TraThuong: 40,      // Hệ số thắng (1 ăn 40)
+
+        // Lô xiên 4 (3 tham số)
+        xien4Goc: 600,           // Tiền thu đã chiết khấu (1k)
+        xien4Danh: 1000,         // Tiền mặc định (1k)
+        xien4TraThuong: 100,     // Hệ số thắng (1 ăn 100)
+
+        // Ba càng (3 tham số)
+        baCangGoc: 600,          // Tiền thu đã chiết khấu (1k)
+        baCangDanh: 1000,        // Tiền mặc định (1k)
+        baCangTraThuong: 400,    // Hệ số thắng (1 ăn 400)
+
         // Tùy chọn (2 fields)
         lamTronTien: false,              // Làm tròn hàng nghìn
         strictLoValidation: false        // Bắt buộc lô chia hết cho 1 điểm
     };
     
-    // Lottery functions - ENHANCED FLEXIBLE DATA RETRIEVAL
-    window.getLotteryData = (region = 'bac', selectedDate = null) => {
+    // ==========================================
+    // ADVANCED INPUT PREPROCESSOR
+    // Chuyển đổi input phức tạp thành dạng chuẩn
+    // ==========================================
+    window.advancedPreprocessInput = (rawInput) => {
+        console.log(' [PREPROCESS] Starting advanced input preprocessing...');
+        const results = [];
+
+        // Normalize input - xử lý unicode và whitespace
+        let input = rawInput
+            .replace(/[\u200B-\u200D\uFEFF]/g, '') // Remove zero-width chars
+            .replace(/\r\n/g, '\n')
+            .replace(/\r/g, '\n');
+
+        // Split by newlines first
+        const lines = input.split('\n');
+
+        for (let lineText of lines) {
+            lineText = lineText.trim();
+            if (!lineText) continue;
+
+            // Process each line with multiple handlers
+            // "Tin X:" prefix is handled inside processComplexLine
+            const processed = processComplexLine(lineText);
+            results.push(...processed);
+        }
+
+        console.log(` [PREPROCESS] Converted to ${results.length} simple bet lines`);
+        return results;
+    };
+
+    // Process a single complex line into multiple simple bets
+    function processComplexLine(line) {
+        const results = [];
+        const originalLine = line;
+
+        // Helper function: Generate all combinations of size k from array
+        function getCombinations(arr, k) {
+            const result = [];
+
+            function combine(start, combo) {
+                if (combo.length === k) {
+                    result.push([...combo]);
+                    return;
+                }
+
+                for (let i = start; i < arr.length; i++) {
+                    combo.push(arr[i]);
+                    combine(i + 1, combo);
+                    combo.pop();
+                }
+            }
+
+            combine(0, []);
+            return result;
+        }
+
+        // Normalize: remove extra spaces, lowercase
+        line = line.trim();
+
+        // === SPECIAL: Remove "Tin X:" prefix if present ===
+        // "Tin 1: De 00 x 1070n" → "De 00 x 1070n"
+        const tinPrefixMatch = line.match(/^tin\s*\d+\s*:\s*/i);
+        if (tinPrefixMatch) {
+            line = line.substring(tinPrefixMatch[0].length).trim();
+            console.log(`[PREPROCESS] Removed tin prefix: "${originalLine}" -> "${line}"`);
+            // If line is now empty (was just "Tin X:"), skip it
+            if (!line) {
+                console.log(`[PREPROCESS] Skipping empty tin marker: ${originalLine}`);
+                return results; // Return empty array to skip this line
+            }
+        }
+
+        // === HANDLER 1: Lô xiên quay / XQ format ===
+        // "xien quay 00,07,68,54 x 2000" -> TẤT CẢ tổ hợp xiên 2, 3, 4
+        // Generates ALL combinations: C(n,2) + C(n,3) + C(n,4)
+        const xienQuayMatch = line.match(/^(xien\s*quay|xiên\s*quây|xq)\s+([\d,\s]+)\s*x\s*([\d.]+)(n{1,2}|k|m)?$/i);
+        if (xienQuayMatch) {
+            const numbersStr = xienQuayMatch[2];
+            const moneyValue = parseFloat(xienQuayMatch[3]);
+            const unit = (xienQuayMatch[4] || '').toLowerCase();
+
+            const numbers = numbersStr.split(/[,\s]+/).filter(n => n && /^\d{1,2}$/.test(n));
+            const money = convertToMoney(moneyValue, unit);
+
+            if (numbers.length >= 2 && numbers.length <= 4) {
+                // Generate ALL combinations: xiên 2, xiên 3, xiên 4
+                let totalCombos = 0;
+                for (let k = 2; k <= numbers.length; k++) {
+                    const combinations = getCombinations(numbers, k);
+                    for (const combo of combinations) {
+                        results.push(`xien ${combo.join(' ')}-${money}`);
+                        totalCombos++;
+                    }
+                }
+                console.log(`[PREPROCESS] Lô xiên quay: ${originalLine} -> ${totalCombos} tổ hợp (${numbers.length} số × ${money}đ)`);
+            }
+            return results;
+        }
+
+        // === HANDLER 2: Đầu X Đít Y format ===
+        // "Đề đầu 5 đít 5 x1000nn" -> 2 NHÓM: đầu 5 (50-59) VÀ đít 5 (05-95)
+        const dauDitMatch = line.match(/^(de|đề|d)\s+đầu\s+(\d)\s+đít\s+(\d)\s*x\s*([\d.]+)(n{1,2}|k|m)?$/i);
+        if (dauDitMatch) {
+            const firstDigit = dauDitMatch[2];
+            const lastDigit = dauDitMatch[3];
+            const moneyValue = parseFloat(dauDitMatch[4]);
+            const unit = (dauDitMatch[5] || '').toLowerCase();
+            const money = convertToMoney(moneyValue, unit);
+
+            // Group 1: "đầu X" = X0, X1, X2, ..., X9 (10 numbers)
+            for (let i = 0; i <= 9; i++) {
+                const num = firstDigit + i.toString();
+                results.push(`de ${num}-${money}`);
+            }
+
+            // Group 2: "đít Y" = 0Y, 1Y, 2Y, ..., 9Y (10 numbers)
+            for (let i = 0; i <= 9; i++) {
+                const num = (i.toString() + lastDigit).padStart(2, '0');
+                results.push(`de ${num}-${money}`);
+            }
+
+            console.log(`[PREPROCESS] Đầu ${firstDigit} Đít ${lastDigit}: ${originalLine} -> ${results.length} đề (10+10)`);
+            return results;
+        }
+
+        // === HANDLER 3: Số 3 chữ số format ===
+        // "de 525 535 565 575 595 x1000nn" -> tách thành 52+25, 53+35, etc.
+        const de3DigitMatch = line.match(/^(de|đề|d)\s+((?:\d{3}\s*)+)\s*x\s*([\d.]+)(n{1,2}|k|m)?$/i);
+        if (de3DigitMatch) {
+            const numbersStr = de3DigitMatch[2];
+            const moneyValue = parseFloat(de3DigitMatch[3]);
+            const unit = (de3DigitMatch[4] || '').toLowerCase();
+            const money = convertToMoney(moneyValue, unit);
+
+            const numbers3 = numbersStr.match(/\d{3}/g) || [];
+            for (const num3 of numbers3) {
+                // Tách số 3 chữ số thành 2 số: ABC -> AB và BC
+                const first2 = num3.substring(0, 2);
+                const last2 = num3.substring(1, 3);
+                results.push(`de ${first2}-${money}`);
+                results.push(`de ${last2}-${money}`);
+            }
+            console.log(`[PREPROCESS] Đề 3 số: ${originalLine} -> ${results.length} đề`);
+            return results;
+        }
+
+        // === HANDLER 4: Multi-bet với dấu chấm ===
+        // "De 00 x 1070n. 90 x 735n. 11 x 330n."
+        if (/\d+\s*x\s*[\d.]+n{0,2}\s*\./i.test(line)) {
+            // Detect bet type from start
+            const typeMatch = line.match(/^(de|đề|d|lo|lô|l)\s+/i);
+            const betType = typeMatch ? typeMatch[1].toLowerCase() : 'de';
+            const normalizedType = betType.match(/^(de|đề|d)$/i) ? 'de' : 'lo';
+
+            // Split by "." and process each segment
+            const segments = line.split(/\.\s*/);
+
+            for (const segment of segments) {
+                if (!segment.trim()) continue;
+
+                // Match: "00 x 1070n" or "17,56 x 94n" (multi-number)
+                // Also handle optional bet type prefix: "De 00 x 1070n"
+                const segMatch = segment.match(/(?:de|đề|d|lo|lô|l)?\s*([\d,\s]+)\s*x\s*([\d.]+)(n{1,2}|k|m)?/i);
+                if (segMatch) {
+                    const numbersStr = segMatch[1];
+                    const moneyValue = parseFloat(segMatch[2]);
+                    const unit = (segMatch[3] || '').toLowerCase();
+                    const money = convertToMoney(moneyValue, unit);
+
+                    // Split numbers by comma or space
+                    const numbers = numbersStr.split(/[,\s]+/).filter(n => n && /^\d{1,2}$/.test(n));
+
+                    for (const num of numbers) {
+                        if (normalizedType === 'de') {
+                            results.push(`de ${num.padStart(2, '0')}-${money}`);
+                        } else {
+                            results.push(`lo ${num.padStart(2, '0')}-${money}`);
+                        }
+                    }
+                }
+            }
+
+            if (results.length > 0) {
+                console.log(`[PREPROCESS] Multi-bet dấu chấm: ${originalLine} -> ${results.length} bets`);
+                return results;
+            }
+        }
+
+        // === HANDLER 5: Single multi-number format ===
+        // "17,56 x 94n" without type prefix (assume đề in context)
+        const multiNumMatch = line.match(/^([\d,]+)\s*x\s*([\d.]+)(n{1,2}|k|m)?$/i);
+        if (multiNumMatch) {
+            const numbersStr = multiNumMatch[1];
+            const moneyValue = parseFloat(multiNumMatch[2]);
+            const unit = (multiNumMatch[3] || '').toLowerCase();
+            const money = convertToMoney(moneyValue, unit);
+
+            const numbers = numbersStr.split(',').filter(n => n && /^\d{1,2}$/.test(n));
+            for (const num of numbers) {
+                results.push(`de ${num.padStart(2, '0')}-${money}`);
+            }
+
+            if (results.length > 0) {
+                console.log(`[PREPROCESS] Multi-number: ${originalLine} -> ${results.length} đề`);
+                return results;
+            }
+        }
+
+        // === HANDLER 6: Standard format with "x" separator ===
+        // "de 00 x 1070n" -> "de 00 1070k"
+        const standardXMatch = line.match(/^(de|đề|d|lo|lô|l)\s+([\d,\s]+)\s*x\s*([\d.]+)(n{1,2}|k|m)?$/i);
+        if (standardXMatch) {
+            const betType = standardXMatch[1].toLowerCase();
+            const normalizedType = betType.match(/^(de|đề|d)$/i) ? 'de' : 'lo';
+            const numbersStr = standardXMatch[2];
+            const moneyValue = parseFloat(standardXMatch[3]);
+            const unit = (standardXMatch[4] || '').toLowerCase();
+            const money = convertToMoney(moneyValue, unit);
+
+            const numbers = numbersStr.split(/[,\s]+/).filter(n => n && /^\d{1,2}$/.test(n));
+
+            for (const num of numbers) {
+                if (normalizedType === 'de') {
+                    results.push(`de ${num.padStart(2, '0')}-${money}`);
+                } else {
+                    results.push(`lo ${num.padStart(2, '0')}-${money}`);
+                }
+            }
+
+            if (results.length > 0) {
+                console.log(`[PREPROCESS] Standard X format: ${originalLine} -> ${results.length} bets`);
+                return results;
+            }
+        }
+
+        // === HANDLER 7: Lo format (point-based) ===
+        // "lo 32 23k" or "lo 32 23" -> format as "lo 32-23"
+        const loMatch = line.match(/^(lo|lô|l)\s+([\d\s]+)\s+([\d.]+)[km]?$/i);
+        if (loMatch) {
+            const numbers = loMatch[2].trim();
+            const points = loMatch[3];
+            results.push(`lo ${numbers}-${points}`);
+            console.log(`[PREPROCESS] Lo format: ${originalLine} -> lo ${numbers}-${points}`);
+            return results;
+        }
+
+        // === FALLBACK: Return original line if no pattern matched ===
+        // Let simpleBetParse handle it
+        console.log(`[PREPROCESS] Fallback: ${originalLine}`);
+        results.push(originalLine);
+        return results;
+    }
+
+    // Convert money value to thousands (k)
+    function convertToMoney(value, unit) {
+        if (!unit || unit === '') {
+            return value; // Assume already in k
+        }
+        switch (unit.toLowerCase()) {
+            case 'n':
+                return value; // n = nghìn = k
+            case 'nn':
+                return value; // nn cũng là nghìn (không phải 10k)
+            case 'k':
+                return value;
+            case 'm':
+                return value * 1000;
+            default:
+                return value;
+        }
+    }
+
+    // ==========================================
+    // END ADVANCED INPUT PREPROCESSOR
+    // ==========================================
+
+    // Lottery functions - ASYNC REALTIME DATA RETRIEVAL
+    window.getLotteryData = async (region = 'bac', selectedDate = null) => {
         if (window.LotteryDataService) {
             let data;
-            
+
             if (selectedDate) {
-                // Try specific date first
-                data = window.LotteryDataService.getDataForDate(selectedDate, region);
+                // ASYNC: Fetch data for specific date (now async in online mode)
+                console.log(`[getLotteryData]  Fetching data for ${selectedDate}...`);
+                data = await window.LotteryDataService.getDataForDate(selectedDate, region);
                 console.log(`[getLotteryData] Requested ${selectedDate}: ${data ? 'Found' : 'Not found'}`);
-                
-                // Enhanced: getDataForDate now handles past dates with simulation data
-                // No need for fallback to current data for past dates
             } else {
                 data = window.LotteryDataService.getCurrentData(region);
                 console.log(`[getLotteryData] Current data: ${data ? 'Found' : 'Not found'}`);
             }
-            
+
+            // Check for error response from date validation
+            if (data && data.error) {
+                console.error(`[getLotteryData]  Error: ${data.error}`);
+                return { error: data.error };
+            }
+
             if (data && data.results) {
                 console.log(`[getLotteryData] Returning lottery data for ${data.date || 'unknown'}`);
                 return data.results;
             }
-            
+
             // Legacy support: check for numbers property
             if (data && data.numbers) {
                 console.log(`[getLotteryData] Returning legacy lottery data`);
                 return data.numbers;
             }
-            
+
             // Support for historical/simulation/rss data
             if (data && (data.dataType === 'historical' || data.dataType === 'simulation' || data.dataType === 'rss')) {
                 console.log(`[getLotteryData] Returning ${data.dataType} data for ${data.date}`);
                 return data;
             }
-            
+
             // If data exists but no specific format, return it directly
             if (data) {
                 console.log(`[getLotteryData] Returning raw data for ${data.date || 'unknown'}`);
                 return data;
             }
-            
+
             // No valid data found
             console.log(`[getLotteryData] No valid data format found for ${selectedDate || 'current'}`);
         }
-        
+
         console.log(`[getLotteryData] No data available for ${selectedDate || 'current'}`);
+        return null;
+    };
+
+    // Synchronous version for backwards compatibility
+    window.getLotteryDataSync = (region = 'bac', selectedDate = null) => {
+        if (window.LotteryDataService) {
+            let data;
+
+            if (selectedDate) {
+                // Use sync version
+                data = window.LotteryDataService.getDataForDateSync(selectedDate, region);
+            } else {
+                data = window.LotteryDataService.getCurrentData(region);
+            }
+
+            if (data && data.results) return data.results;
+            if (data && data.numbers) return data.numbers;
+            if (data) return data;
+        }
+
         return null;
     };
     
@@ -151,11 +457,11 @@
         const baCangArray = [];
 
         // Extract from special prize (Giải Đặc Biệt) - ĐỀ CHỈ TỪ ĐẶC BIỆT
-        console.log(`🔍 [extractAllLotteryNumbers] Raw special prize:`, rawResults.giai_dac_biet);
+        console.log(` [extractAllLotteryNumbers] Raw special prize:`, rawResults.giai_dac_biet);
         
         if (rawResults.giai_dac_biet && rawResults.giai_dac_biet.length > 0) {
             const specialNumber = rawResults.giai_dac_biet[0];
-            console.log(`🔍 [extractAllLotteryNumbers] Special number found: "${specialNumber}" (type: ${typeof specialNumber})`);
+            console.log(` [extractAllLotteryNumbers] Special number found: "${specialNumber}" (type: ${typeof specialNumber})`);
             
             if (specialNumber && specialNumber.length >= 2) {
                 const lastTwo = specialNumber.slice(-2);
@@ -198,7 +504,7 @@
         // Remove duplicates and create final arrays
         const uniqueDeArray = [...new Set(deArray)];
         const uniqueLoArray = [...new Set(loArray)];
-        const uniqueXienArray = [...new Set(loArray)]; // Xiên uses same as lô
+        const uniqueXienArray = [...new Set(loArray)]; // Lô xiên uses same as lô
         const uniqueBaCangArray = [...new Set(baCangArray)];
 
         const result = {
@@ -211,7 +517,7 @@
         console.log('Final extracted arrays:', {
             'Đề (từ ĐB)': result.deArray.length + ' số',
             'Lô (tất cả giải)': result.loArray.length + ' số', 
-            'Xiên (như lô)': result.xienArray.length + ' số',
+            'Lô xiên (như lô)': result.xienArray.length + ' số',
             'Ba càng (ĐB→G6)': result.baCangArray.length + ' số'
         });
         
@@ -263,7 +569,7 @@
             return data;
         };
 
-        console.log('🚀 LotteryDataService enhanced with auto array extraction!');
+        console.log(' LotteryDataService enhanced with auto array extraction!');
     };
 
     // Auto-enhance when available
@@ -303,73 +609,156 @@
         try {
             // Clean and normalize input
             const originalLine = line;
-            line = line.trim().replace(/,/g, ' ').replace(/\s+/g, ' ');
-            
+            line = line.trim();
+
             // Check for empty line
             if (!line) {
                 return { success: false, error: 'Dòng trống' };
             }
-            
+
+            // === HANDLE DASH FORMAT ===
+            // Convert "de 00-1043" or "lo 32-23" to "de 00 1043k" or "lo 32 23"
+            // Also handle "xien 00 07-2000" format (from preprocessor)
+            const dashFormatMatch = line.match(/^(xien\s+quay|xiên\s+quây|xq|xien|xiên|de|đề|d|lo|lô|l)\s+([\d\s]+)-(\d+)$/i);
+            if (dashFormatMatch) {
+                const betType = dashFormatMatch[1].trim().toLowerCase();
+                const numbersStr = dashFormatMatch[2].trim();
+                const moneyValue = dashFormatMatch[3];
+
+                // Check if this is lô xiên format (from preprocessor or user input)
+                if (betType.match(/^(xien\s*quay|xiên\s*quây|xq|xien|xiên)$/i)) {
+                    // Lô xiên: convert to standard format with k suffix
+                    line = `xien ${numbersStr} ${moneyValue}k`;
+                } else if (betType.match(/^(l|lo|lô)$/i)) {
+                    // Lô: points-based, no k needed
+                    line = `lo ${numbersStr} ${moneyValue}`;
+                } else {
+                    // Đề: add k suffix
+                    line = `de ${numbersStr} ${moneyValue}k`;
+                }
+                console.log(`[PARSE] Converted dash format: "${originalLine}" -> "${line}"`);
+            }
+
+            // Normalize commas and spaces
+            line = line.replace(/,/g, ' ').replace(/\s+/g, ' ');
+
             // Check for basic structure
             const parts = line.split(' ').filter(p => p.trim());
             if (parts.length < 3) {
-                return { success: false, error: 'Thiếu thông tin - Cần: [loại] [số] [tiền]' };
+                return { success: false, error: 'Thiếu thông tin - Cần: [loại] [số] [tiền/điểm]' };
             }
-            
-            // Enhanced pattern for real formats: Lx, D, L + numbers + money (k, m, .2m etc)
-            const match = line.toLowerCase().match(/^(lx|l|d|lo|lô|de|đề|xien|xiên|ba\s*cang|ba\s*càng)\s+([\d\s]+?)\s+([\d.]+[km]?)$/);
+
+            // Check if this is Lô type (uses points instead of money)
+            const isLoType = /^(l|lo|lô)\s+/i.test(line);
+
+            // Enhanced pattern - Lô can use points (number without k/m or with k/m ignored)
+            // Other types require k/m suffix for money
+            let match;
+            if (isLoType) {
+                // Lô: last part is POINTS (can be "20" or "20k" - k is ignored)
+                match = line.toLowerCase().match(/^(l|lo|lô)\s+([\d\s]+)\s+([\d.]+)[km]?$/i);
+            } else {
+                // Other types: last part is MONEY (requires k/m)
+                match = line.toLowerCase().match(/^(lx\d?|x\d|d|đ|de|đề|dê|xien\d?|xiên\d?|bc|ba\s*cang|ba\s*càng)\s+([\d\s]+)\s+([\d.]+[km])$/i);
+            }
+
             if (!match) {
                 // More specific error messages
-                if (!/^(lx|l|d|lo|lô|de|đề|xien|xiên|ba\s*cang|ba\s*càng)/i.test(line)) {
-                    return { success: false, error: 'Loại cược không hợp lệ - Cần: L/D/Lx (Lô/Đề/Xiên)' };
+                if (!/^(lx\d?|x\d|l|d|đ|lo|lô|de|đề|dê|xien\d?|xiên\d?|bc|ba\s*cang|ba\s*càng)/i.test(line)) {
+                    return { success: false, error: 'Loại cược không hợp lệ - Cần: L/D/Lx/BC (Lô/Đề/Xiên/Ba càng)' };
                 }
-                if (!/[\d.]+[km]?$/i.test(line)) {
-                    return { success: false, error: 'Số tiền không hợp lệ - Cần: 100k, 1m, 1.5m' };
+                if (!isLoType && !/[\d.]+[km]$/i.test(line)) {
+                    return { success: false, error: 'Số tiền phải có đơn vị k hoặc m - Ví dụ: 100k, 1.5m' };
                 }
-                return { success: false, error: 'Cú pháp không đúng - Ví dụ: "D 34 100k"' };
+                return { success: false, error: isLoType ? 'Cú pháp không đúng - Ví dụ: "L 12 20" (20 điểm)' : 'Cú pháp không đúng - Ví dụ: "D 34 100k"' };
             }
-            
-            const [, type, numbersStr, moneyStr] = match;
+
+            const [, type, numbersStr, amountStr] = match;
             const numbers = numbersStr.split(/\s+/).filter(n => n && n.length > 0);
-            
+
+            // Get type key for validation
+            const typeKey = type.toLowerCase().replace(/\s+/g, '');
+            const isBaCang = ['bc', 'bacang', 'bacàng'].includes(typeKey);
+
             // Validate numbers
             for (const num of numbers) {
-                if (!/^\d{1,2}$/.test(num)) {
-                    return { success: false, error: `Số "${num}" không hợp lệ - Cần 1-2 chữ số (00-99)` };
-                }
-                const numValue = parseInt(num);
-                if (numValue < 0 || numValue > 99) {
-                    return { success: false, error: `Số "${num}" ngoài phạm vi - Cần từ 00 đến 99` };
+                if (isBaCang) {
+                    // Ba càng allows 3-digit numbers (000-999)
+                    if (!/^\d{1,3}$/.test(num)) {
+                        return { success: false, error: `Số "${num}" không hợp lệ - Ba càng cần 1-3 chữ số` };
+                    }
+                } else {
+                    // Other types need 1-2 digit numbers (00-99)
+                    if (!/^\d{1,2}$/.test(num)) {
+                        return { success: false, error: `Số "${num}" không hợp lệ - Cần 1-2 chữ số (00-99)` };
+                    }
+                    const numValue = parseInt(num);
+                    if (numValue < 0 || numValue > 99) {
+                        return { success: false, error: `Số "${num}" ngoài phạm vi - Cần từ 00 đến 99` };
+                    }
                 }
             }
-            
-            // Parse money: 100k, 4m, 1.2m, 660k, etc.
+
+            // Parse amount: money for most types, points for Lô
             let money = 0;
-            if (moneyStr.includes('m')) {
-                const value = parseFloat(moneyStr.replace('m', ''));
-                if (isNaN(value) || value <= 0) {
-                    return { success: false, error: `Số tiền "${moneyStr}" không hợp lệ` };
+            let points = 0;
+
+            if (isLoType) {
+                // Lô: amountStr is POINTS (e.g., "20" or "20k" → 20 points)
+                // Remove k/m suffix if present
+                const pointValue = parseFloat(amountStr.replace(/[km]/gi, ''));
+                if (isNaN(pointValue) || pointValue <= 0) {
+                    return { success: false, error: `Số điểm "${amountStr}" không hợp lệ` };
                 }
-                money = value * 1000000;
-            } else if (moneyStr.includes('k')) {
-                const value = parseInt(moneyStr.replace('k', ''));
-                if (isNaN(value) || value <= 0) {
-                    return { success: false, error: `Số tiền "${moneyStr}" không hợp lệ` };
-                }
-                money = value * 1000;
+                points = Math.floor(pointValue);
+                // Money will be calculated later using tien1DiemLo
+                // For now, store points as money (will be recalculated)
+                money = points; // Placeholder - actual calculation in processResult
             } else {
-                return { success: false, error: `Số tiền phải có đơn vị k hoặc m - Ví dụ: 100k, 1.5m` };
+                // Other types: amountStr is MONEY with k/m suffix
+                if (amountStr.includes('m')) {
+                    const value = parseFloat(amountStr.replace('m', ''));
+                    if (isNaN(value) || value <= 0) {
+                        return { success: false, error: `Số tiền "${amountStr}" không hợp lệ` };
+                    }
+                    money = value * 1000000;
+                } else if (amountStr.includes('k')) {
+                    const value = parseInt(amountStr.replace('k', ''));
+                    if (isNaN(value) || value <= 0) {
+                        return { success: false, error: `Số tiền "${amountStr}" không hợp lệ` };
+                    }
+                    money = value * 1000;
+                } else {
+                    return { success: false, error: `Số tiền phải có đơn vị k hoặc m - Ví dụ: 100k, 1.5m` };
+                }
             }
-            
+
             // Map type shortcuts to full names
-            const mappedType = {
-                'lx': 'xiên', 'l': 'lô', 'd': 'đề',
-                'lo': 'lô', 'lô': 'lô',
-                'de': 'đề', 'đề': 'đề', 
+            let mappedType = {
+                'l': 'lô', 'lo': 'lô', 'lô': 'lô',
+                'd': 'đề', 'đ': 'đề', 'de': 'đề', 'đề': 'đề', 'dê': 'đề',
+                'lx': 'xiên', 'lx2': 'xiên 2', 'lx3': 'xiên 3', 'lx4': 'xiên 4',
+                'x2': 'xiên 2', 'x3': 'xiên 3', 'x4': 'xiên 4',
                 'xien': 'xiên', 'xiên': 'xiên',
-                'ba cang': 'ba càng', 'ba càng': 'ba càng'
-            }[type.toLowerCase()] || type;
-            
+                'xien2': 'xiên 2', 'xien3': 'xiên 3', 'xien4': 'xiên 4',
+                'xiên2': 'xiên 2', 'xiên3': 'xiên 3', 'xiên4': 'xiên 4',
+                'bc': 'ba càng', 'bacang': 'ba càng', 'bacàng': 'ba càng'
+            }[typeKey] || type;
+
+            // Auto-detect lô xiên type based on number count
+            // Lô xiên MUST have 2, 3, or 4 numbers - auto-detect type
+            if (mappedType === 'xiên') {
+                if (numbers.length === 2) {
+                    mappedType = 'xiên 2';
+                } else if (numbers.length === 3) {
+                    mappedType = 'xiên 3';
+                } else if (numbers.length === 4) {
+                    mappedType = 'xiên 4';
+                } else {
+                    return { success: false, error: `Lô xiên cần 2, 3 hoặc 4 số - Bạn nhập ${numbers.length} số` };
+                }
+            }
+
             // Validate number count for each bet type
             if (mappedType === 'đề' && numbers.length !== 1) {
                 return { success: false, error: `Đề chỉ cần 1 số - Bạn nhập ${numbers.length} số` };
@@ -377,23 +766,27 @@
             if (mappedType === 'lô' && numbers.length < 1) {
                 return { success: false, error: 'Lô cần ít nhất 1 số' };
             }
-            if (mappedType === 'xiên') {
-                if (numbers.length < 2 || numbers.length > 4) {
-                    return { success: false, error: `Xiên cần 2-4 số - Bạn nhập ${numbers.length} số` };
+            // Validate lô xiên types - if user specified explicit type (lx2, x3, etc.), check exact count
+            if (mappedType === 'xiên 2' && numbers.length !== 2) {
+                return { success: false, error: `Lô xiên 2 cần đúng 2 số - Bạn nhập ${numbers.length} số` };
+            }
+            if (mappedType === 'xiên 3' && numbers.length !== 3) {
+                return { success: false, error: `Lô xiên 3 cần đúng 3 số - Bạn nhập ${numbers.length} số` };
+            }
+            if (mappedType === 'xiên 4' && numbers.length !== 4) {
+                return { success: false, error: `Lô xiên 4 cần đúng 4 số - Bạn nhập ${numbers.length} số` };
+            }
+            if (mappedType === 'ba càng') {
+                if (numbers.length !== 1) {
+                    return { success: false, error: `Ba càng chỉ cần 1 số - Bạn nhập ${numbers.length} số` };
+                }
+                // Ba càng needs 3-digit number
+                if (numbers[0].length !== 3) {
+                    return { success: false, error: `Ba càng cần số 3 chữ số (000-999) - Bạn nhập "${numbers[0]}"` };
                 }
             }
-            if (mappedType === 'ba càng' && numbers.length !== 1) {
-                return { success: false, error: `Ba càng chỉ cần 1 số 3 chữ số - Bạn nhập ${numbers.length} số` };
-            }
-            
-            // RELAXED validation - warn but don't block (for real-world data)
-            let warning = '';
-            if (mappedType === 'lô' && money % 23000 !== 0) {
-                warning = ` (Khuyến nghị: Lô nên là bội số của 23k)`;
-            } else if (mappedType === 'đề' && money % 100000 !== 0) {
-                warning = ` (Khuyến nghị: Đề nên là bội số của 100k)`;
-            }
-            
+
+            // Return bet object with points for Lô
             return {
                 success: true,
                 bet: {
@@ -401,7 +794,8 @@
                     betType: mappedType,
                     numbers: numbers,
                     money: money,
-                    warning: warning
+                    points: isLoType ? points : 0, // Lô uses points directly
+                    isPointBased: isLoType // Flag to indicate point-based calculation
                 }
             };
         } catch (error) {
@@ -579,31 +973,31 @@
         
         // This function will be called from component with parameters state
         const buildCorrectParameters = (parametersState) => {
-            const getUIParameter = createGetUIParameter(parametersState);
-            
+            // ✅ SIMPLIFIED: Calculation functions already use NEW format (18 params)
+            // No mapping needed - just pass through with additions
+
+            console.log('✅ [PARAMS] Using NEW format (18 parameters):', {
+                loGoc: parametersState.loGoc,
+                loDanh: parametersState.loDanh,
+                loTraThuong: parametersState.loTraThuong,
+                deGoc: parametersState.deGoc,
+                deDanh: parametersState.deDanh,
+                deTraThuong: parametersState.deTraThuong,
+                xien2TraThuong: parametersState.xien2TraThuong,
+                xien3TraThuong: parametersState.xien3TraThuong,
+                xien4TraThuong: parametersState.xien4TraThuong,
+                baCangTraThuong: parametersState.baCangTraThuong
+            });
+
             return {
                 ...parametersState,
                 multipliers: {
                     'lô': 80000,      // 80k return per 23k bet = 3.48x
-                    'đề': 8000000,    // 8M return per 100k bet = 80x  
+                    'đề': 8000000,    // 8M return per 100k bet = 80x
                     'xiên': 13000,    // 13k per k bet
                     'ba càng': 500000 // 500k per k bet
                 },
-                // Config for calculateWinAmount function - USE ACTUAL PARAMETERS
-                tien1DiemLo: getUIParameter('tien1DiemLo', 23000),
-                tienTra1DiemLo: getUIParameter('tienTra1DiemLo', 80000),
-                heSoDeTra: getUIParameter('heSoDeTra', 80),
-                heSoXien2Tra: getUIParameter('heSoXien2Tra', 10),        // From UI: 10
-                heSoXien3Tra: getUIParameter('heSoXien3Tra', 40),        // From UI: 40  
-                heSoXien4Tra: getUIParameter('heSoXien4Tra', 100),       // From UI: 100
-                heSoBaCangTra: getUIParameter('heSoBaCangTra', 500),
-                lamTronTien: true,
-                tyLeLoThu: getUIParameter('tyLeLoThu', 100) / 100,       // Convert % to decimal
-                tyLeDeThu: getUIParameter('tyLeDeThu', 100) / 100,
-                tyLeXien2Thu: getUIParameter('tyLeXien2Thu', 100) / 100, // From UI: 100%
-                tyLeXien3Thu: getUIParameter('tyLeXien3Thu', 100) / 100, // From UI: 100%
-                tyLeXien4Thu: getUIParameter('tyLeXien4Thu', 100) / 100, // From UI: 100%
-                tyLeBaCangThu: getUIParameter('tyLeBaCangThu', 100) / 100
+                lamTronTien: parametersState.lamTronTien !== undefined ? parametersState.lamTronTien : false
             };
         };
         
@@ -627,7 +1021,7 @@
         const numbers = bet.numbers;
         const type = bet.type.toLowerCase();
         
-        console.log(`🔍 [OPTIMIZED DEBUG] Checking:`, {
+        console.log(` [OPTIMIZED DEBUG] Checking:`, {
             type: type,
             numbers: numbers,
             deArray: deArray,
@@ -667,13 +1061,16 @@
                 
             case 'xien':
             case 'xiên':
-                // Xiên check trong xienArray - TẤT CẢ số phải có
+            case 'xiên 2':
+            case 'xiên 3':
+            case 'xiên 4':
+                // Lô xiên check trong xienArray - TẤT CẢ số phải có
                 matchedNumbers = numbers.filter(num => xienArray.includes(String(num)));
                 won = matchedNumbers.length === numbers.length; // Tất cả số phải trúng
                 const missingNumbers = numbers.filter(num => !xienArray.includes(String(num)));
                 note = won ?
-                    `Xiên ${numbers.length} [${numbers.join(',')}] - tất cả đều có` :
-                    `Xiên ${numbers.length} [${numbers.join(',')}] - thiếu: ${missingNumbers.join(',')}`;
+                    `Lô xiên ${numbers.length} [${numbers.join(',')}] - tất cả đều có` :
+                    `Lô xiên ${numbers.length} [${numbers.join(',')}] - thiếu: ${missingNumbers.join(',')}`;
                 break;
                 
             case 'ba càng':
@@ -765,23 +1162,38 @@
 
     // STANDARDIZED DATA TRANSFORMER - Unifies all data formats
     const convertToLotteryData = (rawResults) => {
-        console.log(`[CRITICAL] STANDARDIZED convertToLotteryData called with:`, rawResults);
-        console.log(`[CRITICAL] rawResults keys:`, Object.keys(rawResults || {}));
-        console.log(`[CRITICAL] rawResults.results:`, rawResults?.results);
-        console.log(`[CRITICAL] rawResults.giai_dac_biet:`, rawResults?.giai_dac_biet);
         if (!rawResults) {
             console.log(`[CRITICAL] convertToLotteryData: rawResults is null/undefined`);
             return null;
         }
-        
+
+        // FAST PATH: If pre-computed arrays exist (from RSS service), use them directly
+        if (rawResults.loArray && rawResults.deArray && rawResults.baCangArray) {
+            console.log(`[FAST] Using pre-computed arrays from RSS service`);
+            return {
+                specialLast2: rawResults.deArray[0] || null,
+                specialPrize: rawResults.results?.giai_dac_biet?.[0] || null,
+                loNumbers: rawResults.loArray,
+                loNumbersArray: rawResults.loArray, // Alias for compatibility
+                xienNumbers: rawResults.loArray, // Lô xiên uses same pool as Lô
+                xienNumbersArray: rawResults.loArray, // Alias for compatibility
+                baCangNumbers: rawResults.baCangArray,
+                baCangNumbersArray: rawResults.baCangArray, // Alias for compatibility
+                rawData: rawResults.results || rawResults,
+                allNumbers: rawResults.loArray,
+                date: rawResults.date,
+                dataType: rawResults.dataType || 'rss_precomputed'
+            };
+        }
+
         // DETECT FORMAT: RSS vs Hardcoded vs Other
-        let format = 'unknown';
         let standardizedData = {};
-        
-        if (rawResults.results && rawResults.results.dacbiet) {
-            format = 'rss_nested';
-            console.log(`[DEBUG] Detected RSS nested format`);
-            // RSS format: rawResults.results.dacbiet, .nhat, .nhi, etc.
+
+        if (rawResults.results && rawResults.results.giai_dac_biet) {
+            // RSS format with giai_dac_biet in results
+            standardizedData = rawResults.results;
+        } else if (rawResults.results && rawResults.results.dacbiet) {
+            // RSS format with dacbiet naming
             standardizedData = {
                 giai_dac_biet: rawResults.results.dacbiet || [],
                 giai_nhat: rawResults.results.nhat || [],
@@ -790,14 +1202,13 @@
                 giai_tu: rawResults.results.tu || [],
                 giai_nam: rawResults.results.nam || [],
                 giai_sau: rawResults.results.sau || [],
-                giai_bay: rawResults.results.bay || [],
-                date: rawResults.date || 'unknown',
-                dataType: 'rss'
+                giai_bay: rawResults.results.bay || []
             };
+        } else if (rawResults.giai_dac_biet) {
+            // Already standardized format
+            standardizedData = rawResults;
         } else if (rawResults.dacbiet) {
-            format = 'rss_direct';
-            console.log(`[DEBUG] Detected RSS direct format`);
-            // Direct RSS format: rawResults.dacbiet, .nhat, .nhi, etc.
+            // Direct RSS format
             standardizedData = {
                 giai_dac_biet: rawResults.dacbiet || [],
                 giai_nhat: rawResults.nhat || [],
@@ -806,193 +1217,147 @@
                 giai_tu: rawResults.tu || [],
                 giai_nam: rawResults.nam || [],
                 giai_sau: rawResults.sau || [],
-                giai_bay: rawResults.bay || [],
-                date: rawResults.actualDate || rawResults.date || 'unknown',
-                dataType: 'rss_direct'
+                giai_bay: rawResults.bay || []
             };
-        } else if (rawResults.giai_dac_biet) {
-            format = 'hardcoded';
-            console.log(`[DEBUG] Detected hardcoded format`);
-            // Hardcoded format: already correct
-            standardizedData = {
-                giai_dac_biet: rawResults.giai_dac_biet || [],
-                giai_nhat: rawResults.giai_nhat || [],
-                giai_nhi: rawResults.giai_nhi || [],
-                giai_ba: rawResults.giai_ba || [],
-                giai_tu: rawResults.giai_tu || [],
-                giai_nam: rawResults.giai_nam || [],
-                giai_sau: rawResults.giai_sau || [],
-                giai_bay: rawResults.giai_bay || [],
-                date: rawResults.date || 'unknown',
-                dataType: rawResults.dataType || 'hardcoded'
-            };
-            } else {
+        } else {
             console.log(`[ERROR] Unknown data format:`, Object.keys(rawResults));
             return null;
         }
-        
-        console.log(`[DEBUG] Format: ${format}, Standardized data:`, standardizedData);
-        
-        // AUTOMATED ARRAY EXTRACTION - Tự động chia array cho từng loại bet
-        const extractArrays = (data) => {
-            const allNumbers = [];
-            const deArray = [];
-            const loArray = [];
-            const xienArray = [];
-            const baCangArray = [];
-            
-            console.log(`[EXTRACTION] Starting extraction from:`, data);
-            
-            // Extract từ giải đặc biệt (5 digits)
-            if (data.giai_dac_biet && data.giai_dac_biet.length > 0) {
-                const specialFull = data.giai_dac_biet[0];
-                console.log(`[CRITICAL] ĐB: ${specialFull} -> Đề: ${specialFull.slice(-2)}, Lô: ${specialFull.slice(-2)}, Ba càng: ${specialFull.slice(-3)}`);
-                
-                // Đề: 2 số cuối
-                const specialLast2 = specialFull.slice(-2);
-                deArray.push(specialLast2);
-                
-                // Lô: 2 số cuối  
-                loArray.push(specialLast2);
-                
-                // Ba càng: 3 số cuối
-                const specialLast3 = specialFull.slice(-3);
-                baCangArray.push(specialLast3);
-                
-                // Xiên: thêm vào pool
-                xienArray.push(specialLast2);
-                allNumbers.push(specialFull);
-            }
-            
-            // Extract từ các giải khác
-            const prizeNames = ['G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'G7'];
-            const allPrizes = [
-                data.giai_nhat, data.giai_nhi, data.giai_ba, 
-                data.giai_tu, data.giai_nam, data.giai_sau, data.giai_bay
-            ];
-            
-            allPrizes.forEach((prizeArray, index) => {
-                const prizeName = prizeNames[index];
-                console.log(`[EXTRACTION] Processing ${prizeName}:`, prizeArray);
-                
-                if (prizeArray && Array.isArray(prizeArray)) {
-                    prizeArray.forEach(number => {
-                        if (number) {
-                            allNumbers.push(number);
-                            
-                            // Lô: 2 số cuối của tất cả giải
-                            const last2 = number.slice(-2);
-                            if (!loArray.includes(last2)) {
-                                loArray.push(last2);
-                                console.log(`[EXTRACTION] ${prizeName} ${number} -> Lô: ${last2}`);
-                            }
-                            
-                            // Xiên: 2 số cuối
-                            if (!xienArray.includes(last2)) {
-                                xienArray.push(last2);
-                                console.log(`[EXTRACTION] ${prizeName} ${number} -> Xiên: ${last2}`);
-                            }
-                            
-                            // Ba càng: chỉ từ giải ĐB đến giải 6 (không có giải 7 vì chỉ 2 digits)
-                            if (index < 6 && number.length >= 3) {
-                                const last3 = number.slice(-3);
-                                if (!baCangArray.includes(last3)) {
-                                    baCangArray.push(last3);
-                                    console.log(`[EXTRACTION] ${prizeName} ${number} -> Ba càng: ${last3}`);
-                                }
-                            }
+
+        // EXTRACT ARRAYS - Optimized version (keep duplicates for counting!)
+        const loArray = [];
+        const baCangArray = [];
+
+        // Get special prize first
+        const specialFull = standardizedData.giai_dac_biet?.[0] || '';
+        const specialLast2 = specialFull ? specialFull.slice(-2).padStart(2, '0') : null;
+        const specialLast3 = specialFull ? specialFull.slice(-3).padStart(3, '0') : null;
+
+        // Process all prizes
+        const allPrizes = [
+            standardizedData.giai_dac_biet,
+            standardizedData.giai_nhat,
+            standardizedData.giai_nhi,
+            standardizedData.giai_ba,
+            standardizedData.giai_tu,
+            standardizedData.giai_nam,
+            standardizedData.giai_sau,
+            standardizedData.giai_bay
+        ];
+
+        allPrizes.forEach((prizeArray, prizeIndex) => {
+            if (prizeArray && Array.isArray(prizeArray)) {
+                for (let i = 0; i < prizeArray.length; i++) {
+                    const number = prizeArray[i];
+                    if (number) {
+                        // Lô/Lô xiên: 2 số cuối (KEEP DUPLICATES!)
+                        const last2 = number.toString().slice(-2).padStart(2, '0');
+                        loArray.push(last2);
+
+                        // Ba càng: 3 số cuối từ giải ĐB đến giải 6 (không có giải 7)
+                        if (prizeIndex < 7 && number.length >= 3) {
+                            const last3 = number.toString().slice(-3).padStart(3, '0');
+                            baCangArray.push(last3);
                         }
-                    });
-                } else {
-                    console.log(`[EXTRACTION] ${prizeName} is empty or not array`);
+                    }
                 }
-            });
-            
-            console.log(`[EXTRACTION] FINAL ARRAYS:`, {
-                deArray: deArray,
-                loArray: loArray.slice(0, 20), // Show first 20 for Lô
-                xienArray: xienArray.slice(0, 20), // Show first 20 for Xiên  
-                baCangArray: baCangArray.slice(0, 20), // Show first 20 for Ba càng
-                totalNumbers: allNumbers.length
-            });
-            
-            return {
-                deArray,
-                loArray, 
-                xienArray,
-                baCangArray,
-                allNumbers
-            };
-        };
-        
-        const extractedArrays = extractArrays(standardizedData);
-        console.log(`[CRITICAL] Extracted arrays:`, extractedArrays);
-        
-        // BUILD RESULT for bet checking
-        const result = {
-            // Dữ liệu cho ĐỀ: 2 số cuối giải đặc biệt
-            specialLast2: standardizedData.giai_dac_biet?.[0]?.slice(-2) || null,
-            
-            // Dữ liệu cho LÔ: tất cả 2 số cuối từ tất cả giải  
-            loNumbers: extractedArrays.loArray,
-            
-            // Dữ liệu cho XIÊN: 2 số cuối từ tất cả giải
-            xienNumbers: extractedArrays.xienArray,
-            
-            // Dữ liệu cho BA CÀNG: 3 số cuối từ giải ĐB đến giải 6
-            baCangNumbers: extractedArrays.baCangArray,
-            
-            // Raw data for UI display
+            }
+        });
+
+        console.log(`[EXTRACT] Lô: ${loArray.length} numbers, Ba càng: ${baCangArray.length} numbers`);
+
+        // BUILD RESULT
+        return {
+            specialLast2: specialLast2,
+            specialPrize: specialFull,
+            loNumbers: loArray,
+            loNumbersArray: loArray,
+            xienNumbers: loArray, // Lô xiên uses same pool
+            xienNumbersArray: loArray,
+            baCangNumbers: baCangArray,
+            baCangNumbersArray: baCangArray,
             rawData: standardizedData,
-            
-            // For compatibility
-            allNumbers: extractedArrays.allNumbers
+            allNumbers: loArray,
+            date: rawResults.date || 'unknown',
+            dataType: rawResults.dataType || 'extracted'
         };
-        
-        console.log(`[CRITICAL] FINAL RESULT for bet checking:`, result);
-        return result;
     };
 
     // Calculate win amount using BetParser rules
+    // Calculate win amount - KHÁCH THẮNG (đại lý phải trả)
     const calculateWinAmount = (bet, config) => {
         const { type, money, numbers } = bet;
         let amount = 0;
-        
+
         if (type === 'lô') {
-            // Lô - Theo điểm: (bet_amount / tien1DiemLo) × tienTra1DiemLo
-            const diem = money / config.tien1DiemLo;
-            amount = diem * config.tienTra1DiemLo;
+            // Lô - Tính theo ĐIỂM
+            // VD: "L 12 20" → 20 điểm × loTraThuong(80k) = 1,600,000đ
+            const diem = bet.points || 0;
+            amount = diem * config.loTraThuong;
         } else if (type === 'đề') {
-            // Đề - Hệ số nhân: bet_amount × heSoTra
-            amount = money * config.heSoDeTra;
-        } else if (type === 'xiên') {
+            // Đề - Công thức: điểm × 1000 × deTraThuong
+            // Điểm = tiền / deDanh (user cấu hình)
+            // Thắng = điểm × 1000 × deTraThuong (70)
+            // VD: 100k / 1000 = 100 điểm × 1000 × 70 = 7,000,000đ
+            const diem = Math.floor(money / config.deDanh);
+            amount = diem * 1000 * config.deTraThuong;
+        } else if (type === 'xiên' || type === 'xiên 2' || type === 'xiên 3' || type === 'xiên 4') {
+            // Lô xiên 2, 3, 4 - Nhân với hệ số tương ứng
             const count = numbers.length;
-            if (count === 2) amount = money * config.heSoXien2Tra;
-            else if (count === 3) amount = money * config.heSoXien3Tra;
-            else if (count === 4) amount = money * config.heSoXien4Tra;
+            if (count === 2) amount = money * config.xien2TraThuong;
+            else if (count === 3) amount = money * config.xien3TraThuong;
+            else if (count === 4) amount = money * config.xien4TraThuong;
         } else if (type === 'ba càng') {
-            amount = money * config.heSoBaCangTra;
+            amount = money * config.baCangTraThuong;
         }
-        
+
         return config.lamTronTien ? Math.round(amount / 1000) * 1000 : amount;
     };
 
-    // Calculate lose amount using BetParser rules  
+    // Calculate lose amount - FIXED LOGIC
+    // When you LOSE, you ALWAYS lose 100% of your bet amount
+    // This is universal for ALL bet types: Lô, Đề, Lô xiên, Ba Càng
     const calculateLoseAmount = (bet, config) => {
-        const { type, money, numbers } = bet;
-        let rate = 0;
-        
-        if (type === 'lô') rate = config.tyLeLoThu;
-        else if (type === 'đề') rate = config.tyLeDeThu;
-        else if (type === 'xiên') {
-            const count = numbers.length;
-            if (count === 2) rate = config.tyLeXien2Thu;
-            else if (count === 3) rate = config.tyLeXien3Thu;
-            else if (count === 4) rate = config.tyLeXien4Thu;
-        } else if (type === 'ba càng') rate = config.tyLeBaCangThu;
-        
-        const amount = money * (rate / 100);
-        return config.lamTronTien ? Math.round(amount / 1000) * 1000 : amount;
+        // CRITICAL FIX: Khi thua → mất toàn bộ tiền cược
+        // Không cần tính toán phức tạp, chỉ trả về số tiền đã đặt
+        const loseAmount = bet.money;
+
+        // Apply rounding if enabled
+        return config.lamTronTien ? Math.round(loseAmount / 1000) * 1000 : loseAmount;
+    };
+
+    // Calculate discounted amount (tiền gốc = tiền thu đã chiết khấu)
+    // This is used for statistics to show agency's actual collected amount
+    const calculateDiscountedAmount = (bet, config) => {
+        const { type, money } = bet;
+        let discounted = 0;
+
+        if (type === 'lô') {
+            // Lô - Tính theo ĐIỂM
+            // VD: "L 12 20" → 20 điểm × loGoc(16k) = 320,000đ (đã CK)
+            const diem = bet.points || 0;
+            discounted = diem * config.loGoc;
+        } else if (type === 'đề') {
+            // Đề - Công thức: (tiền / deDanh) × deGoc
+            // VD: 100k / 1000 = 100 điểm × 720 = 72,000đ (đã CK)
+            const diem = Math.floor(money / config.deDanh);
+            discounted = diem * config.deGoc;
+        } else if (type === 'xiên' || type === 'xiên 2') {
+            // Lô xiên 2 - Công thức: (tiền / xien2Danh) × xien2Goc
+            // VD: 10k / 1000 × 600 = 6,000đ (đã CK)
+            discounted = (money / config.xien2Danh) * config.xien2Goc;
+        } else if (type === 'xiên 3') {
+            // Lô xiên 3
+            discounted = (money / config.xien3Danh) * config.xien3Goc;
+        } else if (type === 'xiên 4') {
+            // Lô xiên 4
+            discounted = (money / config.xien4Danh) * config.xien4Goc;
+        } else if (type === 'ba càng') {
+            // Ba càng
+            discounted = (money / config.baCangDanh) * config.baCangGoc;
+        }
+
+        return config.lamTronTien ? Math.round(discounted / 1000) * 1000 : discounted;
     };
 
     // Fallback simple check
@@ -1023,6 +1388,9 @@
                 
             case 'xien':
             case 'xiên':
+            case 'xiên 2':
+            case 'xiên 3':
+            case 'xiên 4':
                 matchedNumbers = numbers.filter(num => xienArray.includes(num));
                 won = matchedNumbers.length === numbers.length; // Tất cả số phải trúng
                 break;
@@ -1050,11 +1418,31 @@
     
     // Main component with core functionality
     const MainReconciliation = () => {
-        console.log('📄 FINAL: Rendering MainReconciliation...');
-        
+        console.log('═══════════════════════════════════════════════════════');
+        console.log('🎯 FINAL: Rendering MainReconciliation...');
+        console.log('🔍 [DEBUG] Checking dependencies...');
+        console.log('  - React:', !!React);
+        console.log('  - AuthService:', !!window.AuthService);
+        console.log('  - DEFAULT_PARAMETERS:', !!window.DEFAULT_PARAMETERS);
+
+        // Validate DEFAULT_PARAMETERS exists
+        if (!window.DEFAULT_PARAMETERS) {
+            console.error('❌ CRITICAL: DEFAULT_PARAMETERS not defined!');
+            return React.createElement('div', {className: 'p-8 text-center bg-red-50'},
+                React.createElement('h2', {className: 'text-xl font-bold text-red-600 mb-4'}, '❌ Lỗi Khởi Tạo'),
+                React.createElement('p', {className: 'text-gray-700'}, 'DEFAULT_PARAMETERS chưa được định nghĩa. Vui lòng reload trang.')
+            );
+        }
+
         // Package status check - CRITICAL SECURITY
         const currentUser = window.AuthService?.getCurrentUser();
         const isPackageActive = currentUser?.package_status === 'active';
+
+        console.log('👤 [USER] Current user:', currentUser ? {
+            username: currentUser.username,
+            package_status: currentUser.package_status,
+            package_name: currentUser.package_name
+        } : 'null');
         
         // ENFORCE PACKAGE ACCESS CONTROL
         const checkPackageAccess = () => {
@@ -1085,16 +1473,43 @@
         
         // State management - Load saved parameters
         const [parameters, setParameters] = React.useState(() => {
+            console.log('🔧 [PARAMS] Initializing parameters...');
             try {
                 const savedParams = localStorage.getItem('lottery_parameters');
                 if (savedParams) {
                     const parsed = JSON.parse(savedParams);
-                    console.log('💾 Loaded saved parameters from localStorage');
-                    return { ...window.DEFAULT_PARAMETERS, ...parsed };
+                    console.log('📦 [PARAMS] Found saved params in localStorage:', Object.keys(parsed).length, 'keys');
+
+                    // ⚠️ MIGRATION: Detect old parameter format and clear it
+                    const isOldFormat = parsed.hasOwnProperty('tien1DiemLo') ||
+                                       parsed.hasOwnProperty('chiKhauLo') ||
+                                       parsed.hasOwnProperty('tien1DiemDe') ||
+                                       parsed.hasOwnProperty('chiKhauDe');
+
+                    if (isOldFormat) {
+                        console.warn('⚠️ [MIGRATION] Detected OLD parameter format - clearing and using defaults');
+                        console.warn('Old parameters:', Object.keys(parsed));
+                        localStorage.removeItem('lottery_parameters');
+                        console.log('✅ [MIGRATION] Using DEFAULT_PARAMETERS');
+                        return window.DEFAULT_PARAMETERS;
+                    }
+
+                    console.log('✅ [PARAMS] Loaded saved parameters from localStorage');
+                    const merged = { ...window.DEFAULT_PARAMETERS, ...parsed };
+                    console.log('✅ [PARAMS] Final params:', {
+                        loGoc: merged.loGoc,
+                        loDanh: merged.loDanh,
+                        loTraThuong: merged.loTraThuong,
+                        deGoc: merged.deGoc,
+                        deDanh: merged.deDanh,
+                        deTraThuong: merged.deTraThuong
+                    });
+                    return merged;
                 }
             } catch (error) {
-                console.warn('Could not load saved parameters:', error);
+                console.error('❌ [PARAMS] Error loading saved parameters:', error);
             }
+            console.log('✅ [PARAMS] No saved params - using DEFAULT_PARAMETERS');
             return window.DEFAULT_PARAMETERS;
         });
         const [betText, setBetText] = React.useState('');
@@ -1140,26 +1555,90 @@
             };
         }, [checkPackageAccess]);
         
+        // Ref for debounce timer
+        const validationTimerRef = React.useRef(null);
+
+        // Auto-validate function (debounced)
+        const autoValidate = React.useCallback((text) => {
+            if (!text.trim()) {
+                setValidationResults(null);
+                setShowValidation(false);
+                return;
+            }
+
+            console.log(' [AUTO-VALIDATION] Validating bets...');
+
+            const lines = parseInputText(text);
+
+            const validation = lines.map((line, index) => {
+                const lineNumber = index + 1;
+
+                if (!line.trim()) {
+                    return {
+                        lineNumber,
+                        line,
+                        isValid: true,
+                        error: null,
+                        type: 'empty'
+                    };
+                }
+
+                // Try parsing
+                const result = simpleBetParse(line.trim());
+
+                if (result.success && result.bet) {
+                    return {
+                        lineNumber,
+                        line,
+                        isValid: true,
+                        error: null,
+                        type: result.bet.type,
+                        bet: result.bet
+                    };
+                } else {
+                    return {
+                        lineNumber,
+                        line,
+                        isValid: false,
+                        error: result.error || 'Không thể parse',
+                        type: 'error'
+                    };
+                }
+            });
+
+            setValidationResults(validation);
+            setShowValidation(true);
+
+            const validCount = validation.filter(v => v.isValid && v.line.trim()).length;
+            const errorCount = validation.filter(v => !v.isValid && v.line.trim()).length;
+            console.log(` [AUTO-VALIDATION] Valid: ${validCount}, Errors: ${errorCount}`);
+        }, [parseInputText]);
+
         // Handlers
         const handleBetTextChange = React.useCallback((e) => {
             const newValue = e.target.value;
-            
+
             // Only update if value actually changed
             if (newValue !== betText) {
                 setBetText(newValue);
-                
-                // If text is empty, clear everything
+
+                // Clear previous timer
+                if (validationTimerRef.current) {
+                    clearTimeout(validationTimerRef.current);
+                }
+
+                // If text is empty, clear immediately
                 if (!newValue.trim()) {
                     setValidationResults(null);
                     setShowValidation(false);
-                }
-                // If text changed significantly, clear validation (user needs to re-validate)
-                else if (betText && newValue.trim() !== betText.trim()) {
-                    console.log(`[DEBUG] Text changed, clearing validation. Old: "${betText.trim()}", New: "${newValue.trim()}"`);
-                    setValidationResults(null);
+                } else {
+                    // Auto-validate after 300ms debounce
+                    validationTimerRef.current = setTimeout(() => {
+                        autoValidate(newValue);
+                    }, 300);
                 }
             }
-        }, [betText]);
+        }, [betText, autoValidate]);
 
         // Validation function
         const handleValidateBets = React.useCallback(() => {
@@ -1179,71 +1658,94 @@
                 return;
             }
 
-            console.log('🔍 [VALIDATION] Validating bets...');
-            console.log('🔧 [DEBUG] BetParser available:', !!window.BetParser);
-            console.log('🔧 [DEBUG] parseSingleLine available:', !!window.BetParser?.parseSingleLine);
-            
+            const validationStartTime = performance.now();
+            console.log(' [VALIDATION] Validating bets...');
+
             // Use advanced parsing to handle multiple formats
             const lines = parseInputText(betText);
-            console.log('🔧 [DEBUG] Parsed lines:', lines);
-            
-            const validation = lines.map((line, index) => {
+            const lineCount = lines.length;
+            console.log(` [VALIDATION] Parsed ${lineCount} lines`);
+
+            // PERFORMANCE: Pre-allocate validation array
+            const validation = new Array(lineCount);
+            let errorCount = 0;
+            let validCount = 0;
+
+            // PERFORMANCE: Only log for small datasets or sample for large ones
+            const shouldLogDetail = lineCount <= 100;
+
+            for (let index = 0; index < lineCount; index++) {
                 const lineNumber = index + 1;
-                const trimmedLine = line.trim();
-                
+                const trimmedLine = lines[index].trim();
+
                 if (!trimmedLine) {
-                    return { lineNumber, line: trimmedLine, isValid: true, error: null };
+                    validation[index] = { lineNumber, line: trimmedLine, isValid: true, error: null };
+                    continue;
                 }
 
-                // Use BetParser if available  
-                // FORCE FALLBACK VALIDATION  
-                console.log(`🔧 [DEBUG] Validating line ${lineNumber}: "${trimmedLine}"`);
+                // Parse the bet
                 const fallbackResult = simpleBetParse(trimmedLine);
-                
+
                 if (fallbackResult.success) {
-                    console.log(`[DEBUG] Line ${lineNumber} VALID:`, fallbackResult.bet);
-                    return { 
-                        lineNumber, 
-                        line: trimmedLine, 
-                        isValid: true, 
+                    validation[index] = {
+                        lineNumber,
+                        line: trimmedLine,
+                        isValid: true,
                         error: null,
                         parsed: fallbackResult.bet,
                         warning: fallbackResult.bet.warning || null
                     };
+                    validCount++;
                 } else {
-                    console.log(`[DEBUG] Line ${lineNumber} INVALID:`, fallbackResult.error);
-                    return { 
-                        lineNumber, 
-                        line: trimmedLine, 
-                        isValid: false, 
+                    validation[index] = {
+                        lineNumber,
+                        line: trimmedLine,
+                        isValid: false,
                         error: fallbackResult.error,
                         parsed: null
                     };
+                    errorCount++;
+
+                    // Only log errors for debugging (limit to first 10)
+                    if (shouldLogDetail || errorCount <= 10) {
+                        console.log(`[DEBUG] Line ${lineNumber} INVALID:`, fallbackResult.error);
+                    }
                 }
-            });
+
+                // PERFORMANCE: Progress update for large datasets every 1000 lines
+                if (lineCount > 1000 && index % 1000 === 0 && index > 0) {
+                    console.log(` [VALIDATION] Progress: ${index}/${lineCount} (${((index/lineCount)*100).toFixed(1)}%)`);
+                }
+            }
 
             setValidationResults(validation);
             setShowValidation(true);
-            
-            // PERSIST validation to localStorage to survive re-renders
+
+            // PERSIST validation to localStorage (with size limit)
             try {
-                localStorage.setItem('lastValidationResults', JSON.stringify({
+                // Only persist if data is not too large (< 5MB)
+                const dataToStore = {
                     validation: validation,
                     betText: betText.trim(),
                     timestamp: Date.now()
-                }));
-                console.log(`[VALIDATION] Persisted to localStorage`);
+                };
+
+                const jsonSize = JSON.stringify(dataToStore).length;
+                if (jsonSize < 5 * 1024 * 1024) { // 5MB limit
+                    localStorage.setItem('lastValidationResults', JSON.stringify(dataToStore));
+                    console.log(`[VALIDATION] Persisted to localStorage (${(jsonSize/1024).toFixed(1)}KB)`);
+                } else {
+                    console.warn(`[VALIDATION] Data too large to persist (${(jsonSize/1024/1024).toFixed(2)}MB)`);
+                }
             } catch (e) {
                 console.warn(`[VALIDATION] Failed to persist:`, e);
             }
-            
-            const errorCount = validation.filter(item => !item.isValid).length;
-            const totalLines = validation.filter(item => item.line.trim()).length;
-            
-            console.log(`[VALIDATION] Completed: ${totalLines} lines, ${errorCount} errors`);
-            console.log(`[VALIDATION] Setting validationResults:`, validation);
-            console.log(`[VALIDATION] State should be set now`);
-            
+
+            const validationEndTime = performance.now();
+            const duration = (validationEndTime - validationStartTime).toFixed(2);
+
+            console.log(` [VALIDATION] Completed in ${duration}ms: ${validCount} valid, ${errorCount} errors, ${lineCount} total`);
+
             if (errorCount > 0) {
                 console.warn(`[VALIDATION] Found ${errorCount} syntax errors that need to be fixed!`);
             }
@@ -1339,18 +1841,18 @@
             }
             
             if (!activeValidationResults) {
-                alert('⚠️ Bạn phải kiểm tra cú pháp trước khi đối chiếu!\n\nHãy nhấn nút "Kiểm Tra Cú Pháp" để xác nhận dữ liệu đầu vào hợp lệ.');
+                alert(' Bạn phải kiểm tra cú pháp trước khi đối chiếu!\n\nHãy nhấn nút "Kiểm Tra Cú Pháp" để xác nhận dữ liệu đầu vào hợp lệ.');
                 return;
             }
             
             const invalidLines = activeValidationResults.filter(item => item.line.trim() && !item.isValid);
             console.log(`[DEBUG] Invalid lines count:`, invalidLines.length);
             if (invalidLines.length > 0) {
-                alert(`❌ Có ${invalidLines.length} dòng lỗi cú pháp!\n\nVui lòng sửa các lỗi sau trước khi đối chiếu:\n\n${invalidLines.slice(0, 5).map(item => `Dòng ${item.lineNumber}: ${item.error}`).join('\n')}${invalidLines.length > 5 ? `\n... và ${invalidLines.length - 5} lỗi khác` : ''}`);
+                alert(` Có ${invalidLines.length} dòng lỗi cú pháp!\n\nVui lòng sửa các lỗi sau trước khi đối chiếu:\n\n${invalidLines.slice(0, 5).map(item => `Dòng ${item.lineNumber}: ${item.error}`).join('\n')}${invalidLines.length > 5 ? `\n... và ${invalidLines.length - 5} lỗi khác` : ''}`);
                 return;
             }
             
-            console.log(`✅ [VALIDATION] Passed: ${activeValidationResults.filter(r => r.isValid && r.line.trim()).length} valid lines`);
+            console.log(` [VALIDATION] Passed: ${activeValidationResults.filter(r => r.isValid && r.line.trim()).length} valid lines`);
         
             
             // Check RSS timing first - ENHANCED WITH DATE LOGIC
@@ -1383,25 +1885,37 @@
                 let lotteryData = null;
                 let actualDataDate = null;
                 
-                console.log(`🔍 Tìm dữ liệu cho ngày: ${parameters.ngay}`);
+                console.log(` Tìm dữ liệu cho ngày: ${parameters.ngay}`);
                 
-                // Strategy 1: Use requested date with proper info extraction
+                // Strategy 1: Use requested date with proper info extraction - ASYNC ONLINE
                 if (parameters.ngay) {
-                    console.log(`[DEBUG] Requesting lottery data for date: "${parameters.ngay}" (type: ${typeof parameters.ngay})`);
-                    lotteryData = window.getLotteryData(parameters.mien, parameters.ngay);
+                    console.log(`[DEBUG]  Requesting lottery data ONLINE for date: "${parameters.ngay}"`);
+
+                    // ASYNC: Await the fetch
+                    lotteryData = await window.getLotteryData(parameters.mien, parameters.ngay);
+
                     console.log(`[DEBUG] getLotteryData result:`, {
                         hasData: !!lotteryData,
                         dataType: typeof lotteryData,
                         dataKeys: lotteryData ? Object.keys(lotteryData) : null
                     });
+
+                    // Check for error response (date validation, etc.)
+                    if (lotteryData && lotteryData.error) {
+                        console.error(` Lỗi dữ liệu: ${lotteryData.error}`);
+                        alert(` ${lotteryData.error}`);
+                        setIsLoading(false);
+                        return;
+                    }
+
                     if (lotteryData) {
                         // Get the actual date info from the data
                         const lotteryInfo = window.getLotteryInfo(parameters.mien, parameters.ngay);
                         actualDataDate = lotteryInfo?.date || parameters.ngay;
                         console.log(`[DEBUG] getLotteryInfo result:`, lotteryInfo);
-                        
-                        console.log(`Tìm thấy dữ liệu - Requested: ${parameters.ngay}, Actual: ${actualDataDate}`);
-                        console.log(`Data type: ${lotteryInfo?.dataType || 'unknown'}`);
+
+                        console.log(` Tìm thấy dữ liệu ONLINE - Requested: ${parameters.ngay}, Actual: ${actualDataDate}`);
+                        console.log(`Data type: ${lotteryInfo?.dataType || 'rss_online'}`);
                     }
                 }
                 
@@ -1410,50 +1924,19 @@
                 
                 // Final check with enhanced debugging
                 if (!lotteryData) {
-                    console.error(`CRITICAL: No lottery data for ${parameters.ngay}`);
+                    console.error(` CRITICAL: No lottery data for ${parameters.ngay}`);
                     console.error(`Debug info:`, {
                         requestedDate: parameters.ngay,
                         actualDataDate: actualDataDate,
                         lotteryData: lotteryData,
                         dataServiceAvailable: !!window.LotteryDataService,
-                        knownRSSDataTest: window.LotteryDataService?.getKnownRSSData?.(parameters.ngay, parameters.mien)
+                        serviceStatus: window.LotteryDataService?.getStatus?.()
                     });
-                    
-                    // Try one more time with forced fallback
-                    if (parameters.ngay === '2025-08-21') {
-                        console.log('Forcing fallback data for 2025-08-21...');
-                        lotteryData = {
-                            date: '2025-08-21',
-                            giai_dac_biet: ['94127'],
-                            giai_nhat: ['42750'],
-                            giai_nhi: ['74104', '87683'],
-                            giai_ba: ['81958', '18532', '91536', '91701', '68466', '45273'],
-                            giai_tu: ['7891', '3332', '7157', '6617'],
-                            giai_nam: ['2203', '8523', '2365', '6996', '1994', '2910'],
-                            giai_sau: ['883', '219', '396'],
-                            giai_bay: ['83', '85', '09', '38'],
-                            dataType: 'fallback'
-                        };
-                        actualDataDate = '2025-08-21';
-                        console.log('Fallback data loaded for 2025-08-21');
-                    } else {
-                        // Get available dates for better error message
-                        let availableDatesMsg = '';
-                        if (window.LotteryDataService && window.LotteryDataService.getAvailableDates) {
-                            const availableDates = window.LotteryDataService.getAvailableDates(parameters.mien);
-                            if (availableDates.length > 0) {
-                                const topDates = availableDates.slice(0, 5).map(d => {
-                                    const [y, m, day] = d.split('-');
-                                    return `${day}/${m}/${y}`;
-                                }).join(', ');
-                                availableDatesMsg = `\n\nCác ngày có sẵn: ${topDates}`;
-                            }
-                        }
 
-                        alert(`Không tìm thấy dữ liệu xổ số cho ngày ${parameters.ngay}.${availableDatesMsg}\n\nHãy thử:\n1. Chọn một trong các ngày có sẵn trên\n2. Đảm bảo đã qua 18:30 nếu chọn ngày hôm nay\n3. Kiểm tra kết nối internet và thử refresh trang`);
-                        setIsLoading(false);
-                        return;
-                    }
+                    // ONLINE MODE: Show network error message
+                    alert(` Không thể lấy dữ liệu xổ số online cho ngày ${parameters.ngay}.\n\nVui lòng kiểm tra:\n- Kết nối mạng\n- Ngày phải là ngày trong quá khứ hoặc hôm nay sau 18:30\n\nThử lại sau vài giây.`);
+                    setIsLoading(false);
+                    return;
                 }
                 
                 console.log(`Sử dụng dữ liệu ngày: ${actualDataDate}`);
@@ -1615,23 +2098,39 @@
                 lost: 0,
                 totalWinAmount: 0,
                 totalLoseAmount: 0,
-                totalBetAmount: 0,
+                totalBetAmount: 0,              // Tổng tiền chưa chiết khấu (original)
+                totalBetAmountDiscounted: 0,    // Tổng tiền đã chiết khấu (discounted)
+                totalDiscount: 0,                // Chênh lệch (commission)
                 netProfit: 0,
                 byType: {}
             };
 
             bets.forEach(item => {
                 if (item.bet && item.bet.money) {
+                    // Original bet amount (chưa chiết khấu)
                     stats.totalBetAmount += item.bet.money;
-                    
+
+                    // Discounted bet amount (đã chiết khấu) using new function
+                    const discountedAmount = calculateDiscountedAmount(item.bet, parameters);
+                    stats.totalBetAmountDiscounted += discountedAmount;
+
                     const betType = item.bet.type;
                     if (!stats.byType[betType]) {
-                        stats.byType[betType] = { count: 0, won: 0, lost: 0, winAmount: 0, loseAmount: 0, betAmount: 0 };
+                        stats.byType[betType] = {
+                            count: 0,
+                            won: 0,
+                            lost: 0,
+                            winAmount: 0,
+                            loseAmount: 0,
+                            betAmount: 0,
+                            betAmountDiscounted: 0
+                        };
                     }
-                    
+
                     stats.byType[betType].count++;
                     stats.byType[betType].betAmount += item.bet.money;
-                    
+                    stats.byType[betType].betAmountDiscounted += discountedAmount;
+
                     if (item.result.won) {
                         stats.won++;
                         stats.totalWinAmount += item.result.amount;
@@ -1647,13 +2146,17 @@
                 }
             });
 
+            // Calculate total discount (commission)
+            stats.totalDiscount = stats.totalBetAmount - stats.totalBetAmountDiscounted;
+
+            // Net profit calculation (agency perspective)
             stats.netProfit = stats.totalWinAmount - stats.totalLoseAmount;
             return stats;
-        }, []);
+        }, [parameters]);
 
         // Handle parameter changes - REAL-TIME UPDATE
         const handleParameterChange = React.useCallback((key, value) => {
-            console.log(`🔧 Parameter changed: ${key} = ${value}`);
+            console.log(` Parameter changed: ${key} = ${value}`);
             
             setParameters(prev => {
                 const newParams = {
@@ -1664,7 +2167,7 @@
                 // Auto-save to localStorage for persistence
                 try {
                     localStorage.setItem('lottery_parameters', JSON.stringify(newParams));
-                    console.log('💾 Parameters saved to localStorage');
+                    console.log(' Parameters saved to localStorage');
                 } catch (error) {
                     console.warn('Could not save parameters to localStorage:', error);
                 }
@@ -1679,7 +2182,7 @@
                     // Trigger re-processing with updated parameters
                     const currentLotteryData = lotteryResults;
                     if (currentLotteryData) {
-                        console.log('♻️ Re-processing existing results with updated parameters');
+                        console.log(' Re-processing existing results with updated parameters');
                         // The existing results will be recalculated on next render
                     }
                 }, 100);
@@ -1688,86 +2191,173 @@
 
         // ADVANCED STRING PARSING - Handle multiple formats
         const parseInputText = React.useCallback((inputText) => {
-            console.log('Parsing input text, length:', inputText.length);
-            
+            const startTime = performance.now();
+            console.log(' Parsing input text, length:', inputText.length, 'chars');
+
             if (!inputText.trim()) return [];
 
+            // === STEP 1: ADVANCED PREPROCESSOR ===
+            // Convert complex formats to simple bet lines
+            const preprocessedLines = window.advancedPreprocessInput(inputText);
+
+            // If preprocessor returns results, use them
+            if (preprocessedLines.length > 0) {
+                const endTime = performance.now();
+                console.log(` Advanced preprocessing complete: ${preprocessedLines.length} lines in ${(endTime - startTime).toFixed(2)}ms`);
+                return preprocessedLines;
+            }
+
+            // === STEP 2: FALLBACK - Original logic ===
             let lines = [];
-            
-            // Strategy 1: Check for comma-separated format in single line
-            if (inputText.includes(',') && inputText.split('\n').length === 1) {
-                console.log('📝 Detected comma-separated format');
-                lines = inputText.split(',').map(item => item.trim()).filter(item => item);
-            }
-            // Strategy 2: Check for WhatsApp/SMS mixed format (comma + newline)
-            else if (inputText.includes(',') && inputText.includes('\n')) {
-                console.log('📝 Detected mixed format (comma + newline)');
-                // First split by newlines, then by commas
+            const inputLength = inputText.length;
+
+            // PERFORMANCE: Use Set for O(1) keyword lookup
+            const betKeywordSet = new Set(['lo', 'de', 'đề', 'lô', 'xien', 'xiên', 'ba cang', 'ba càng', 'bc', 'lx', 'd', 'l']);
+            const betKeywordArray = ['lo', 'de', 'đề', 'lô', 'xien', 'xiên', 'ba\\s*cang', 'ba\\s*càng', 'bc', 'lx', 'd', 'l'];
+
+            // FAST PATH: Check format type with minimal operations
+            const hasNewline = inputText.indexOf('\n') !== -1;
+            const hasComma = inputText.indexOf(',') !== -1;
+            const lineCount = hasNewline ? inputText.split('\n').length : 1;
+
+            // Strategy 1: Newline-separated (most common for large data)
+            if (hasNewline) {
+                console.log(' Fast path: Newline-separated format');
+
+                // PERFORMANCE: Single split operation
                 const rawLines = inputText.split('\n');
-                lines = [];
-                rawLines.forEach(line => {
-                    if (line.includes(',')) {
-                        lines.push(...line.split(',').map(item => item.trim()).filter(item => item));
-                    } else {
-                        lines.push(line.trim());
-                    }
-                });
-                lines = lines.filter(line => line);
-            }
-            // Strategy 3: Traditional newline format or single line with multiple bets
-            else {
-                console.log('📝 Detected newline format');
-                lines = inputText.split('\n').map(line => line.trim()).filter(line => line);
-                
-                // If only one line but contains multiple bet patterns, split them
-                if (lines.length === 1) {
-                    const singleLine = lines[0];
-                    // Pattern: "de 54 100k de 34 166k" -> split on bet type keywords
-                    const betKeywords = ['lo', 'de', 'đề', 'lô', 'xien', 'xiên', 'ba cang', 'ba càng'];
-                    let hasMultipleBets = false;
-                    
-                    // Count bet keywords
-                    let keywordCount = 0;
-                    betKeywords.forEach(keyword => {
-                        const regex = new RegExp(`\\b${keyword}\\b`, 'gi');
-                        const matches = singleLine.match(regex);
-                        if (matches) keywordCount += matches.length;
-                    });
-                    
-                    if (keywordCount > 1) {
-                        console.log(`🔍 Single line contains ${keywordCount} bet keywords, attempting to split`);
-                        
-                        // Split on bet keywords while preserving the keyword
-                        let splitLines = [];
-                        let currentBet = '';
-                        const words = singleLine.split(/\s+/);
-                        
-                        for (let i = 0; i < words.length; i++) {
-                            const word = words[i].toLowerCase();
-                            
-                            // If this is a bet keyword and we have content, save previous bet
-                            if (betKeywords.includes(word) && currentBet.trim()) {
-                                splitLines.push(currentBet.trim());
-                                currentBet = words[i]; // Start new bet with keyword
-                            } else {
-                                currentBet += ' ' + words[i];
+
+                // PERFORMANCE: Pre-allocate array
+                lines = new Array(rawLines.length);
+                let validCount = 0;
+
+                for (let i = 0; i < rawLines.length; i++) {
+                    const line = rawLines[i].trim();
+                    if (line) {
+                        // Check if line has comma (sub-split needed)
+                        if (hasComma && line.indexOf(',') !== -1) {
+                            const subLines = line.split(',');
+                            for (let j = 0; j < subLines.length; j++) {
+                                const subLine = subLines[j].trim();
+                                if (subLine) {
+                                    lines[validCount++] = subLine;
+                                }
                             }
-                        }
-                        
-                        // Add the last bet
-                        if (currentBet.trim()) {
-                            splitLines.push(currentBet.trim());
-                        }
-                        
-                        if (splitLines.length > 1) {
-                            lines = splitLines;
-                            console.log(`✅ Successfully split into ${lines.length} bets:`, lines);
+                        } else {
+                            lines[validCount++] = line;
                         }
                     }
                 }
+
+                // Trim array to actual size
+                lines.length = validCount;
+
+                const endTime = performance.now();
+                console.log(` Parsed ${validCount} lines in ${(endTime - startTime).toFixed(2)}ms`);
+                return lines;
             }
 
-            console.log('Parsed into', lines.length, 'bet lines');
+            // Strategy 2: Single line with comma separation
+            if (hasComma && !hasNewline) {
+                console.log(' Comma-separated format');
+                const parts = inputText.split(',');
+                lines = new Array(parts.length);
+                let validCount = 0;
+
+                for (let i = 0; i < parts.length; i++) {
+                    const part = parts[i].trim();
+                    if (part) {
+                        lines[validCount++] = part;
+                    }
+                }
+
+                lines.length = validCount;
+
+                const endTime = performance.now();
+                console.log(` Parsed ${validCount} lines in ${(endTime - startTime).toFixed(2)}ms`);
+                return lines;
+            }
+
+            // Strategy 3: Single line with multiple bets (needs smart splitting)
+            // This is the complex case - optimize for it
+            console.log(' Single line format - smart splitting');
+            const singleLine = inputText.trim();
+
+            // PERFORMANCE: Use single compiled regex for all splitting
+            // Pattern: split at money unit (k/m) followed by bet keyword
+            const splitPattern = new RegExp(
+                `(\\d+[km])\\s+(?=(${betKeywordArray.join('|')}))`,
+                'gi'
+            );
+
+            // Check if pattern exists (single test on whole string)
+            if (splitPattern.test(singleLine)) {
+                // Reset regex lastIndex after test
+                splitPattern.lastIndex = 0;
+
+                // PERFORMANCE: Single replace + split operation
+                const parts = singleLine.replace(splitPattern, '$1\x00').split('\x00');
+                lines = new Array(parts.length);
+                let validCount = 0;
+
+                for (let i = 0; i < parts.length; i++) {
+                    const part = parts[i].trim();
+                    if (part) {
+                        lines[validCount++] = part;
+                    }
+                }
+
+                lines.length = validCount;
+
+                if (validCount > 1) {
+                    const endTime = performance.now();
+                    console.log(` Split by money unit into ${validCount} bets in ${(endTime - startTime).toFixed(2)}ms`);
+                    return lines;
+                }
+            }
+
+            // Fallback: Split by bet keywords using efficient single-pass
+            // PERFORMANCE: Use single pass through words instead of multiple regex
+            const words = singleLine.split(/\s+/);
+            const wordCount = words.length;
+
+            if (wordCount > 3) { // At least 2 bets minimum (keyword + number + money each)
+                // PERFORMANCE: Single pass through words
+                const splitLines = [];
+                const currentParts = [];
+
+                for (let i = 0; i < wordCount; i++) {
+                    const word = words[i];
+                    const wordLower = word.toLowerCase();
+
+                    // Check if this is a bet keyword
+                    if (betKeywordSet.has(wordLower) && currentParts.length > 0) {
+                        // Save previous bet
+                        splitLines.push(currentParts.join(' '));
+                        currentParts.length = 0; // Clear array efficiently
+                    }
+
+                    currentParts.push(word);
+                }
+
+                // Add last bet
+                if (currentParts.length > 0) {
+                    splitLines.push(currentParts.join(' '));
+                }
+
+                if (splitLines.length > 1) {
+                    lines = splitLines;
+                    const endTime = performance.now();
+                    console.log(` Split by keywords into ${lines.length} bets in ${(endTime - startTime).toFixed(2)}ms`);
+                    return lines;
+                }
+            }
+
+            // No splitting needed - single bet
+            lines = [singleLine];
+
+            const endTime = performance.now();
+            console.log(` Single bet parsed in ${(endTime - startTime).toFixed(2)}ms`);
             return lines;
         }, []);
 
@@ -1794,7 +2384,7 @@
                 };
                 setProcessingProgress(progress);
                 
-                console.log(`⚡ Processing batch ${batchIndex + 1}/${batches} (lines ${start + 1}-${end})`);
+                console.log(` Processing batch ${batchIndex + 1}/${batches} (lines ${start + 1}-${end})`);
                 
                 // Process batch
                 const batchResults = batchLines.map((line, index) => {
@@ -1862,7 +2452,7 @@
         if (!accessCheck.allowed) {
             return React.createElement('div', {className: 'min-h-screen bg-[#F8F7F7] flex items-center justify-center p-8'},
                 React.createElement('div', {className: 'bg-white rounded-lg shadow-lg p-8 max-w-2xl text-center'},
-                    React.createElement('div', {className: 'text-red-500 text-6xl mb-6'}, '🚫'),
+                    React.createElement('div', {className: 'text-red-500 text-6xl mb-6'}, ''),
                     React.createElement('h2', {className: 'text-2xl font-bold text-[#121212] mb-4'}, 'Truy Cập Bị Hạn Chế'),
                     React.createElement('p', {className: 'text-[#7B7B7B] mb-6'}, accessCheck.reason),
                     React.createElement('div', {className: 'space-y-4'},
@@ -1886,7 +2476,7 @@
                                     }
                                 },
                                 className: 'w-full px-6 py-3 bg-[#E36323] text-white rounded-lg hover:bg-[#DF5A18] font-semibold transition-colors'
-                            }, '💰 Xem Gói Dịch Vụ'),
+                            }, ' Xem Gói Dịch Vụ'),
                             React.createElement('button', {
                                 onClick: () => {
                                     if (window.AuthService) {
@@ -1902,13 +2492,21 @@
                                 window.location.href = 'index.html';
                             },
                             className: 'w-full px-6 py-3 bg-[#E36323] text-white rounded-lg hover:bg-[#DF5A18] font-semibold transition-colors'
-                        }, '🔑 Đăng Nhập')
+                        }, ' Đăng Nhập')
                     )
                 )
             );
         }
-        
-        return React.createElement('div', {className: 'max-w-7xl mx-auto p-4'}, 
+
+        console.log('✅ [RENDER] Access granted - rendering main reconciliation UI');
+        console.log('📊 [STATE] Current state:', {
+            betText: betText?.length || 0,
+            results: results?.length || 0,
+            parameters: Object.keys(parameters).length,
+            showConfig: showConfig
+        });
+
+        return React.createElement('div', {className: 'max-w-7xl mx-auto p-2 md:p-4 overflow-x-hidden'},
             // Header with controls
             React.createElement('div', {className: 'mb-6'},
                 React.createElement('div', {className: 'flex items-center justify-between'},
@@ -1920,7 +2518,7 @@
                         React.createElement('button', {
                             onClick: () => setShowConfig(!showConfig),
                             className: `px-4 py-2 rounded-lg text-sm font-medium ${showConfig ? 'bg-[#E36323] text-white' : 'bg-[#ECECEC] text-[#7B7B7B] hover:bg-[#ECECEC]'}`
-                        }, showConfig ? 'Cấu Hình' : '⚙️ Cấu Hình'),
+                        }, showConfig ? 'Cấu Hình' : ' Cấu Hình'),
 
                         React.createElement('button', {
                             onClick: () => {
@@ -1932,7 +2530,7 @@
                                 }
                             },
                             className: 'px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-sm'
-                        }, '📋 Xem Arrays')
+                        }, ' Xem Arrays')
                     )
                 )
             ),
@@ -1940,7 +2538,19 @@
             // ============ SECTION A: THAM SỐ HỆ THỐNG (16 FIELDS) ============
             // Configuration Panel
             showConfig && React.createElement('div', {className: 'bg-white rounded-lg shadow-md p-4 mb-6'},
-                React.createElement('h2', {className: 'text-lg font-semibold text-[#121212] mb-4'}, '⚙️ Cấu Hình Tham Số'),
+                React.createElement('div', {className: 'flex items-center justify-between mb-4'},
+                    React.createElement('h2', {className: 'text-lg font-semibold text-[#121212]'}, ' Cấu Hình Tham Số'),
+                    React.createElement('button', {
+                        onClick: () => {
+                            if (confirm('⚠️ Reset tất cả tham số về mặc định?\n\nThao tác này sẽ xóa tất cả cài đặt đã lưu.')) {
+                                localStorage.removeItem('lottery_parameters');
+                                setParameters(window.DEFAULT_PARAMETERS);
+                                alert('✅ Đã reset tất cả tham số về mặc định!');
+                            }
+                        },
+                        className: 'px-3 py-1.5 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 text-sm font-medium transition-colors'
+                    }, '🔄 Reset Tham Số')
+                ),
                 
                 // Date and Region Selection - SECTION A
                 React.createElement('div', {className: 'mb-6'},
@@ -1963,8 +2573,8 @@
                                 const timingCheck = checkRssTiming();
                                 const statusColor = timingCheck.isValid ? 'text-green-600' : 
                                                    timingCheck.canProceed ? 'text-orange-600' : 'text-red-600';
-                                const statusIcon = timingCheck.isValid ? '✅' : 
-                                                  timingCheck.canProceed ? '⚠️' : '❌';
+                                const statusIcon = timingCheck.isValid ? '' : 
+                                                  timingCheck.canProceed ? '' : '';
                                 
                                 return React.createElement('div', {className: `text-xs mt-2 p-2 rounded ${
                                     timingCheck.isValid ? 'bg-green-50' : 
@@ -1999,160 +2609,207 @@
                 ),
                 
                 // 16 Parameters Section - SECTION B
-                React.createElement('h3', {className: 'text-md font-medium text-[#7B7B7B] mb-3'}, '💰 16 Tham Số Tính Toán'),
+                React.createElement('h3', {className: 'text-md font-medium text-[#7B7B7B] mb-3'}, '⚙️ 18 Tham Số Tính Toán'),
                 React.createElement('div', {className: 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4'},
                     // Lô parameters
                     React.createElement('div', {className: 'space-y-3'},
                         React.createElement('h3', {className: 'font-semibold text-[#E36323]'}, 'Lô (3 tham số)'),
                         React.createElement('div', {},
-                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Tiền 1 điểm lô'),
+                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Lô gốc (thu đã CK)'),
                             React.createElement('input', {
                                 type: 'number',
-                                value: parameters.tien1DiemLo,
-                                onChange: (e) => handleParameterChange('tien1DiemLo', parseInt(e.target.value) || 0),
+                                value: parameters.loGoc,
+                                onChange: (e) => handleParameterChange('loGoc', parseInt(e.target.value) || 0),
                                 className: 'mt-1 block w-full border rounded-md px-3 py-2 text-sm'
                             })
                         ),
                         React.createElement('div', {},
-                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Tiền trả 1 điểm lô'),
+                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Lô đánh (mặc định/điểm)'),
                             React.createElement('input', {
                                 type: 'number',
-                                value: parameters.tienTra1DiemLo,
-                                onChange: (e) => handleParameterChange('tienTra1DiemLo', parseInt(e.target.value) || 0),
+                                value: parameters.loDanh,
+                                onChange: (e) => handleParameterChange('loDanh', parseInt(e.target.value) || 0),
                                 className: 'mt-1 block w-full border rounded-md px-3 py-2 text-sm'
                             })
                         ),
                         React.createElement('div', {},
-                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Tỷ lệ lô thu (%)'),
+                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Lô trả thưởng (cố định)'),
                             React.createElement('input', {
                                 type: 'number',
-                                value: parameters.tyLeLoThu,
-                                onChange: (e) => handleParameterChange('tyLeLoThu', parseInt(e.target.value) || 0),
-                                className: 'mt-1 block w-full border rounded-md px-3 py-2 text-sm'
+                                value: parameters.loTraThuong,
+                                disabled: true,
+                                className: 'mt-1 block w-full border rounded-md px-3 py-2 text-sm bg-gray-100'
                             })
                         )
                     ),
                     
                     // Đề parameters
                     React.createElement('div', {className: 'space-y-3'},
-                        React.createElement('h3', {className: 'font-semibold text-green-600'}, 'Đề (2 tham số)'),
+                        React.createElement('h3', {className: 'font-semibold text-green-600'}, 'Đề (3 tham số)'),
                         React.createElement('div', {},
-                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Hệ số đề trả'),
+                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Đề gốc (thu đã CK)'),
                             React.createElement('input', {
                                 type: 'number',
-                                value: parameters.heSoDeTra,
-                                onChange: (e) => handleParameterChange('heSoDeTra', parseInt(e.target.value) || 0),
+                                value: parameters.deGoc,
+                                onChange: (e) => handleParameterChange('deGoc', parseInt(e.target.value) || 0),
                                 className: 'mt-1 block w-full border rounded-md px-3 py-2 text-sm'
                             })
                         ),
                         React.createElement('div', {},
-                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Tỷ lệ đề thu (%)'),
+                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Đề đánh (mặc định/điểm)'),
                             React.createElement('input', {
                                 type: 'number',
-                                value: parameters.tyLeDeThu,
-                                onChange: (e) => handleParameterChange('tyLeDeThu', parseInt(e.target.value) || 0),
+                                value: parameters.deDanh,
+                                onChange: (e) => handleParameterChange('deDanh', parseInt(e.target.value) || 0),
+                                className: 'mt-1 block w-full border rounded-md px-3 py-2 text-sm'
+                            })
+                        ),
+                        React.createElement('div', {},
+                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Đề trả thưởng (1 ăn X)'),
+                            React.createElement('input', {
+                                type: 'number',
+                                value: parameters.deTraThuong,
+                                onChange: (e) => handleParameterChange('deTraThuong', parseInt(e.target.value) || 0),
                                 className: 'mt-1 block w-full border rounded-md px-3 py-2 text-sm'
                             })
                         )
                     ),
 
-                    // Xiên parameters  
+                    // Lô xiên 2 parameters
                     React.createElement('div', {className: 'space-y-3'},
-                        React.createElement('h3', {className: 'font-semibold text-purple-600'}, 'Xiên (6 tham số)'),
+                        React.createElement('h3', {className: 'font-semibold text-purple-600'}, 'Lô xiên 2 (3 tham số)'),
                         React.createElement('div', {},
-                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Hệ số xiên 2'),
+                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Xiên 2 gốc (thu đã CK)'),
                             React.createElement('input', {
                                 type: 'number',
-                                value: parameters.heSoXien2Tra,
-                                onChange: (e) => handleParameterChange('heSoXien2Tra', parseInt(e.target.value) || 0),
+                                value: parameters.xien2Goc,
+                                onChange: (e) => handleParameterChange('xien2Goc', parseInt(e.target.value) || 0),
                                 className: 'mt-1 block w-full border rounded-md px-3 py-2 text-sm'
                             })
                         ),
                         React.createElement('div', {},
-                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Tỷ lệ xiên 2 thu (%)'),
+                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Xiên 2 đánh (mặc định/1k)'),
                             React.createElement('input', {
                                 type: 'number',
-                                value: parameters.tyLeXien2Thu,
-                                onChange: (e) => handleParameterChange('tyLeXien2Thu', parseInt(e.target.value) || 0),
+                                value: parameters.xien2Danh,
+                                onChange: (e) => handleParameterChange('xien2Danh', parseInt(e.target.value) || 0),
                                 className: 'mt-1 block w-full border rounded-md px-3 py-2 text-sm'
                             })
                         ),
                         React.createElement('div', {},
-                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Hệ số xiên 3'),
+                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Xiên 2 trả thưởng (1 ăn X)'),
                             React.createElement('input', {
                                 type: 'number',
-                                value: parameters.heSoXien3Tra,
-                                onChange: (e) => handleParameterChange('heSoXien3Tra', parseInt(e.target.value) || 0),
-                                className: 'mt-1 block w-full border rounded-md px-3 py-2 text-sm'
-                            })
-                        ),
-                        React.createElement('div', {},
-                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Tỷ lệ xiên 3 thu (%)'),
-                            React.createElement('input', {
-                                type: 'number',
-                                value: parameters.tyLeXien3Thu,
-                                onChange: (e) => handleParameterChange('tyLeXien3Thu', parseInt(e.target.value) || 0),
-                                className: 'mt-1 block w-full border rounded-md px-3 py-2 text-sm'
-                            })
-                        ),
-                        React.createElement('div', {},
-                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Hệ số xiên 4'),
-                            React.createElement('input', {
-                                type: 'number',
-                                value: parameters.heSoXien4Tra,
-                                onChange: (e) => handleParameterChange('heSoXien4Tra', parseInt(e.target.value) || 0),
-                                className: 'mt-1 block w-full border rounded-md px-3 py-2 text-sm'
-                            })
-                        ),
-                        React.createElement('div', {},
-                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Tỷ lệ xiên 4 thu (%)'),
-                            React.createElement('input', {
-                                type: 'number',
-                                value: parameters.tyLeXien4Thu,
-                                onChange: (e) => handleParameterChange('tyLeXien4Thu', parseInt(e.target.value) || 0),
+                                value: parameters.xien2TraThuong,
+                                onChange: (e) => handleParameterChange('xien2TraThuong', parseInt(e.target.value) || 0),
                                 className: 'mt-1 block w-full border rounded-md px-3 py-2 text-sm'
                             })
                         )
                     ),
 
-                    // Ba càng & other parameters
+                    // Lô xiên 3 parameters
                     React.createElement('div', {className: 'space-y-3'},
-                        React.createElement('h3', {className: 'font-semibold text-red-600'}, 'Ba Càng & Khác (3 tham số)'),
+                        React.createElement('h3', {className: 'font-semibold text-purple-600'}, 'Lô xiên 3 (3 tham số)'),
                         React.createElement('div', {},
-                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Hệ số ba càng'),
+                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Xiên 3 gốc (thu đã CK)'),
                             React.createElement('input', {
                                 type: 'number',
-                                value: parameters.heSoBaCangTra,
-                                onChange: (e) => handleParameterChange('heSoBaCangTra', parseInt(e.target.value) || 0),
+                                value: parameters.xien3Goc,
+                                onChange: (e) => handleParameterChange('xien3Goc', parseInt(e.target.value) || 0),
                                 className: 'mt-1 block w-full border rounded-md px-3 py-2 text-sm'
                             })
                         ),
                         React.createElement('div', {},
-                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Tỷ lệ ba càng thu (%)'),
+                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Xiên 3 đánh (mặc định/1k)'),
                             React.createElement('input', {
                                 type: 'number',
-                                value: parameters.tyLeBaCangThu,
-                                onChange: (e) => handleParameterChange('tyLeBaCangThu', parseInt(e.target.value) || 0),
+                                value: parameters.xien3Danh,
+                                onChange: (e) => handleParameterChange('xien3Danh', parseInt(e.target.value) || 0),
                                 className: 'mt-1 block w-full border rounded-md px-3 py-2 text-sm'
                             })
                         ),
                         React.createElement('div', {},
-                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Làm tròn tiền'),
+                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Xiên 3 trả thưởng (1 ăn X)'),
                             React.createElement('input', {
-                                type: 'checkbox',
-                                checked: parameters.lamTronTien,
-                                onChange: (e) => handleParameterChange('lamTronTien', e.target.checked),
-                                className: 'mt-2'
+                                type: 'number',
+                                value: parameters.xien3TraThuong,
+                                onChange: (e) => handleParameterChange('xien3TraThuong', parseInt(e.target.value) || 0),
+                                className: 'mt-1 block w-full border rounded-md px-3 py-2 text-sm'
+                            })
+                        )
+                    ),
+
+                    // Lô xiên 4 parameters
+                    React.createElement('div', {className: 'space-y-3'},
+                        React.createElement('h3', {className: 'font-semibold text-purple-600'}, 'Lô xiên 4 (3 tham số)'),
+                        React.createElement('div', {},
+                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Xiên 4 gốc (thu đã CK)'),
+                            React.createElement('input', {
+                                type: 'number',
+                                value: parameters.xien4Goc,
+                                onChange: (e) => handleParameterChange('xien4Goc', parseInt(e.target.value) || 0),
+                                className: 'mt-1 block w-full border rounded-md px-3 py-2 text-sm'
+                            })
+                        ),
+                        React.createElement('div', {},
+                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Xiên 4 đánh (mặc định/1k)'),
+                            React.createElement('input', {
+                                type: 'number',
+                                value: parameters.xien4Danh,
+                                onChange: (e) => handleParameterChange('xien4Danh', parseInt(e.target.value) || 0),
+                                className: 'mt-1 block w-full border rounded-md px-3 py-2 text-sm'
+                            })
+                        ),
+                        React.createElement('div', {},
+                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Xiên 4 trả thưởng (1 ăn X)'),
+                            React.createElement('input', {
+                                type: 'number',
+                                value: parameters.xien4TraThuong,
+                                onChange: (e) => handleParameterChange('xien4TraThuong', parseInt(e.target.value) || 0),
+                                className: 'mt-1 block w-full border rounded-md px-3 py-2 text-sm'
+                            })
+                        )
+                    ),
+
+                    // Ba càng parameters
+                    React.createElement('div', {className: 'space-y-3'},
+                        React.createElement('h3', {className: 'font-semibold text-red-600'}, 'Ba Càng (3 tham số)'),
+                        React.createElement('div', {},
+                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Ba càng gốc (thu đã CK)'),
+                            React.createElement('input', {
+                                type: 'number',
+                                value: parameters.baCangGoc,
+                                onChange: (e) => handleParameterChange('baCangGoc', parseInt(e.target.value) || 0),
+                                className: 'mt-1 block w-full border rounded-md px-3 py-2 text-sm'
+                            })
+                        ),
+                        React.createElement('div', {},
+                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Ba càng đánh (mặc định/1k)'),
+                            React.createElement('input', {
+                                type: 'number',
+                                value: parameters.baCangDanh,
+                                onChange: (e) => handleParameterChange('baCangDanh', parseInt(e.target.value) || 0),
+                                className: 'mt-1 block w-full border rounded-md px-3 py-2 text-sm'
+                            })
+                        ),
+                        React.createElement('div', {},
+                            React.createElement('label', {className: 'block text-sm font-medium text-[#7B7B7B]'}, 'Ba càng trả thưởng (1 ăn X)'),
+                            React.createElement('input', {
+                                type: 'number',
+                                value: parameters.baCangTraThuong,
+                                onChange: (e) => handleParameterChange('baCangTraThuong', parseInt(e.target.value) || 0),
+                                className: 'mt-1 block w-full border rounded-md px-3 py-2 text-sm'
                             })
                         )
                     )
+                )
                 )
             ),
             
             // RSS Timing Warning
             rssTimingWarning && React.createElement('div', {className: 'bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6'},
                 React.createElement('div', {className: 'flex items-center'},
-                    React.createElement('div', {className: 'text-amber-600 mr-2'}, '⚠️'),
+                    React.createElement('div', {className: 'text-amber-600 mr-2'}, ''),
                     React.createElement('div', {},
                         React.createElement('div', {className: 'font-medium text-amber-800'}, 'Cảnh báo thời gian'),
                         React.createElement('div', {className: 'text-amber-700 text-sm'}, rssTimingWarning),
@@ -2163,140 +2820,141 @@
             
             // Main layout with two panels
             // ============ SECTION B: NHẬP DỮ LIỆU TIN NHẮN ============
-            React.createElement('div', {className: 'grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6'},
+            React.createElement('div', {className: 'grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-6 mb-6'},
                 // Left panel - Input
-                React.createElement('div', {className: 'bg-white rounded-lg shadow-md p-4'},
-                    React.createElement('div', {className: 'flex items-center justify-between mb-4'},
-                        React.createElement('h2', {className: 'text-lg font-semibold text-[#121212]'}, 'Nhập Dữ Liệu Cược'),
+                React.createElement('div', {className: 'bg-white rounded-lg shadow-md p-3 md:p-4 min-w-0'},
+                    React.createElement('div', {className: 'flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4'},
+                        React.createElement('h2', {className: 'text-base md:text-lg font-semibold text-[#121212]'}, 'Nhập Dữ Liệu Cược'),
                         React.createElement('button', {
                             onClick: handleValidateBets,
                             disabled: !betText.trim(),
-                            className: 'px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 disabled:opacity-50 text-sm'
+                            className: 'px-3 md:px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 disabled:opacity-50 text-sm whitespace-nowrap'
                         }, 'Kiểm Tra Cú Pháp')
                     ),
-                    
-                    // Textarea with line numbers
-                    React.createElement('div', {className: 'relative'},
-                        React.createElement('div', {className: 'flex'},
-                            // Line numbers
-                            React.createElement('div', {
-                                className: 'bg-[#F8F7F7] border-r border-[#ECECEC] p-3 text-[#7B7B7B] text-sm font-mono min-w-[3rem] text-right select-none',
-                                style: { lineHeight: '1.5' }
-                            }, 
-                                betText.split('\n').map((_, index) => {
-                                    const validation = validationResults?.find(v => v.lineNumber === index + 1);
-                                    const hasError = validation && !validation.isValid;
-                                    return React.createElement('div', { 
-                                        key: index, 
-                                        className: hasError ? 'text-red-500 font-bold' : '',
-                                        title: hasError ? validation.error : ''
-                                    }, index + 1);
-                                }).concat([React.createElement('div', { key: 'end' }, betText.split('\n').length + 1)])
-                            ),
-                            // Textarea with simplified error styling 
-                            React.createElement('div', {className: 'flex-1 relative'},
+
+                    // Side-by-side: Input và Preview (stack on mobile)
+                    React.createElement('div', {className: 'grid grid-cols-1 lg:grid-cols-2 gap-4'},
+                        // LEFT: Input textarea
+                        React.createElement('div', {},
+                            React.createElement('div', {className: 'text-sm font-medium text-[#7B7B7B] mb-2'}, 'Nhập cược:'),
+                            React.createElement('div', {className: 'flex border rounded-lg overflow-hidden w-full'},
+                                // Line numbers
+                                React.createElement('div', {
+                                    className: 'bg-[#F8F7F7] border-r border-[#ECECEC] p-3 text-[#7B7B7B] text-sm font-mono min-w-[3rem] text-right select-none',
+                                    style: { lineHeight: '1.5' }
+                                },
+                                    betText.split('\n').map((_, index) =>
+                                        React.createElement('div', { key: index }, index + 1)
+                                    ).concat([React.createElement('div', { key: 'end', className: 'text-[#ECECEC]' }, betText.split('\n').length + 1)])
+                                ),
+                                // Textarea
                                 React.createElement('textarea', {
                                     value: betText,
                                     onChange: handleBetTextChange,
-                                    placeholder: 'Nhập theo format:\nD 16 500k\nL 23 100k\nX2 12 34 200k',
-                                    className: getTextareaClassName(validationResults, betText),
-                                    style: { 
-                                        lineHeight: '1.5', 
-                                        minHeight: '300px',
+                                    placeholder: 'Nhập theo format:\nD 16 500k\nL 23 100k\nX2 12 34 200k\nBC 123 50k',
+                                    className: 'flex-1 p-2 md:p-3 border-0 outline-none resize-none w-full',
+                                    style: {
+                                        lineHeight: '1.5',
+                                        minHeight: '300px', // Tăng từ 200px
+                                        maxHeight: '600px', // Giới hạn max height
                                         fontFamily: 'monospace',
-                                        fontSize: '14px'
+                                        fontSize: 'clamp(12px, 2.5vw, 14px)' // Responsive font
                                     },
                                     spellCheck: false
-                                }),
-                                
-                                // Line-by-line error highlighting overlay
-                                validationResults && React.createElement('div', {
-                                    className: 'absolute inset-0 pointer-events-none',
-                                    style: { 
-                                        padding: '12px',
-                                        lineHeight: '1.5',
-                                        fontFamily: 'monospace',
-                                        fontSize: '14px',
-                                        zIndex: 5
-                                    }
+                                })
+                            )
+                        ),
+
+                        // RIGHT: Preview panel with error highlighting
+                        React.createElement('div', {},
+                            React.createElement('div', {className: 'flex items-center justify-between mb-2'},
+                                React.createElement('span', {className: 'text-sm font-medium text-[#7B7B7B]'}, 'Kiểm tra cú pháp:'),
+                                validationResults && React.createElement('span', {
+                                    className: `text-xs px-2 py-1 rounded ${
+                                        validationResults.filter(v => !v.isValid && v.line.trim()).length > 0
+                                            ? 'bg-red-100 text-red-600'
+                                            : 'bg-green-100 text-green-600'
+                                    }`
                                 },
-                                    betText.split('\n').map((line, index) => {
-                                        const validation = validationResults.find(v => v.lineNumber === index + 1);
-                                        const hasError = validation && !validation.isValid && line.trim();
-                                        
-                                        return React.createElement('div', {
-                                            key: index,
-                                            className: hasError ? 'relative' : '',
-                                            style: { 
-                                                height: '1.5em',
-                                                lineHeight: '1.5',
-                                                backgroundColor: hasError ? 'rgba(239, 68, 68, 0.15)' : 'transparent',
-                                                borderLeft: hasError ? '4px solid #ef4444' : 'none',
-                                                paddingLeft: hasError ? '8px' : '0px',
-                                                marginLeft: hasError ? '-8px' : '0px',
-                                                borderRadius: hasError ? '4px' : 'none',
-                                                border: hasError ? '1px solid rgba(239, 68, 68, 0.3)' : 'none'
-                                            }
-                                        }, hasError ? [
-                                            // Invisible spacer text
-                                            React.createElement('span', {
-                                                key: 'spacer',
-                                                style: { color: 'transparent', userSelect: 'none' }
-                                            }, line || ' '),
-                                            // Red wavy underline at bottom
-                                            React.createElement('div', {
-                                                key: 'underline',
-                                                style: {
-                                                    position: 'absolute',
-                                                    bottom: '1px',
-                                                    left: '8px',
-                                                    right: '8px',
-                                                    height: '2px',
-                                                    backgroundColor: '#ef4444',
-                                                    borderRadius: '1px',
-                                                    opacity: '0.7'
-                                                }
-                                            })
-                                        ] : React.createElement('span', {
-                                            style: { color: 'transparent', userSelect: 'none' }
-                                        }, line || ' '));
-                                    })
-                                ),
-                                
-                                // Error indicators on the right side
-                                validationResults && React.createElement('div', {
-                                    className: 'absolute right-2 top-3 pointer-events-none',
-                                    style: { lineHeight: '1.5', zIndex: 10 }
-                                },
-                                    betText.split('\n').map((line, index) => {
-                                        const validation = validationResults.find(v => v.lineNumber === index + 1);
-                                        const hasError = validation && !validation.isValid && line.trim();
-                                        return React.createElement('div', {
-                                            key: index,
-                                            style: { 
-                                                height: '1.5em',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'flex-end'
-                                            }
-                                        }, hasError && React.createElement('div', {
-                                            title: `Dòng ${index + 1}: ${validation.error}`,
-                                            style: {
-                                                color: '#ef4444',
-                                                fontSize: '12px',
-                                                fontWeight: 'bold',
-                                                backgroundColor: 'white',
-                                                borderRadius: '50%',
-                                                width: '16px',
-                                                height: '16px',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                border: '1px solid #ef4444',
-                                                cursor: 'help'
-                                            }
-                                        }, '!'));
-                                    })
+                                    validationResults.filter(v => !v.isValid && v.line.trim()).length > 0
+                                        ? `${validationResults.filter(v => !v.isValid && v.line.trim()).length} lỗi`
+                                        : ' Hợp lệ'
+                                )
+                            ),
+                            React.createElement('div', {
+                                className: 'border rounded-lg overflow-hidden bg-white',
+                                style: { minHeight: '300px', maxHeight: '600px' }
+                            },
+                                React.createElement('div', {className: 'flex'},
+                                    // Line numbers with error highlighting
+                                    React.createElement('div', {
+                                        className: 'bg-[#F8F7F7] border-r border-[#ECECEC] p-3 text-sm font-mono min-w-[3rem] text-right select-none',
+                                        style: { lineHeight: '1.5' }
+                                    },
+                                        betText.split('\n').map((line, index) => {
+                                            const validation = validationResults?.find(v => v.lineNumber === index + 1);
+                                            const hasError = validation && !validation.isValid && line.trim();
+                                            return React.createElement('div', {
+                                                key: index,
+                                                className: hasError ? 'text-red-500 font-bold' : 'text-[#7B7B7B]',
+                                                title: hasError ? validation.error : ''
+                                            }, index + 1);
+                                        }).concat([React.createElement('div', { key: 'end', className: 'text-[#ECECEC]' }, betText.split('\n').length + 1)])
+                                    ),
+                                    // Preview content with error underlines
+                                    React.createElement('div', {
+                                        className: 'flex-1 p-3 overflow-x-auto overflow-y-auto',
+                                        style: {
+                                            lineHeight: '1.5',
+                                            fontFamily: 'monospace',
+                                            fontSize: 'clamp(12px, 2.5vw, 14px)',
+                                            maxHeight: '550px',
+                                            wordBreak: 'break-word'
+                                        }
+                                    },
+                                        betText.split('\n').map((line, index) => {
+                                            const validation = validationResults?.find(v => v.lineNumber === index + 1);
+                                            const hasError = validation && !validation.isValid && line.trim();
+                                            const isValid = validation && validation.isValid && line.trim();
+
+                                            return React.createElement('div', {
+                                                key: index,
+                                                className: 'relative group',
+                                                style: { minHeight: '1.5em' }
+                                            },
+                                                // Line content with styling
+                                                React.createElement('span', {
+                                                    className: hasError
+                                                        ? 'text-red-600 border-b-2 border-red-500 border-dashed'
+                                                        : isValid
+                                                            ? 'text-green-700'
+                                                            : 'text-[#7B7B7B]',
+                                                    style: {
+                                                        display: 'inline-block',
+                                                        minWidth: '100%',
+                                                        paddingBottom: hasError ? '2px' : '0'
+                                                    }
+                                                }, line || '\u00A0'),
+                                                // Error tooltip on hover
+                                                hasError && React.createElement('div', {
+                                                    className: 'absolute left-0 top-full mt-1 bg-red-600 text-white text-xs px-2 py-1 rounded shadow-lg z-20 hidden group-hover:block whitespace-nowrap'
+                                                }, validation.error)
+                                            );
+                                        })
+                                    )
+                                )
+                            ),
+                            // Error summary
+                            validationResults && validationResults.filter(v => !v.isValid && v.line.trim()).length > 0 &&
+                            React.createElement('div', {className: 'mt-2 p-2 bg-red-50 border border-red-200 rounded text-sm'},
+                                React.createElement('div', {className: 'font-medium text-red-700 mb-1'}, 'Dòng lỗi:'),
+                                React.createElement('ul', {className: 'text-red-600 text-xs space-y-1'},
+                                    validationResults.filter(v => !v.isValid && v.line.trim()).map(v =>
+                                        React.createElement('li', {key: v.lineNumber},
+                                            React.createElement('span', {className: 'font-bold'}, `Dòng ${v.lineNumber}: `),
+                                            v.error
+                                        )
+                                    )
                                 )
                             )
                         )
@@ -2327,10 +2985,10 @@
                                     'Đang xử lý...'
                                 ) : 
                                 !validationResults ? 
-                                    '⚠️ Cần kiểm tra cú pháp trước' :
+                                    ' Cần kiểm tra cú pháp trước' :
                                     validationResults.filter(item => item.line.trim() && !item.isValid).length > 0 ?
-                                        '❌ Có lỗi cú pháp' :
-                                        '✅ Đối Chiếu Kết Quả'
+                                        ' Có lỗi cú pháp' :
+                                        ' Đối Chiếu Kết Quả'
                         ),
                         React.createElement('button', {
                             onClick: () => {
@@ -2352,88 +3010,6 @@
                             className: 'px-4 py-2 bg-[#E36323] text-white rounded-lg hover:bg-[#DF5A18] ml-2'
                         }, 'Refresh')
                     )
-                ),
-                
-                // Right panel - Validation Preview
-                React.createElement('div', {className: 'bg-white rounded-lg shadow-md p-4'},
-                    React.createElement('h2', {className: 'text-lg font-semibold text-[#121212] mb-4'}, 'Kiểm Tra Cú Pháp'),
-                    
-                    !showValidation || !validationResults ? 
-                        React.createElement('div', {className: 'flex items-center justify-center h-64 text-[#7B7B7B]'},
-                            React.createElement('div', {className: 'text-center'},
-                                React.createElement('div', {className: 'text-4xl mb-2'}, '📋'),
-                                React.createElement('p', {}, 'Nhấn "Kiểm Tra Cú Pháp" để xem kết quả validation')
-                            )
-                        ) :
-                        React.createElement('div', {className: 'space-y-2', style: { maxHeight: '300px', overflowY: 'auto' }},
-                            validationResults.map((item, index) => 
-                                React.createElement('div', {
-                                    key: index,
-                                    className: `p-3 rounded border text-sm ${
-                                        !item.line ? 'bg-[#F8F7F7] border-[#ECECEC]' :
-                                        item.isValid ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-400'
-                                    }`
-                                },
-                                    React.createElement('div', {className: 'flex items-start'},
-                                        React.createElement('span', {
-                                            className: `min-w-[2.5rem] text-right mr-3 font-bold ${
-                                                item.isValid ? 'text-green-600' : 'text-red-600'
-                                            }`
-                                        }, item.lineNumber),
-                                        React.createElement('div', {className: 'flex-1'},
-                                            React.createElement('div', {
-                                                className: `font-mono p-2 rounded ${
-                                                    item.isValid ? 'bg-green-100' : 'bg-red-100'
-                                                }`
-                                            }, item.line || '(trống)'),
-                                            
-                                            // Error details
-                                            item.error && React.createElement('div', {
-                                                className: 'text-red-700 text-sm mt-2 p-2 bg-red-50 rounded border-l-4 border-red-400'
-                                            },
-                                                React.createElement('strong', {}, 'Lỗi: '),
-                                                item.error
-                                            ),
-                                            
-                                            // Success details  
-                                            item.isValid && item.line && item.parsed && React.createElement('div', {
-                                                className: 'text-green-700 text-sm mt-2 p-2 bg-green-50 rounded border-l-4 border-green-400'
-                                            },
-                                                React.createElement('div', {},
-                                                    React.createElement('strong', {}, 'Hợp lệ: '),
-                                                    `${item.parsed.type} - ${item.parsed.numbers?.join(', ')} - ${(item.parsed.money / 1000).toLocaleString()}k`
-                                                ),
-                                                item.warning && React.createElement('div', {
-                                                    className: 'text-orange-600 text-xs mt-1'
-                                                }, item.warning)
-                                            )
-                                        )
-                                    )
-                                )
-                            ),
-                            validationResults.length > 0 && React.createElement('div', {className: 'mt-4 pt-3 border-t'},
-                                React.createElement('div', {className: 'grid grid-cols-3 gap-4 text-sm'},
-                                    React.createElement('div', {className: 'text-center p-2 bg-green-100 rounded'},
-                                        React.createElement('div', {className: 'text-2xl font-bold text-green-600'}, 
-                                            validationResults.filter(r => r.isValid && r.line.trim()).length
-                                        ),
-                                        React.createElement('div', {className: 'text-green-700'}, 'Hợp lệ')
-                                    ),
-                                    React.createElement('div', {className: 'text-center p-2 bg-red-100 rounded'},
-                                        React.createElement('div', {className: 'text-2xl font-bold text-red-600'}, 
-                                            validationResults.filter(r => !r.isValid && r.line.trim()).length
-                                        ),
-                                        React.createElement('div', {className: 'text-red-700'}, 'Có lỗi')
-                                    ),
-                                    React.createElement('div', {className: 'text-center p-2 bg-[#FFEDD5] rounded'},
-                                        React.createElement('div', {className: 'text-2xl font-bold text-[#E36323]'}, 
-                                            validationResults.filter(r => r.line.trim()).length
-                                        ),
-                                        React.createElement('div', {className: 'text-[#E36323]'}, 'Tổng dòng')
-                                    )
-                                )
-                            )
-                        )
                 )
             ),
             
@@ -2472,8 +3048,8 @@
                         ),
                         React.createElement('div', {className: 'text-sm text-[#7B7B7B]'},
                             lotteryResults.isSimulation ? 
-                                '🎲 Simulation Data' : 
-                                '📡 RSS xosodaiphat.com'
+                                ' Simulation Data' : 
+                                ' RSS xosodaiphat.com'
                         )
                     ),
                     React.createElement('div', {className: 'grid grid-cols-1 md:grid-cols-2 gap-4'},
@@ -2481,31 +3057,25 @@
                         React.createElement('div', {},
                             React.createElement('div', {className: 'border rounded-lg p-3 mb-3 bg-red-50'},
                                 React.createElement('div', {className: 'text-sm font-medium text-red-800 mb-2'}, 'Giải Đặc Biệt'),
-                                React.createElement('div', {className: 'text-2xl font-bold text-red-600 font-mono'}, 
-                                    lotteryResults?.giai_dac_biet?.[0] || 
-                                    lotteryResults?.dacbiet?.[0] || 
-                                    lotteryResults?.special?.[0] || 
-                                    (lotteryResults?.date === '2025-08-21' ? '94127' : 'N/A')
+                                React.createElement('div', {className: 'text-2xl font-bold text-red-600 font-mono'},
+                                    lotteryResults?.giai_dac_biet?.[0] ||
+                                    lotteryResults?.dacbiet?.[0] ||
+                                    lotteryResults?.special?.[0] ||
+                                    'Đang tải...'
                                 )
                             ),
                             React.createElement('div', {className: 'border rounded-lg p-3 mb-3 bg-[#FFF7ED]'},
                                 React.createElement('div', {className: 'text-sm font-medium text-[#E36323] mb-2'}, 'Giải Nhất'),
-                                React.createElement('div', {className: 'text-lg font-bold text-[#E36323] font-mono'}, 
-                                    lotteryResults?.giai_nhat?.[0] || 
+                                React.createElement('div', {className: 'text-lg font-bold text-[#E36323] font-mono'},
+                                    lotteryResults?.giai_nhat?.[0] ||
                                     lotteryResults?.nhat?.[0] ||
-                                    (lotteryResults?.date === '2025-08-21' ? '42750' : 'N/A')
+                                    'Đang tải...'
                                 )
                             ),
                             React.createElement('div', {className: 'border rounded-lg p-3 bg-green-50'},
                                 React.createElement('div', {className: 'text-sm font-medium text-green-800 mb-2'}, 'Giải Nhì'),
-                                React.createElement('div', {className: 'text-lg font-bold text-green-600 font-mono'}, 
-                                    (() => {
-                                        const nhi = lotteryResults?.giai_nhi || lotteryResults?.nhi;
-                                        if (lotteryResults?.date === '2025-08-21' && (!nhi || nhi.length === 0)) {
-                                            return '74104 - 87683'; // Hardcoded fallback for 21st
-                                        }
-                                        return nhi?.join(' - ') || 'N/A';
-                                    })()
+                                React.createElement('div', {className: 'text-lg font-bold text-green-600 font-mono'},
+                                    (lotteryResults?.giai_nhi || lotteryResults?.nhi)?.join(' - ') || 'Đang tải...'
                                 )
                             )
                         ),
@@ -2516,29 +3086,17 @@
                                 ['giai_ba', 'giai_tu', 'giai_nam', 'giai_sau', 'giai_bay'].map(prize => {
                                     const prizeNames = {
                                         giai_ba: 'Giải Ba',
-                                        giai_tu: 'Giải Tư', 
+                                        giai_tu: 'Giải Tư',
                                         giai_nam: 'Giải Năm',
                                         giai_sau: 'Giải Sáu',
                                         giai_bay: 'Giải Bảy'
                                     };
-                                    let numbers = lotteryResults[prize] || [];
-                                    
-                                    // Special fallback for 2025-08-21 if data is missing
-                                    if (lotteryResults?.date === '2025-08-21' && (!numbers || numbers.length === 0)) {
-                                        const fallbackData = {
-                                            giai_ba: ['81958', '18532', '91536', '91701', '68466', '45273'],
-                                            giai_tu: ['7891', '3332', '7157', '6617'],
-                                            giai_nam: ['2203', '8523', '2365', '6996', '1994', '2910'],
-                                            giai_sau: ['883', '219', '396'],
-                                            giai_bay: ['83', '85', '09', '38']
-                                        };
-                                        numbers = fallbackData[prize] || [];
-                                    }
-                                    
+                                    const numbers = lotteryResults[prize] || [];
+
                                     return React.createElement('div', {key: prize, className: 'border rounded-lg p-2'},
                                         React.createElement('div', {className: 'text-xs font-medium text-[#7B7B7B] mb-1'}, prizeNames[prize]),
-                                        React.createElement('div', {className: 'text-sm font-mono text-[#7B7B7B]'}, 
-                                            numbers?.join(' - ') || 'N/A'
+                                        React.createElement('div', {className: 'text-sm font-mono text-[#7B7B7B]'},
+                                            numbers?.length > 0 ? numbers.join(' - ') : 'Đang tải...'
                                         )
                                     );
                                 })
@@ -2557,8 +3115,8 @@
                             className: 'border rounded-lg px-3 py-2 text-sm'
                         },
                             React.createElement('option', {value: 'all'}, 'Tất cả'),
-                            React.createElement('option', {value: 'win'}, 'Chỉ thắng'),
-                            React.createElement('option', {value: 'lose'}, 'Chỉ thua'),
+                            React.createElement('option', {value: 'win'}, 'Khách thắng'),
+                            React.createElement('option', {value: 'lose'}, 'Khách thua'),
                             React.createElement('option', {value: 'error'}, 'Chỉ lỗi')
                         )
                     ),
@@ -2573,16 +3131,16 @@
                                     React.createElement('th', {className: 'text-left p-3 border'}, 'Số cược'),
                                     React.createElement('th', {className: 'text-left p-3 border'}, 'Tiền cược'),
                                     React.createElement('th', {className: 'text-left p-3 border'}, 'Trạng thái'),
-                                    React.createElement('th', {className: 'text-left p-3 border'}, 'Tiền thắng/thua')
+                                    React.createElement('th', {className: 'text-left p-3 border'}, 'Kết quả (đ)')
                                 )
                             ),
                             React.createElement('tbody', {},
                                 getPaginatedResults().data.map((item, index) => {
                                     // DEBUG: Log every item to trace issue
                                     if (index === 0) {
-                                        console.log('🔍 [Table Debug] First item full structure:', JSON.stringify(item, null, 2));
-                                        if (item.result) console.log('🔍 [Table Debug] Result object:', item.result);
-                                        if (item.bet) console.log('🔍 [Table Debug] Bet object:', item.bet);
+                                        console.log(' [Table Debug] First item full structure:', JSON.stringify(item, null, 2));
+                                        if (item.result) console.log(' [Table Debug] Result object:', item.result);
+                                        if (item.bet) console.log(' [Table Debug] Bet object:', item.bet);
                                     }
                                     
                                     // Handle different data structures
@@ -2622,9 +3180,9 @@
                                             (item.bet?.money || item.money || 0).toLocaleString() + 'đ'
                                         ),
                                         // Trạng thái với màu
-                                        React.createElement('td', {className: `p-3 border ${statusClass}`}, 
+                                        React.createElement('td', {className: `p-3 border ${statusClass}`},
                                             isError ? 'LỖI' :
-                                            isWin ? 'THẮNG' : 'THUA'
+                                            isWin ? 'KHÁCH THẮNG' : 'KHÁCH THUA'
                                         ),
                                         // Tiền thắng/thua
                                         React.createElement('td', {className: 'p-3 border font-semibold'}, 
@@ -2680,10 +3238,10 @@
                                 React.createElement('span', {className: 'font-semibold'}, getPaginatedResults().data.length)
                             ),
                             React.createElement('div', {},
-                                React.createElement('span', {className: 'text-[#7B7B7B]'}, 'Thắng/Thua: '),
-                                React.createElement('span', {className: 'text-green-600 font-semibold'}, getFilteredResults().filter(r => (r.result?.won || r.result?.status === 'win')).length),
+                                React.createElement('span', {className: 'text-[#7B7B7B]'}, 'Khách thua/thắng: '),
+                                React.createElement('span', {className: 'text-green-600 font-semibold'}, getFilteredResults().filter(r => !(r.result?.won || r.result?.status === 'win') && !r.result?.error).length),
                                 React.createElement('span', {className: 'text-[#7B7B7B]'}, ' / '),
-                                React.createElement('span', {className: 'text-red-600 font-semibold'}, getFilteredResults().filter(r => !(r.result?.won || r.result?.status === 'win') && !r.result?.error).length)
+                                React.createElement('span', {className: 'text-red-600 font-semibold'}, getFilteredResults().filter(r => (r.result?.won || r.result?.status === 'win')).length)
                             ),
                             React.createElement('div', {},
                                 React.createElement('span', {className: 'text-[#7B7B7B]'}, 'Lãi/Lỗ: '),
@@ -2708,22 +3266,24 @@
                         React.createElement('h3', {className: 'font-semibold text-[#E36323] mb-2'}, 'Tổng Quan'),
                         React.createElement('div', {className: 'space-y-1 text-sm'},
                             React.createElement('div', {}, `Tổng bet: ${statistics.total}`),
-                            React.createElement('div', {className: 'text-green-600'}, `Thắng: ${statistics.won}`),
-                            React.createElement('div', {className: 'text-red-600'}, `Thua: ${statistics.lost}`),
-                            React.createElement('div', {className: 'font-bold'}, 
-                                `Tỷ lệ thắng: ${statistics.total > 0 ? Math.round((statistics.won / statistics.total) * 100) : 0}%`
+                            React.createElement('div', {className: 'text-green-600'}, `Khách thua: ${statistics.lost}`),
+                            React.createElement('div', {className: 'text-red-600'}, `Khách thắng: ${statistics.won}`),
+                            React.createElement('div', {className: 'font-bold'},
+                                `Tỷ lệ khách thua: ${statistics.total > 0 ? Math.round((statistics.lost / statistics.total) * 100) : 0}%`
                             )
                         )
                     ),
                     
-                    // Money stats
+                    // Money stats - Agency perspective
                     React.createElement('div', {className: 'bg-green-50 rounded-lg p-4'},
-                        React.createElement('h3', {className: 'font-semibold text-green-800 mb-2'}, 'Tiền Cược'),
+                        React.createElement('h3', {className: 'font-semibold text-green-800 mb-2'}, 'Tiền Thu/Trả'),
                         React.createElement('div', {className: 'space-y-1 text-sm'},
-                            React.createElement('div', {}, `Tổng cược: ${statistics.totalBetAmount.toLocaleString()}đ`),
-                            React.createElement('div', {className: 'text-green-600'}, `Thắng: +${statistics.totalWinAmount.toLocaleString()}đ`),
-                            React.createElement('div', {className: 'text-red-600'}, `Thua: -${statistics.totalLoseAmount.toLocaleString()}đ`),
-                            React.createElement('div', {className: `font-bold ${statistics.netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}, 
+                            React.createElement('div', {}, `Thu chưa CK: ${statistics.totalBetAmount.toLocaleString()}đ`),
+                            React.createElement('div', {}, `Thu đã CK: ${statistics.totalBetAmountDiscounted.toLocaleString()}đ`),
+                            React.createElement('div', {className: 'text-blue-600'}, `Chênh lệch: ${statistics.totalDiscount.toLocaleString()}đ`),
+                            React.createElement('div', {className: 'text-red-600'}, `Khách thắng: -${statistics.totalWinAmount.toLocaleString()}đ`),
+                            React.createElement('div', {className: 'text-green-600'}, `Khách thua: +${statistics.totalLoseAmount.toLocaleString()}đ`),
+                            React.createElement('div', {className: `font-bold ${statistics.netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`},
                                 `Lãi/Lỗ: ${statistics.netProfit >= 0 ? '+' : ''}${statistics.netProfit.toLocaleString()}đ`
                             )
                         )
@@ -2735,10 +3295,13 @@
                         React.createElement('div', {className: 'grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm'},
                             Object.entries(statistics.byType).map(([type, data]) => 
                                 React.createElement('div', {key: type, className: 'bg-white rounded p-2 border'},
-                                    React.createElement('div', {className: 'font-semibold capitalize'}, 
-                                        type === 'lô' ? 'Lô' : 
-                                        type === 'đề' ? 'Đề' : 
-                                        type === 'xiên' ? 'Xiên' : 
+                                    React.createElement('div', {className: 'font-semibold capitalize'},
+                                        type === 'lô' ? 'Lô' :
+                                        type === 'đề' ? 'Đề' :
+                                        type === 'xiên' ? 'Lô xiên' :
+                                        type === 'xiên 2' ? 'Lô xiên 2' :
+                                        type === 'xiên 3' ? 'Lô xiên 3' :
+                                        type === 'xiên 4' ? 'Lô xiên 4' :
                                         type === 'ba càng' ? 'Ba Càng' : type
                                     ),
                                     React.createElement('div', {}, `${data.count} bet (${data.won}T/${data.lost}H)`),
@@ -2750,11 +3313,10 @@
                         )
                     )
                 )
-            )
         );
     };
     console.log('FINAL: Component created successfully');
     
     window.MainReconciliation = MainReconciliation;
-    console.log('🎉 FINAL VERSION: Complete and functional!');
+    console.log(' FINAL VERSION: Complete and functional!');
 })();

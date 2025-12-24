@@ -38,7 +38,11 @@
 
     <!-- MODULE LOADING - User System -->
 
+    <!-- 0. Version Info -->
+    <script src="./js/version.js"></script>
+
     <!-- 1. Core Services -->
+    <script type="text/babel" src="./js/core/security-utils.js" onerror="console.error('Failed to load:', this.src)"></script>
     <script type="text/babel" src="./js/core/shared-data-service.js" onerror="console.error('Failed to load:', this.src)"></script>
     <script type="text/babel" src="./js/core/auth-system.js" onerror="console.error('Failed to load:', this.src)"></script>
 
@@ -46,9 +50,12 @@
     <script type="text/babel" src="./js/services/lottery-data-service.js" onerror="console.error('Failed to load:', this.src)"></script>
 
     <!-- 3. User Components -->
+    <script type="text/babel" src="./js/user/version-bar.js" onerror="console.error('Failed to load:', this.src)"></script>
+    <script type="text/babel" src="./js/user/ui-components.js" onerror="console.error('Failed to load:', this.src)"></script>
     <script type="text/babel" src="./js/user/bet-parser.js" onerror="console.error('Failed to load:', this.src)"></script>
     <script type="text/babel" src="./js/user/landing-page.js" onerror="console.error('Failed to load:', this.src)"></script>
     <script type="text/babel" src="./js/user/formula-page.js" onerror="console.error('Failed to load:', this.src)"></script>
+    <script type="text/babel" src="./js/user/payment-modal.js" onerror="console.error('Failed to load:', this.src)"></script>
     <script type="text/babel" src="./js/user/pricing-page.js" onerror="console.error('Failed to load:', this.src)"></script>
     <script type="text/babel" src="./js/user/main-reconciliation-final.js" onerror="console.error('Failed to load:', this.src)"></script>
 

@@ -1,328 +1,354 @@
-// 💳 PAYMENT MODAL COMPONENT
-// Version: 1.0.0 | Created: 2024 | Handles unified QR code payment with order IDs
+//  PAYMENT MODAL - User Payment Flow with Order ID Generation
+// Version: 2.1.0 | Created: 2024 | MYSQL SYNC
 (function() {
     'use strict';
-    
+
     const { useState, useEffect, useCallback, memo } = React;
-    
-    // ===== ORDER ID GENERATOR =====
+
+    console.log(' PaymentModal v2.1.0 loaded - MySQL Sync');
+
+    // ===== API CONFIGURATION =====
+    const API_BASE_URL = window.API_BASE_URL || '/api';
+
+    // ===== MYSQL SYNC HELPER =====
+    const syncPaymentToMySQL = async (paymentData) => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/sync.php?action=payment`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(paymentData)
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                console.log(' [PaymentModal] Payment synced to MySQL:', paymentData.id);
+                return true;
+            } else {
+                console.error(' [PaymentModal] MySQL sync failed:', result.error);
+                return false;
+            }
+        } catch (error) {
+            console.error(' [PaymentModal] MySQL sync error:', error);
+            return false;
+        }
+    };
+
+    // Generate unique Order ID
     const generateOrderId = () => {
         const timestamp = Date.now();
         const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
         return `ORDER${timestamp}${random}`;
     };
-    
-    // ===== PAYMENT MODAL COMPONENT =====
-    const PaymentModal = memo(({ 
-        isOpen, 
-        onClose, 
-        selectedPackage, 
-        paymentConfig = null 
-    }) => {
-        const [selectedMethod, setSelectedMethod] = useState('qr_code');
-        const [showQR, setShowQR] = useState(false);
-        const [loading, setLoading] = useState(false);
+
+    // Format currency
+    const formatCurrency = (amount) => {
+        return new Intl.NumberFormat('vi-VN', {
+            style: 'currency',
+            currency: 'VND'
+        }).format(amount);
+    };
+
+    // Parse price string to number (e.g., "199k" -> 199000)
+    const parsePrice = (priceStr) => {
+        if (typeof priceStr === 'number') return priceStr;
+        if (!priceStr) return 0;
+
+        const cleaned = priceStr.toLowerCase().replace(/[^\d.km]/g, '');
+        let value = parseFloat(cleaned) || 0;
+
+        if (priceStr.toLowerCase().includes('k')) {
+            value *= 1000;
+        } else if (priceStr.toLowerCase().includes('m')) {
+            value *= 1000000;
+        }
+
+        return value;
+    };
+
+    // Payment Modal Component
+    const PaymentModal = memo(({ isOpen, onClose, selectedPackage, paymentConfig }) => {
         const [orderId, setOrderId] = useState('');
-        
-        // Generate order ID when modal opens
+        const [paymentMethod, setPaymentMethod] = useState('qr_code');
+        const [isSubmitting, setIsSubmitting] = useState(false);
+        const [paymentCreated, setPaymentCreated] = useState(false);
+        const [config, setConfig] = useState(null);
+
+        // Generate Order ID when modal opens
         useEffect(() => {
             if (isOpen && selectedPackage) {
-                setOrderId(generateOrderId());
+                const newOrderId = generateOrderId();
+                setOrderId(newOrderId);
+                setPaymentCreated(false);
+                console.log(' Generated Order ID:', newOrderId);
             }
         }, [isOpen, selectedPackage]);
-        
-        // Load payment config from admin
+
+        // Load payment config
         useEffect(() => {
-            if (!paymentConfig && window.SharedDataService) {
-                const config = window.SharedDataService.getPaymentConfig();
-                if (config && config.qrCodes && config.qrCodes.main) {
-                    setShowQR(true);
+            if (paymentConfig) {
+                setConfig(paymentConfig);
+            } else if (window.SharedDataService) {
+                const adminConfig = window.SharedDataService.getPaymentConfig();
+                if (adminConfig) {
+                    setConfig(adminConfig);
                 }
             }
         }, [paymentConfig]);
-        
-        // Handle payment method selection
-        const handleMethodSelect = useCallback((method) => {
-            setSelectedMethod(method);
-            if (method === 'qr_code') {
-                setShowQR(true);
-            } else {
-                setShowQR(false);
-            }
+
+        // Copy to clipboard
+        const copyToClipboard = useCallback((text, label) => {
+            navigator.clipboard.writeText(text).then(() => {
+                alert(`Đã copy ${label}: ${text}`);
+            }).catch(() => {
+                // Fallback for older browsers
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                alert(`Đã copy ${label}: ${text}`);
+            });
         }, []);
-        
-        // Handle payment submission
-        const handlePaymentSubmit = useCallback(async () => {
+
+        // Create pending payment
+        const handleCreatePayment = useCallback(() => {
             if (!selectedPackage || !orderId) return;
-            
-            setLoading(true);
-            
+
+            setIsSubmitting(true);
+
             try {
-                // Create payment record with order ID
-                const paymentData = {
+                const currentUser = window.AuthService?.getCurrentUser();
+                const amount = parsePrice(selectedPackage.price);
+
+                // Create payment record
+                const paymentRecord = {
                     id: Date.now(),
                     orderId: orderId,
-                    userId: window.currentUser?.id || 'guest',
+                    userId: currentUser?.id || 'guest',
                     packageId: selectedPackage.id,
-                    amount: selectedPackage.price,
-                    method: selectedMethod,
-                    status: 'pending',
-                    packageType: selectedPackage.id,
-                    createdAt: new Date().toISOString(),
                     packageName: selectedPackage.name,
-                    packageDuration: selectedPackage.duration_days,
-                    transferContent: `Thanh toan goi ${selectedPackage.name} ${orderId}`
+                    amount: amount,
+                    method: paymentMethod,
+                    transferContent: orderId,
+                    status: 'pending',
+                    createdAt: new Date().toISOString(),
+                    userInfo: {
+                        username: currentUser?.username || 'guest',
+                        fullName: currentUser?.fullName || 'Guest User',
+                        email: currentUser?.email || '',
+                        phone: currentUser?.phone || ''
+                    }
                 };
-                
-                // Save to localStorage for admin to process
-                const existingPayments = JSON.parse(localStorage.getItem('pendingPayments') || '[]');
-                existingPayments.push(paymentData);
-                localStorage.setItem('pendingPayments', JSON.stringify(existingPayments));
-                
-                // Notify admin system
-                window.dispatchEvent(new CustomEvent('newPaymentCreated', {
-                    detail: paymentData
-                }));
-                
-                // Show success message
+
+                // Save to localStorage for admin to see (cache)
+                const existingPayments = JSON.parse(localStorage.getItem('adminPendingPayments') || '[]');
+                existingPayments.push(paymentRecord);
+                localStorage.setItem('adminPendingPayments', JSON.stringify(existingPayments));
+
+                // Also save to GlobalStateManager if available
                 if (window.GlobalStateManager) {
-                    window.GlobalStateManager.addNotification(
-                        `✅ Đã tạo yêu cầu thanh toán cho ${selectedPackage.name} (Mã: ${orderId})`,
-                        'success',
-                        'PaymentModal'
-                    );
+                    const payments = window.GlobalStateManager.getData('payments') || [];
+                    payments.push(paymentRecord);
+                    window.GlobalStateManager.updateData('payments', payments, 'PaymentModal');
                 }
-                
-                // Close modal after delay
-                setTimeout(() => {
-                    onClose();
-                    setLoading(false);
-                }, 2000);
-                
+
+                //  SYNC TO MYSQL
+                syncPaymentToMySQL(paymentRecord);
+
+                console.log(' Payment record created:', paymentRecord);
+                setPaymentCreated(true);
+
             } catch (error) {
-                console.error('❌ Payment submission failed:', error);
-                setLoading(false);
+                console.error('Error creating payment:', error);
+                alert('Lỗi tạo giao dịch. Vui lòng thử lại.');
+            } finally {
+                setIsSubmitting(false);
             }
-        }, [selectedPackage, selectedMethod, orderId, onClose]);
-        
+        }, [selectedPackage, orderId, paymentMethod]);
+
         if (!isOpen || !selectedPackage) return null;
-        
-        // Get payment config
-        const config = paymentConfig || (window.SharedDataService ? window.SharedDataService.getPaymentConfig() : null);
-        const qrCode = config?.qrCodes?.main;
-        
-        // Generate transfer content with order ID
-        const transferContent = `Thanh toan goi ${selectedPackage.name} ${orderId}`;
-        
-        return (
-            <window.Modal
-                isOpen={isOpen}
-                onClose={onClose}
-                title="💳 Thanh Toán Gói"
-                size="large"
-            >
-                <div className="space-y-6">
-                    {/* Package Info */}
-                    <div className="bg-[#FFF7ED] rounded-lg p-4">
-                        <h3 className="font-bold text-[#E36323] mb-2">
-                            📦 {selectedPackage.name}
-                        </h3>
-                        <div className="text-[#E36323]">
-                            <p>💰 Giá: {selectedPackage.price}</p>
-                            <p>⏱️ Thời hạn: {selectedPackage.duration_days} ngày</p>
-                            <p>🎯 Mục tiêu: {selectedPackage.target}</p>
-                            <p className="font-bold text-orange-600">🆔 Mã đơn hàng: {orderId}</p>
-                        </div>
-                    </div>
-                    
-                    {/* Payment Methods */}
-                    <div>
-                        <h4 className="font-bold text-[#121212] mb-3">💳 Chọn phương thức thanh toán:</h4>
-                        <div className="grid grid-cols-2 gap-3">
-                            {[
-                                { id: 'qr_code', name: 'QR Code', icon: '📱', enabled: qrCode?.enabled },
-                                { id: 'bank_transfer', name: 'Chuyển khoản', icon: '🏦', enabled: config?.paymentMethods?.bank_transfer?.enabled },
-                                { id: 'cash', name: 'Tiền mặt', icon: '💰', enabled: config?.paymentMethods?.cash?.enabled },
-                                { id: 'contact', name: 'Liên hệ Admin', icon: '📞', enabled: true }
-                            ].filter(method => method.enabled).map(method => (
-                                <button
-                                    key={method.id}
-                                    onClick={() => handleMethodSelect(method.id)}
-                                    className={`p-4 border rounded-lg text-center transition-colors ${
-                                        selectedMethod === method.id
-                                            ? 'border-[#E36323] bg-[#FFF7ED] text-[#E36323]'
-                                            : 'border-[#ECECEC] hover:border-[#E2E2E2]'
-                                    }`}
-                                >
-                                    <div className="text-2xl mb-2">{method.icon}</div>
-                                    <div className="font-medium">{method.name}</div>
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                    
-                    {/* QR Code Display */}
-                    {selectedMethod === 'qr_code' && showQR && qrCode?.url && (
-                        <div className="bg-green-50 border border-green-200 rounded-lg p-6">
-                            <h4 className="font-bold text-green-900 mb-4 flex items-center gap-2">
-                                📱 QR Code Thanh Toán
-                            </h4>
-                            
-                            <div className="flex flex-col md:flex-row items-center gap-6">
-                                {/* QR Code */}
-                                <div className="text-center">
-                                    <img
-                                        src={qrCode.url}
-                                        alt="QR Code"
-                                        className="w-48 h-48 border-4 border-green-200 rounded-lg"
-                                    />
-                                    <p className="text-sm text-green-700 mt-2">
-                                        Scan QR để thanh toán
-                                    </p>
-                                </div>
-                                
-                                {/* Payment Info */}
-                                <div className="flex-1">
-                                    <div className="bg-white rounded-lg p-4 border">
-                                        <h5 className="font-bold text-[#121212] mb-3">
-                                            📋 Thông tin thanh toán
-                                        </h5>
-                                        <div className="space-y-2 text-sm">
-                                            <div className="flex justify-between">
-                                                <span>Gói:</span>
-                                                <span className="font-medium">{selectedPackage.name}</span>
-                                            </div>
-                                            <div className="flex justify-between">
-                                                <span>Giá:</span>
-                                                <span className="font-medium text-green-600">{selectedPackage.price}</span>
-                                            </div>
-                                            <div className="flex justify-between">
-                                                <span>Thời hạn:</span>
-                                                <span className="font-medium">{selectedPackage.duration_days} ngày</span>
-                                            </div>
-                                            <div className="flex justify-between">
-                                                <span>Phương thức:</span>
-                                                <span className="font-medium">QR Code</span>
-                                            </div>
-                                            <div className="flex justify-between">
-                                                <span>Mã đơn hàng:</span>
-                                                <span className="font-medium font-mono text-orange-600">{orderId}</span>
-                                            </div>
-                                        </div>
-                                        
-                                        <div className="mt-4 p-3 bg-yellow-50 rounded border border-yellow-200">
-                                            <p className="text-sm text-yellow-800">
-                                                ⚠️ Sau khi chuyển tiền, vui lòng liên hệ Admin để xác nhận
-                                            </p>
-                                            <p className="text-sm text-yellow-800 mt-1">
-                                                📝 Nội dung chuyển khoản sẽ tự động: <span className="font-mono">{transferContent}</span>
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-                    
-                    {/* Bank Transfer Info */}
-                    {selectedMethod === 'bank_transfer' && config?.bankInfo && (
-                        <div className="bg-[#FFF7ED] border border-[#FFEDD5] rounded-lg p-6">
-                            <h4 className="font-bold text-[#E36323] mb-4 flex items-center gap-2">
-                                🏦 Thông tin chuyển khoản
-                            </h4>
-                            
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label className="text-sm font-medium text-[#7B7B7B]">Ngân hàng:</label>
-                                    <p className="font-medium">{config.bankInfo.bankName}</p>
-                                </div>
-                                <div>
-                                    <label className="text-sm font-medium text-[#7B7B7B]">Số tài khoản:</label>
-                                    <p className="font-medium font-mono">{config.bankInfo.accountNumber}</p>
-                                </div>
-                                <div>
-                                    <label className="text-sm font-medium text-[#7B7B7B]">Tên tài khoản:</label>
-                                    <p className="font-medium">{config.bankInfo.accountName}</p>
-                                </div>
-                                <div>
-                                    <label className="text-sm font-medium text-[#7B7B7B]">Chi nhánh:</label>
-                                    <p className="font-medium">{config.bankInfo.branch}</p>
-                                </div>
-                            </div>
-                            
-                            <div className="mt-4 p-3 bg-yellow-50 rounded border border-yellow-200">
-                                <p className="text-sm text-yellow-800">
-                                    💰 Số tiền: <span className="font-bold">{selectedPackage.price}</span>
-                                </p>
-                                <p className="text-sm text-yellow-800 mt-1">
-                                    📝 Nội dung: <span className="font-mono">{transferContent}</span>
-                                </p>
-                                <p className="text-sm text-yellow-800 mt-1">
-                                    🆔 Mã đơn hàng: <span className="font-mono text-orange-600">{orderId}</span>
-                                </p>
-                            </div>
-                        </div>
-                    )}
-                    
-                    {/* Contact Admin */}
-                    {selectedMethod === 'contact' && (
-                        <div className="bg-purple-50 border border-purple-200 rounded-lg p-6">
-                            <h4 className="font-bold text-purple-900 mb-4 flex items-center gap-2">
-                                📞 Liên hệ Admin
-                            </h4>
-                            
-                            <div className="space-y-3">
-                                <div className="flex items-center gap-3">
-                                    <span className="text-2xl">📱</span>
-                                    <div>
-                                        <p className="font-medium">Zalo/Telegram</p>
-                                        <p className="text-sm text-[#7B7B7B]">@admin_lode_b2b</p>
-                                    </div>
-                                </div>
-                                
-                                <div className="flex items-center gap-3">
-                                    <span className="text-2xl">☎️</span>
-                                    <div>
-                                        <p className="font-medium">Hotline</p>
-                                        <p className="text-sm text-[#7B7B7B]">1900.1234</p>
-                                    </div>
-                                </div>
-                                
-                                <div className="mt-4 p-3 bg-[#FFF7ED] rounded border border-[#FFEDD5]">
-                                    <p className="text-sm text-[#E36323]">
-                                        💬 Vui lòng nhắn tin với thông tin: Gói {selectedPackage.name} - {selectedPackage.price} - Mã: {orderId}
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-                    
-                    {/* Action Buttons */}
-                    <div className="flex justify-end space-x-3">
-                        <window.Button
-                            onClick={onClose}
-                            variant="secondary"
-                            disabled={loading}
-                        >
-                            ❌ Hủy
-                        </window.Button>
-                        
-                        <window.Button
-                            onClick={handlePaymentSubmit}
-                            variant="primary"
-                            loading={loading}
-                        >
-                            {loading ? '⏳ Đang xử lý...' : '✅ Xác nhận thanh toán'}
-                        </window.Button>
-                    </div>
-                </div>
-            </window.Modal>
+
+        const bankInfo = config?.bankInfo || {
+            bankName: 'Chưa cấu hình',
+            accountNumber: 'Chưa cấu hình',
+            accountName: 'Chưa cấu hình'
+        };
+
+        const qrCodeUrl = config?.qrCodes?.main?.url || null;
+        const amount = parsePrice(selectedPackage.price);
+
+        return React.createElement('div', {
+            className: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4'
+        },
+            React.createElement('div', {
+                className: 'bg-white rounded-lg max-w-lg w-full max-h-[90vh] overflow-y-auto'
+            },
+                // Header
+                React.createElement('div', {
+                    className: 'bg-[#E36323] text-white p-4 rounded-t-lg'
+                },
+                    React.createElement('div', { className: 'flex justify-between items-center' },
+                        React.createElement('h2', { className: 'text-xl font-bold' }, ' Thanh Toán'),
+                        React.createElement('button', {
+                            onClick: onClose,
+                            className: 'text-white hover:text-gray-200 text-2xl'
+                        }, '×')
+                    )
+                ),
+
+                // Content
+                React.createElement('div', { className: 'p-6 space-y-6' },
+                    // Package Info
+                    React.createElement('div', { className: 'bg-[#FFF3EE] rounded-lg p-4' },
+                        React.createElement('h3', { className: 'font-bold text-[#E36323] mb-2' }, selectedPackage.name),
+                        React.createElement('div', { className: 'text-2xl font-bold text-[#E36323]' }, formatCurrency(amount)),
+                        React.createElement('div', { className: 'text-sm text-[#E36323]' }, `Thời hạn: ${selectedPackage.duration_days} ngày`)
+                    ),
+
+                    // Order ID - CRITICAL
+                    React.createElement('div', { className: 'bg-[#FEF3C7] border-2 border-[#F59E0B] rounded-lg p-4' },
+                        React.createElement('h4', { className: 'font-bold text-[#F59E0B] mb-2 flex items-center gap-2' },
+                            React.createElement('span', {}, ''),
+                            'MÃ GIAO DỊCH (Nội dung CK)'
+                        ),
+                        React.createElement('div', {
+                            className: 'bg-white border-2 border-dashed border-[#F59E0B] rounded p-3 text-center'
+                        },
+                            React.createElement('div', {
+                                className: 'font-mono text-xl font-bold text-[#E36323] select-all'
+                            }, orderId),
+                            React.createElement('button', {
+                                onClick: () => copyToClipboard(orderId, 'Mã giao dịch'),
+                                className: 'mt-2 text-sm text-[#E36323] hover:text-[#DF5A18] underline'
+                            }, ' Copy mã')
+                        ),
+                        React.createElement('p', { className: 'text-xs text-[#F59E0B] mt-2 text-center' },
+                            'Vui lòng ghi chính xác mã này vào nội dung chuyển khoản'
+                        )
+                    ),
+
+                    // Payment Method Tabs
+                    React.createElement('div', { className: 'border-b border-gray-200' },
+                        React.createElement('div', { className: 'flex' },
+                            React.createElement('button', {
+                                onClick: () => setPaymentMethod('qr_code'),
+                                className: `flex-1 py-2 px-4 text-sm font-medium ${
+                                    paymentMethod === 'qr_code'
+                                        ? 'border-b-2 border-[#E36323] text-[#E36323]'
+                                        : 'text-gray-500 hover:text-gray-700'
+                                }`
+                            }, ' QR Code'),
+                            React.createElement('button', {
+                                onClick: () => setPaymentMethod('bank_transfer'),
+                                className: `flex-1 py-2 px-4 text-sm font-medium ${
+                                    paymentMethod === 'bank_transfer'
+                                        ? 'border-b-2 border-[#E36323] text-[#E36323]'
+                                        : 'text-gray-500 hover:text-gray-700'
+                                }`
+                            }, ' Chuyển khoản')
+                        )
+                    ),
+
+                    // Payment Details
+                    paymentMethod === 'qr_code' ? (
+                        // QR Code
+                        React.createElement('div', { className: 'text-center' },
+                            qrCodeUrl ? (
+                                React.createElement('div', {},
+                                    React.createElement('img', {
+                                        src: qrCodeUrl,
+                                        alt: 'QR Code',
+                                        className: 'mx-auto w-48 h-48 border-2 border-gray-200 rounded-lg'
+                                    }),
+                                    React.createElement('p', { className: 'text-sm text-gray-600 mt-2' },
+                                        'Quét mã QR để thanh toán'
+                                    )
+                                )
+                            ) : (
+                                React.createElement('div', { className: 'bg-gray-100 p-8 rounded-lg' },
+                                    React.createElement('p', { className: 'text-gray-500' },
+                                        'QR Code chưa được cấu hình. Vui lòng sử dụng chuyển khoản.'
+                                    )
+                                )
+                            )
+                        )
+                    ) : (
+                        // Bank Transfer
+                        React.createElement('div', { className: 'space-y-3' },
+                            React.createElement('div', { className: 'bg-gray-50 rounded-lg p-4' },
+                                React.createElement('div', { className: 'grid grid-cols-2 gap-2 text-sm' },
+                                    React.createElement('span', { className: 'text-gray-600' }, 'Ngân hàng:'),
+                                    React.createElement('span', { className: 'font-medium' }, bankInfo.bankName),
+
+                                    React.createElement('span', { className: 'text-gray-600' }, 'Số tài khoản:'),
+                                    React.createElement('div', { className: 'flex items-center gap-2' },
+                                        React.createElement('span', { className: 'font-mono font-medium' }, bankInfo.accountNumber),
+                                        React.createElement('button', {
+                                            onClick: () => copyToClipboard(bankInfo.accountNumber, 'STK'),
+                                            className: 'text-[#E36323] hover:text-[#DF5A18] text-xs'
+                                        }, '')
+                                    ),
+
+                                    React.createElement('span', { className: 'text-gray-600' }, 'Chủ TK:'),
+                                    React.createElement('span', { className: 'font-medium' }, bankInfo.accountName),
+
+                                    React.createElement('span', { className: 'text-gray-600' }, 'Số tiền:'),
+                                    React.createElement('span', { className: 'font-bold text-[#E36323]' }, formatCurrency(amount)),
+
+                                    React.createElement('span', { className: 'text-gray-600' }, 'Nội dung:'),
+                                    React.createElement('div', { className: 'flex items-center gap-2' },
+                                        React.createElement('span', { className: 'font-mono font-bold text-[#E36323]' }, orderId),
+                                        React.createElement('button', {
+                                            onClick: () => copyToClipboard(orderId, 'Nội dung'),
+                                            className: 'text-[#E36323] hover:text-[#DF5A18] text-xs'
+                                        }, '')
+                                    )
+                                )
+                            )
+                        )
+                    ),
+
+                    // Action Buttons
+                    !paymentCreated ? (
+                        React.createElement('div', { className: 'space-y-3' },
+                            React.createElement('button', {
+                                onClick: handleCreatePayment,
+                                disabled: isSubmitting,
+                                className: 'w-full py-3 bg-[#E36323] text-white rounded-lg font-semibold hover:bg-[#DF5A18] disabled:opacity-50'
+                            }, isSubmitting ? '⏳ Đang xử lý...' : ' Đã chuyển khoản'),
+                            React.createElement('p', { className: 'text-xs text-gray-500 text-center' },
+                                'Nhấn nút sau khi đã chuyển khoản để gửi thông báo cho Admin'
+                            )
+                        )
+                    ) : (
+                        React.createElement('div', { className: 'bg-[#ECFDF5] border border-[#10B981] rounded-lg p-4 text-center' },
+                            React.createElement('div', { className: 'text-3xl mb-2' }, ''),
+                            React.createElement('h4', { className: 'font-bold text-[#10B981] mb-2' }, 'Đã ghi nhận!'),
+                            React.createElement('p', { className: 'text-sm text-[#10B981]' },
+                                'Admin sẽ xác nhận và kích hoạt gói trong thời gian sớm nhất.'
+                            ),
+                            React.createElement('p', { className: 'text-xs text-[#059669] mt-2' },
+                                `Mã giao dịch: ${orderId}`
+                            )
+                        )
+                    ),
+
+                    // Contact Info
+                    React.createElement('div', { className: 'text-center text-sm text-gray-500' },
+                        React.createElement('p', {}, 'Cần hỗ trợ? Liên hệ Admin qua Zalo/Telegram'),
+                        config?.bankInfo?.telegramId && React.createElement('p', { className: 'text-[#E36323]' },
+                            `Telegram: @${config.bankInfo.telegramId}`
+                        )
+                    )
+                )
+            )
         );
     });
-    
-    // ===== EXPORT TO GLOBAL SCOPE =====
+
+    // Export to global scope
     window.PaymentModal = PaymentModal;
-    
-    console.log('✅ PaymentModal component loaded successfully');
-    
+
+    console.log(' PaymentModal component loaded');
+
 })();

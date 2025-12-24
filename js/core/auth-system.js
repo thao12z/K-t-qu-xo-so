@@ -5,18 +5,20 @@
 (function() {
     'use strict';
 
-    console.log('🔐 Authentication System v1.3.0 - Rule Compliant');
+    console.log(' Authentication System v3.0.0 - ONLINE ONLY (MySQL)');
 
-    // NOTE: These are EXAMPLE accounts for documentation only.
-    // Actual authentication uses users from GlobalStateManager/localStorage.
-    // DO NOT use these for production authentication!
-    const DEMO_ACCOUNTS_EXAMPLE = {
-        // Example format - not used for actual auth
-        // admin: { username: "admin", password: "***", package: "enterprise", ... }
+    // Configuration
+    const AUTH_CONFIG = {
+        onlineMode: true,
+        sessionTimeout: 3600000, // 1 hour session
+        validationInterval: 30000, // 30 seconds validation check
+        debugMode: window.DEBUG_MODE || false,
+        apiBaseUrl: window.API_BASE_URL || '/api', // API endpoint
+        requireOnline: true // Require online connection
     };
 
     const LoginPage = React.memo(function LoginPage({ onLogin, onNavigate }) {
-        console.log('🔄 Rendering LoginPage...');
+        console.log(' Rendering LoginPage...');
 
         const [username, setUsername] = React.useState('');
         const [password, setPassword] = React.useState('');
@@ -32,67 +34,57 @@
             setError('');
 
             try {
-                await new Promise(resolve => setTimeout(resolve, 1000));
+                console.log(' [LoginPage] Starting login via MySQL API for:', username);
 
-                console.log('🔐 [LoginPage] Starting login process for:', username);
-
-                // Try to get users from SharedDataService (synced from admin)
-                let usersFromAdmin = {};
-                if (window.SharedDataService) {
-                    usersFromAdmin = window.SharedDataService.syncUsersFromAdmin(); // Ensure latest sync
-                    console.log('📡 [LoginPage] Users from SharedDataService:', Object.keys(usersFromAdmin));
-                }
-
-                // Fallback to direct localStorage read if SharedDataService didn't provide
-                if (Object.keys(usersFromAdmin).length === 0) {
-                    console.log('⚠️ [LoginPage] No users from SharedDataService, trying localStorage...');
-                    const registeredUsersData = localStorage.getItem('registeredUsers') || localStorage.getItem('adminUsers') || localStorage.getItem('admin_users');
-                    if (registeredUsersData) {
-                        const users = JSON.parse(registeredUsersData);
-                        console.log('📦 [LoginPage] Users from localStorage:', users.length);
-                        users.forEach(u => {
-                            usersFromAdmin[u.username] = u; // Index by username for easy lookup
-                        });
-                    }
-                }
-
-                console.log('🔍 [LoginPage] Available users:', Object.keys(usersFromAdmin));
-                const user = usersFromAdmin[username];
-                
-                if (!user) {
-                    console.log('❌ [LoginPage] User not found:', username);
-                    setError('Tên đăng nhập hoặc mật khẩu không đúng.');
-                    return;
-                }
-
-                console.log('✅ [LoginPage] User found:', {
-                    username: user.username,
-                    password: user.password ? '***' : 'NO_PASSWORD',
-                    inputPassword: password ? '***' : 'NO_INPUT',
-                    status: user.status,
-                    subscriptionStatus: user.subscriptionStatus
+                // Login via MySQL API - ONLINE ONLY
+                const response = await fetch(`${AUTH_CONFIG.apiBaseUrl}/user-auth.php?action=login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
                 });
 
-                if (user.password !== password) { // Basic password check, should be hashed in production
-                    console.log('❌ [LoginPage] Password mismatch for user:', username);
-                    setError('Tên đăng nhập hoặc mật khẩu không đúng.');
+                const result = await response.json();
+
+                if (!response.ok) {
+                    console.log(' [LoginPage] Login failed:', result.error);
+                    setError(result.error || 'Đăng nhập thất bại');
                     return;
                 }
 
-                // Standardize user object and calculate package_status
-                const processedUser = AuthService.processUserForLogin(user);
-                if (processedUser.package_status === 'expired') {
-                    console.log('⚠️ [LoginPage] User package expired:', username);
+                if (!result.success) {
+                    setError(result.error || 'Đăng nhập thất bại');
+                    return;
+                }
+
+                const user = result.user;
+
+                // Check subscription status
+                if (!user.subscriptionValid && user.subscriptionExpiry) {
+                    console.log(' [LoginPage] User package expired:', username);
                     setError('Gói dịch vụ đã hết hạn. Vui lòng gia hạn.');
                     return;
                 }
 
-                console.log('✅ [LoginPage] Login successful:', processedUser);
+                // Process user for login
+                const processedUser = AuthService.processUserForLogin(user);
+
+                // Save token
+                if (result.token) {
+                    sessionStorage.setItem('user_token', result.token);
+                }
+
+                console.log(' [LoginPage] Login successful:', processedUser);
                 onLogin(processedUser);
 
             } catch (error) {
-                console.error('❌ [LoginPage] Login error:', error);
-                setError('Có lỗi xảy ra. Vui lòng thử lại.');
+                console.error(' [LoginPage] Login error:', error);
+                if (error.message.includes('fetch') || error.name === 'TypeError') {
+                    setError('Không thể kết nối server. Vui lòng kiểm tra kết nối mạng.');
+                } else {
+                    setError('Có lỗi xảy ra. Vui lòng thử lại.');
+                }
             } finally {
                 setIsLoading(false);
             }
@@ -108,7 +100,7 @@
             <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
                 <div className="max-w-md w-full space-y-8">
                     <div className="text-center">
-                        <h2 className="text-3xl font-bold text-gray-900 mb-2">🔐 Đăng Nhập</h2>
+                        <h2 className="text-3xl font-bold text-gray-900 mb-2"> Đăng Nhập</h2>
                         <p className="text-gray-600">Hệ thống đối soát lô đề đại lý</p>
                     </div>
 
@@ -127,12 +119,11 @@
                                 {isLoading ? (<><div className="loading-spinner inline-block w-4 h-4 mr-2"></div>Đang đăng nhập...</>) : ('Đăng Nhập')}
                             </button>
                         </form>
-                        <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-                            <h3 className="text-sm font-medium text-gray-700 mb-2">📋 Tài khoản demo (chỉ để tham khảo):</h3>
-                            <div className="space-y-1 text-xs text-gray-600">
-                                <div>• admin / 123456 (Enterprise - Active)</div>
-                                <div>• user1 / 123456 (Basic - Active)</div>
-                                <div>• demo / demo (No Package)</div>
+                        <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+                            <h3 className="text-sm font-medium text-blue-700 mb-2"> Thông tin đăng nhập:</h3>
+                            <div className="text-xs text-blue-600">
+                                <p>Sử dụng tài khoản được cấp bởi admin.</p>
+                                <p className="mt-1">Liên hệ admin nếu chưa có tài khoản.</p>
                             </div>
                         </div>
                         <div className="mt-4 text-center">
@@ -165,29 +156,24 @@
             }
         },
 
-        // Check if user account still exists in admin system
-        checkUserExists: function(username) {
+        // Check if user account still exists via MySQL API
+        checkUserExists: async function(username) {
             try {
-                // Get users from admin system
-                let usersFromAdmin = {};
-                if (window.SharedDataService) {
-                    usersFromAdmin = window.SharedDataService.syncUsersFromAdmin();
+                const response = await fetch(`${AUTH_CONFIG.apiBaseUrl}/user-auth.php?action=check&username=${encodeURIComponent(username)}`);
+                const result = await response.json();
+
+                if (result.success && result.user) {
+                    return {
+                        exists: true,
+                        isActive: result.user.isActive,
+                        subscriptionValid: result.user.subscriptionValid
+                    };
                 }
 
-                // Fallback to direct localStorage read
-                if (Object.keys(usersFromAdmin).length === 0) {
-                    const registeredUsersData = localStorage.getItem('registeredUsers') || localStorage.getItem('adminUsers') || localStorage.getItem('admin_users');
-                    if (registeredUsersData) {
-                        JSON.parse(registeredUsersData).forEach(u => {
-                            usersFromAdmin[u.username] = u;
-                        });
-                    }
-                }
-
-                return !!usersFromAdmin[username];
+                return { exists: false };
             } catch (e) {
                 console.error('Error checking user existence:', e);
-                return false;
+                return { exists: false, error: true };
             }
         },
 
@@ -199,7 +185,7 @@
             // Check if user account still exists in admin system
             const userExists = this.checkUserExists(currentUser.username);
             if (!userExists) {
-                console.log('⚠️ User account no longer exists, logging out...');
+                console.log(' User account no longer exists, logging out...');
                 this.logout();
                 return false;
             }
@@ -209,7 +195,7 @@
 
         // Process user data for login, calculate package_status
         processUserForLogin: function(user) {
-            console.log('🔍 [AuthService] Processing user for login:', {
+            console.log(' [AuthService] Processing user for login:', {
                 username: user.username,
                 status: user.status,
                 subscriptionStatus: user.subscriptionStatus,
@@ -235,7 +221,7 @@
                 package_status = 'pending';
             }
 
-            console.log('✅ [AuthService] Package status calculated:', {
+            console.log(' [AuthService] Package status calculated:', {
                 username: user.username,
                 package_status: package_status,
                 expiry: expiry,
@@ -280,11 +266,11 @@
     // Listen for admin data changes (when admin deletes users)
     window.addEventListener('storage', (e) => {
         if (e.key === 'registeredUsers' || e.key === 'adminUsers' || e.key === 'admin_users') {
-            console.log('📡 Admin user data changed, validating current session...');
+            console.log(' Admin user data changed, validating current session...');
             if (AuthService.isAuthenticated()) {
                 const isValid = AuthService.validateCurrentSession();
                 if (!isValid) {
-                    console.log('❌ Current user no longer exists, logging out...');
+                    console.log(' Current user no longer exists, logging out...');
                     AuthService.logout();
                     window.location.reload();
                 }
@@ -294,6 +280,7 @@
 
     window.LoginPage = LoginPage;
     window.AuthService = AuthService; // Export AuthService
-    window.DEMO_ACCOUNTS = DEMO_ACCOUNTS_FOR_DISPLAY; // Export for display only
-    console.log('✅ Authentication System loaded successfully');
+    // ONLINE MODE: No demo accounts - all users from MySQL
+    window.DEMO_ACCOUNTS = [];
+    console.log(' Authentication System loaded successfully');
 })(); 
